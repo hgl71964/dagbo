@@ -5,6 +5,8 @@ from botorch.posteriors.gpytorch import GPyTorchPosterior
 from typing import Optional, Type, TypeVar
 
 T = TypeVar('T', bound='SampleAveragePosterior')
+
+
 class SampleAveragePosterior(GPyTorchPosterior):
     """
     The use case for SampleAveragePosterior is for a model with some non-determinism 
@@ -35,7 +37,6 @@ class SampleAveragePosterior(GPyTorchPosterior):
     # wrap in SampleAveragePosterior, now posterior.event_shape = Size([10,5])
     posterior = SampleAveragePosterior.from_gpytorch_posterior(posterior)
     """
-
     def __init__(self, mvn: MultivariateNormal) -> None:
         """
         Args:
@@ -77,7 +78,8 @@ class SampleAveragePosterior(GPyTorchPosterior):
         https://stats.stackexchange.com/questions/16608/what-is-the-variance-of-the-weighted-mixture-of-two-gaussians
         We have num_samples Gaussians, and since each Gaussian is drawn using Monte Carlo, then each Gaussian has equal weight
         """
-        return super().variance.mean(dim=0) + super().mean.square().mean(dim=0) - super().mean.mean(dim=0).square()
+        return super().variance.mean(dim=0) + super().mean.square().mean(
+            dim=0) - super().mean.mean(dim=0).square()
 
     def _replacement_super_rsample(
         self,
@@ -107,24 +109,28 @@ class SampleAveragePosterior(GPyTorchPosterior):
         if sample_shape is None:
             sample_shape = Size([1])
         if base_samples is not None:
-            if base_samples.shape[: len(sample_shape)] != sample_shape:
-                raise RuntimeError("sample_shape disagrees with shape of base_samples.")
+            if base_samples.shape[:len(sample_shape)] != sample_shape:
+                raise RuntimeError(
+                    "sample_shape disagrees with shape of base_samples.")
             # get base_samples to the correct shape
             # THIS IS THE LINE I HAVE CHANGED
-            base_samples = base_samples.expand(sample_shape + Size([self.num_samples]) + self.event_shape)
+            base_samples = base_samples.expand(sample_shape +
+                                               Size([self.num_samples]) +
+                                               self.event_shape)
             # remove output dimension in single output case
             if not self._is_mt:
                 base_samples = base_samples.squeeze(-1)
         with fast_computations(covar_root_decomposition=False):
-            samples = self.mvn.rsample(
-                sample_shape=sample_shape, base_samples=base_samples
-            )
+            samples = self.mvn.rsample(sample_shape=sample_shape,
+                                       base_samples=base_samples)
         # make sure there always is an output dimension
         if not self._is_mt:
             samples = samples.unsqueeze(-1)
         return samples
 
-    def rsample(self, sample_shape: Optional[Size] = None, base_samples: Optional[Tensor] = None) -> Tensor:
+    def rsample(self,
+                sample_shape: Optional[Size] = None,
+                base_samples: Optional[Tensor] = None) -> Tensor:
         """
         Args:
             sample_shape: shape of the additional sample dimensions
@@ -133,12 +139,14 @@ class SampleAveragePosterior(GPyTorchPosterior):
         sample_average_dim = len(sample_shape)
         if base_samples is not None:
             # expand
-            base_samples = base_samples.unsqueeze(sample_average_dim).expand(*sample_shape, self.num_samples, *self.event_shape)
-        samples = self._replacement_super_rsample(sample_shape=sample_shape, base_samples=base_samples)
+            base_samples = base_samples.unsqueeze(sample_average_dim).expand(
+                *sample_shape, self.num_samples, *self.event_shape)
+        samples = self._replacement_super_rsample(sample_shape=sample_shape,
+                                                  base_samples=base_samples)
         # compact
         return samples.mean(dim=sample_average_dim)
 
     @classmethod
-    def from_gpytorch_posterior(cls: Type[T], posterior: GPyTorchPosterior) -> T:
+    def from_gpytorch_posterior(cls: Type[T],
+                                posterior: GPyTorchPosterior) -> T:
         return cls(mvn=posterior.mvn)
-

@@ -12,6 +12,7 @@ from .tensor_dict_conversions import pack_to_tensor, unpack_to_dict
 from typing import Iterator, List, Optional, Union
 from warnings import warn
 
+
 class Dag(Module):
     """
     The DAG is a GPyTorch model with a directed, acyclic graph of sub-models. To
@@ -42,9 +43,9 @@ class Dag(Module):
     GC time uses x=(heap_size, num_cpus) to predict gc_time
     then total time uses y=(num_cpus, gc_time) to predict total_time
     """
-
-    def __init__(self, train_input_names: List[str], train_target_names: List[str],
-                 train_inputs: Tensor, train_targets: Tensor):
+    def __init__(self, train_input_names: List[str],
+                 train_target_names: List[str], train_inputs: Tensor,
+                 train_targets: Tensor):
         """
         Args:
             train_input_names: a d-length List of the names of each input
@@ -92,15 +93,24 @@ class Dag(Module):
         self.registered_input_names.append(name)
         return name
 
-    def register_metric(self, name: str, inputs: List[str],
-                        mean: Optional[Union[Mean, ParametricMean]] = None,
-                        covar: Optional[Kernel] = None,
-                        likelihood: Optional[_GaussianLikelihoodBase] = None) -> str:
+    def register_metric(
+            self,
+            name: str,
+            inputs: List[str],
+            mean: Optional[Union[Mean, ParametricMean]] = None,
+            covar: Optional[Kernel] = None,
+            likelihood: Optional[_GaussianLikelihoodBase] = None) -> str:
         # todo: using "inspect" to add error for ParametricMeans with fwd arguments not in "inputs"
         self._error_missing_names([name] + inputs)
         self._error_unregistered_inputs(inputs, name)
-        X_from_inputs = {k:v for k,v in self.train_inputs.items() if k in inputs}
-        X_from_outputs = {k:v for k,v in self.train_targets.items() if k in inputs}
+        X_from_inputs = {
+            k: v
+            for k, v in self.train_inputs.items() if k in inputs
+        }
+        X_from_outputs = {
+            k: v
+            for k, v in self.train_targets.items() if k in inputs
+        }
         X = pack_to_tensor(inputs, {**X_from_inputs, **X_from_outputs})
         y = self.train_targets[name]
         node = Node(inputs, name, X, y, mean)
@@ -121,7 +131,9 @@ class Dag(Module):
         """Returns: iterator over DAG's nodes in the order specified in train_target_names"""
         return self._nodes_order(self.target_names)
 
-    def forward(self, test_inputs: Tensor) -> Union[MultivariateNormal, MultitaskMultivariateNormal]:
+    def forward(
+        self, test_inputs: Tensor
+    ) -> Union[MultivariateNormal, MultitaskMultivariateNormal]:
         """
         This is only used for prediction, since the individual nodes
         are trained independently
@@ -129,14 +141,17 @@ class Dag(Module):
             test_inputs: batch_shape*q*d-dim tensor
         """
         # since the nodes must be registered in topological order
-        #   then we can do the predictions in the same order and use 
+        #   then we can do the predictions in the same order and use
         #   test_inputs_d to store them
         # also need to pack into tensors before passing to sub-models
-        
+
         test_inputs_d = unpack_to_dict(self.input_names, test_inputs)
         test_metrics_d = {}
         for node in self.nodes_dag_order():
-            node_inputs_d = {k:v for k,v in test_inputs_d.items() if k in node.input_names}
+            node_inputs_d = {
+                k: v
+                for k, v in test_inputs_d.items() if k in node.input_names
+            }
             node_inputs = pack_to_tensor(node.input_names, node_inputs_d)
             # mvn: batch_shape MVN with q points considered jointly
             mvn = node(node_inputs)
@@ -151,23 +166,35 @@ class Dag(Module):
             return test_metrics_d[self.target_names[0]]
 
     def _error_missing_names(self, names):
-        missing_names = set(names).difference(self.input_names).difference(self.target_names)
+        missing_names = set(names).difference(self.input_names).difference(
+            self.target_names)
         if missing_names:
-            raise NameError(str(missing_names) + " defined in DAG but not declared in train_input_names or train_target_names.")
+            raise NameError(
+                str(missing_names) +
+                " defined in DAG but not declared in train_input_names or train_target_names."
+            )
 
     def _error_unregistered_inputs(self, input_names, output_name):
-        unregisted_inputs = set(input_names).difference(self.registered_input_names).difference(self.registered_target_names)
+        unregisted_inputs = set(input_names).difference(
+            self.registered_input_names).difference(
+                self.registered_target_names)
         if unregisted_inputs:
-            raise NameError(str(unregisted_inputs) + " defined as input to " + output_name + " before being registered.")
+            raise NameError(
+                str(unregisted_inputs) + " defined as input to " +
+                output_name + " before being registered.")
 
     def _error_unspecified_outputs(self):
-        unspecified_outputs = set(self.target_names).difference(self.registered_target_names)
+        unspecified_outputs = set(self.target_names).difference(
+            self.registered_target_names)
         if unspecified_outputs:
-            raise RuntimeError("All train_targets_names must be specified in DAG model, but "
-                               + str(unspecified_outputs) + " are not.")
+            raise RuntimeError(
+                "All train_targets_names must be specified in DAG model, but "
+                + str(unspecified_outputs) + " are not.")
 
     def _warn_unused_inputs(self):
-        missing_fields = set(self.input_names).difference(self.registered_input_names)
+        missing_fields = set(self.input_names).difference(
+            self.registered_input_names)
         if missing_fields:
-            warn(str(missing_fields) + " defined in train_input_names but not used in DAG.")
-
+            warn(
+                str(missing_fields) +
+                " defined in train_input_names but not used in DAG.")

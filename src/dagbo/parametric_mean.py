@@ -6,12 +6,16 @@ from gpytorch.constraints.constraints import Interval
 from .tensor_dict_conversions import unpack_to_dict
 from typing import Dict, List
 
+
 class ParametricMean(Module):
     def __init__(self, batch_shape: Size = Size([])):
         super().__init__()
         self.init_params(batch_shape)
 
-    def register_bayesian_parameter(self, name: str, prior: Prior, constraint: Interval = None) -> None:
+    def register_bayesian_parameter(self,
+                                    name: str,
+                                    prior: Prior,
+                                    constraint: Interval = None) -> None:
         """
         Helper class to quickly define parameter, prior and constraint
         Sets initial point value of the parameter to the mean of the prior
@@ -68,4 +72,3 @@ class ParametricMean(Module):
         """
         x_d = unpack_to_dict(field_names, x)
         return super().__call__(**x_d)
-

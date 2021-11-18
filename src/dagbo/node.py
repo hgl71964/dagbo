@@ -15,6 +15,7 @@ from typing import List, Optional, Union
 
 MIN_INFERRED_NOISE_LEVEL = 1e-4
 
+
 class Node(ExactGP):
     """
     An ExactGP with a configurable mean.
@@ -23,8 +24,11 @@ class Node(ExactGP):
     Uses GaussianLikelihood and MaternKernel(nu=5/2).
     Priors for Likelihood and Kernel are borrowed from BoTorch SingleTaskGP
     """
-    def __init__(self, input_names: List[str], output_name: str,
-                 train_inputs: Tensor, train_targets: Tensor, 
+    def __init__(self,
+                 input_names: List[str],
+                 output_name: str,
+                 train_inputs: Tensor,
+                 train_targets: Tensor,
                  mean: Optional[Union[Mean, ParametricMean]] = None,
                  covar: Optional[Kernel] = None,
                  likelihood: Optional[_GaussianLikelihoodBase] = None):
@@ -45,7 +49,8 @@ class Node(ExactGP):
 
         if likelihood is None:
             noise_prior = GammaPrior(1.1, 0.05)
-            noise_prior_mode = (noise_prior.concentration - 1) / noise_prior.rate
+            noise_prior_mode = (noise_prior.concentration -
+                                1) / noise_prior.rate
             # Use GreaterThan constraint for Torch / SciPy fitting
             # Use Positive constraint for MCMC fitting (because MCMC does not play nicely
             # with constraints within the range of the prior)
@@ -55,21 +60,20 @@ class Node(ExactGP):
                 initial_value=noise_prior_mode,
             )
             # noise_constraint = Positive(initial_value=noise_prior_mode)
-            likelihood = GaussianLikelihood(
-                batch_shape=batch_shape,
-                noise_prior=noise_prior,
-                noise_constraint=noise_constraint
-            )
+            likelihood = GaussianLikelihood(batch_shape=batch_shape,
+                                            noise_prior=noise_prior,
+                                            noise_constraint=noise_constraint)
         super().__init__(train_inputs, train_targets, likelihood)
 
         self.input_names = input_names
         self.output_name = output_name
 
-        self.mean = ConstantMean(batch_shape=batch_shape) if mean is None else mean
+        self.mean = ConstantMean(
+            batch_shape=batch_shape) if mean is None else mean
 
         # Use UniformPrior for MCMC, use GammaPrior for Torch/Scipy
         # loss = inf when using UniformPrior with Torch/Scipy so they can't learn
-        # MCMC occasionally samples a very small value for lengthscale, which produces NaNs 
+        # MCMC occasionally samples a very small value for lengthscale, which produces NaNs
         #   and there is no way (afaik) to prevent MCMC from picking these very small values,
         #   even constraints don't work because MCMC samples from lengthscale as opposed to
         #   raw_lengthscale, so it simply throws an error if it samples an illegal lengthscale value
@@ -79,11 +83,10 @@ class Node(ExactGP):
                 ard_num_dims=num_inputs,
                 batch_shape=batch_shape,
                 # lengthscale_prior=UniformPrior(0.01, 0.02)
-                lengthscale_prior=GammaPrior(3.0, 6.0)
-            ),
+                lengthscale_prior=GammaPrior(3.0, 6.0)),
             batch_shape=batch_shape,
-            outputscale_prior=GammaPrior(2.0, 0.15)
-        ) if covar is None else covar
+            outputscale_prior=GammaPrior(2.0,
+                                         0.15)) if covar is None else covar
 
         self.to(train_inputs)
 
