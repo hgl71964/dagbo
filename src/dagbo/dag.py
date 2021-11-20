@@ -85,7 +85,11 @@ class Dag(Module):
         self.define_dag(batch_shape)
         self._error_unspecified_outputs()
         self._error_unused_inputs()
-        self.to(train_inputs)  # tensor dtype and device conversion
+
+        # TODO at the point registered_input_names = input_names and so target_name, so trim?
+
+        # tensor dtype and device conversion
+        self.to(train_inputs)
 
     def define_dag(self, batch_shape: Size) -> None:
         """
@@ -126,8 +130,10 @@ class Dag(Module):
         self._check_init_metric_data(name, X, y)
 
         # instantial node
-        node = Node(children, name, X, y, mean)
-        self.add_module(name, node)
+        node = Node(children, name, X, y, mean, covar, likelihood)
+        self.add_module(
+            name,
+            node)  # nn.Module's method, keep a mapping Dict[name, Module]
         self.registered_target_names.append(node.output_name)
         return name
 
@@ -197,6 +203,10 @@ class Dag(Module):
                 output_name + " before being registered.")
 
     def _error_unspecified_outputs(self):
+        if len(set(self.registered_target_names)) != len(
+                self.registered_target_names):
+            raise RuntimeError("registered_target_names has duplicated name")
+
         unspecified_outputs = set(self.target_names).difference(
             self.registered_target_names)
         if unspecified_outputs:
@@ -205,6 +215,10 @@ class Dag(Module):
                 + str(unspecified_outputs) + " are not.")
 
     def _error_unused_inputs(self):
+        if len(set(self.registered_input_names)) != len(
+                self.registered_input_names):
+            raise RuntimeError("registered_input_names has duplicated name")
+
         missing_fields = set(self.input_names).difference(
             self.registered_input_names)
         if missing_fields:
@@ -215,6 +229,12 @@ class Dag(Module):
     def _check_valid_input(self, train_input_names: List[str],
                            train_target_names: List[str], train_inputs: Tensor,
                            train_targets: Tensor):
+        if len(set(train_input_names)) != len(train_input_names):
+            raise RuntimeError("train_input_names has duplicated name")
+
+        if len(set(train_target_names)) != len(train_target_names):
+            raise RuntimeError("train_target_names has duplicated name")
+
         if len(train_inputs.shape) != 3 or len(train_targets.shape) != 3:
             raise RuntimeError(
                 "train_inputs and train_targets must be 3 dimensional tensor")

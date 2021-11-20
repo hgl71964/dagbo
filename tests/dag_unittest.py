@@ -88,25 +88,11 @@ class dag_test(unittest.TestCase):
         for node in self.simple_dag.nodes_dag_order():
             print(node.output_name)
 
-        for k, v in self.simple_dag.train_inputs_name2tensor_mapping.items():
-            print(k)
-            print(v.shape)
-
-        print("stack list")
-        stack_name = ["x1", "x2"]
-        print(
-            torch.stack([
-                self.simple_dag.train_inputs_name2tensor_mapping[i]
-                for i in stack_name
-            ],
-                        dim=-1).shape)
-
     def test_dag_forward(self):
-
-        b = torch.rand(1, 2)
-        c = torch.ones(1, 2)
-
-        print(torch.stack([b, c]).shape)
+        a = [str(i) for i in range(3)]
+        b = ["2", "3"]
+        diff = set(a).difference(b)
+        print(str(diff))
 
     @unittest.skip("..")
     def test_dag_backward(self):
