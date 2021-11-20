@@ -42,8 +42,7 @@ class Dag(Module):
     then total time uses y=(num_cpus, gc_time) to predict total_time
     """
     def __init__(self, train_input_names: List[str],
-                 train_target_names: List[str],
-                 train_inputs: Tensor,
+                 train_target_names: List[str], train_inputs: Tensor,
                  train_targets: Tensor):
         """
         Args:
@@ -65,32 +64,35 @@ class Dag(Module):
                 dimension of BO's output space
         """
         super().__init__()
+        self._check_valid_input(train_input_names, train_target_names,
+                                train_inputs, train_targets)
+
         self._num_outputs = len(train_target_names)
         batch_shape = train_inputs.shape[:-2]
-        if len(train_inputs) != 3 or len(train_targets.shape) != 3:
-            raise RuntimeError("train_inputs and train_targets must be 3 dimensional tensor")
-
         self.input_names = train_input_names
         self.target_names = train_target_names
 
         # data is explicitly un-batched in DAG since it will be split up for each sub-model
         # it will then be re-batched before adding it to the submodel
-        self.train_inputs_name2tensor_mapping = unpack_to_dict(self.input_names, train_inputs)
-        self.train_targets_name2tensor_mapping = unpack_to_dict(self.target_names, train_targets)
+        print("init")
+        self.train_inputs_name2tensor_mapping = unpack_to_dict(
+            self.input_names, train_inputs)
+        self.train_targets_name2tensor_mapping = unpack_to_dict(
+            self.target_names, train_targets)
+        print("ok")
 
         # nodes themselves will be accessed using self.named_children
         self.registered_input_names = []
         self.registered_target_names = []
         self.define_dag(batch_shape)
         self._error_unspecified_outputs()
-        self._warn_unused_inputs()
+        self._error_unused_inputs()
         self.to(train_inputs)  # tensor dtype and device conversion
 
     def define_dag(self, batch_shape: Size) -> None:
         """
         Must be implemented in subclass
         Creates the nodes and edges of the DAG
-        # todo: example
         """
         raise NotImplementedError()
 
@@ -102,24 +104,30 @@ class Dag(Module):
     def register_metric(
             self,
             name: str,
-            inputs: List[str],
+            children: List[str],
             mean: Optional[Union[Mean, ParametricMean]] = None,
             covar: Optional[Kernel] = None,
             likelihood: Optional[_GaussianLikelihoodBase] = None) -> str:
-        # todo: using "inspect" to add error for ParametricMeans with fwd arguments not in "inputs"
-        self._error_missing_names([name] + inputs)
-        self._error_unregistered_inputs(inputs, name)
+        # TODO: using "inspect" to add error for ParametricMeans with fwd arguments not in "children"
+        self._error_missing_names([name] + children)
+        self._error_unregistered_inputs(children, name)
+
+        # find saved tensor
         X_from_inputs = {
             k: v
-            for k, v in self.train_inputs_name2tensor_mapping.items() if k in inputs
+            for k, v in self.train_inputs_name2tensor_mapping.items()
+            if k in children
         }
-        X_from_outputs = {
+        X_from_outputs = {  # a metric could be a child of this node
             k: v
-            for k, v in self.train_targets_name2tensor_mapping.items() if k in inputs
+            for k, v in self.train_targets_name2tensor_mapping.items()
+            if k in children
         }
-        X = pack_to_tensor(inputs, {**X_from_inputs, **X_from_outputs})
+        X = pack_to_tensor(children, {**X_from_inputs, **X_from_outputs})
         y = self.train_targets_name2tensor_mapping[name]
-        node = Node(inputs, name, X, y, mean)
+
+        # instantial node
+        node = Node(children, name, X, y, mean)
         self.add_module(name, node)
         self.registered_target_names.append(node.output_name)
         return name
@@ -197,10 +205,29 @@ class Dag(Module):
                 "All train_targets_names must be specified in DAG model, but "
                 + str(unspecified_outputs) + " are not.")
 
-    def _warn_unused_inputs(self):
+    def _error_unused_inputs(self):
         missing_fields = set(self.input_names).difference(
             self.registered_input_names)
         if missing_fields:
-            warn(
+            raise RuntimeError(
                 str(missing_fields) +
                 " defined in train_input_names but not used in DAG.")
+
+    def _check_valid_input(self, train_input_names: List[str],
+                           train_target_names: List[str], train_inputs: Tensor,
+                           train_targets: Tensor):
+        if len(train_inputs) != 3 or len(train_targets.shape) != 3:
+            raise RuntimeError(
+                "train_inputs and train_targets must be 3 dimensional tensor")
+
+        if train_inputs.shape[-1] != len(
+                train_input_names) or train_targets.shape[-1] != len(
+                    train_target_names):
+            raise RuntimeError(
+                "train_inputs and train_targets must be 3 dimensional tensor")
+
+        if train_inputs.shape[1] != train_targets.shape[1]:
+            q1, q2 = train_inputs.shape[1], train_targets.shape[1]
+            raise RuntimeError(
+                f"q in train_input is {q1} but in train_targets is {q2}, and they should be equal"
+            )

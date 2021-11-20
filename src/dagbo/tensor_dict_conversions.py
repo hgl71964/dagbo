@@ -22,4 +22,6 @@ def pack_to_tensor(names: List[str], values: Dict[str, Tensor]) -> Tensor:
     Returns: batch_shape * d-dim Tensor
         d is has the same order as `names`
     """
-    return torch.stack([values[y] for y in names], dim=-1)
+    return torch.stack(
+        [values[y] for y in names],
+        dim=-1)  # stack same shape tensor, with an added dimension

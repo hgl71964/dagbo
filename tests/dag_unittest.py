@@ -1,4 +1,5 @@
 import os
+import sys
 import warnings
 import logging
 import unittest
@@ -7,6 +8,11 @@ from typing import List
 from torch import Size, Tensor
 from dagbo.dag import Dag
 from dagbo.dag_gpytorch_model import DagGPyTorchModel
+
+# hacky way to include the src code dir
+testdir = os.path.dirname(__file__)
+srcdir = "../src"
+sys.path.insert(0, os.path.abspath(os.path.join(testdir, srcdir)))
 
 
 class SIMPLE_DAG(Dag, DagGPyTorchModel):
@@ -20,10 +26,12 @@ class SIMPLE_DAG(Dag, DagGPyTorchModel):
               y
     """
     def __init__(self, train_input_names: List[str],
-                 train_target_names: List[str], train_inputs: Tensor,
+                 train_target_names: List[str],
+                 train_inputs: Tensor,
                  train_targets: Tensor, num_samples: int):
         super().__init__(train_input_names, train_target_names, train_inputs,
                          train_targets)
+
         # required for all classes that extend SparkDag
         self.num_samples = num_samples
 
@@ -63,6 +71,10 @@ class dag_test(unittest.TestCase):
 
         self.simple_dag = SIMPLE_DAG(train_input_names, train_target_names,
                                      train_inputs, train_targets, num_samples)
+        print("check attr")
+        print(hasattr(self.simple_dag, "input_names"))
+        print(hasattr(self.simple_dag, "train_inputs_name2tensor_mapping"))
+        print(hasattr(self.simple_dag, "train_targets_name2tensor_mapping"))
 
     def tearDown(self):
         # gc
@@ -73,20 +85,29 @@ class dag_test(unittest.TestCase):
         #logger.info("sample test")
         print("sample test that is skipped")
 
-    @unittest.skip("ok")
+    #@unittest.skip("ok")
     def test_dag_creation(self):
-        print(self.simple_dag)
+        #print(self.simple_dag)
+        for node in self.simple_dag.nodes_dag_order():
+            print(node.output_name)
+
+
+        for k, v  in self.simple_dag.train_inputs_name2tensor_mapping.items():
+            print(k)
+            print(v.shape)
+
 
     def test_dag_forward(self):
-        a = torch.rand(1,4,5)
-
-        unbind = torch.unbind(a, dim=-1)
-        print(len(unbind))
+        a = torch.stack([
+            torch.tensor([1,2,3]),
+            torch.tensor([4, 5, 6]),
+        ])
         print(a)
 
-        for i in unbind:
-            print(i.shape)
-            print(i)
+        b = torch.rand(1,2)
+        c = torch.ones(1,2)
+
+        print(torch.stack([b,c ]).shape)
 
 
     @unittest.skip("..")

@@ -12,6 +12,8 @@ class SparkDag(Dag, DagGPyTorchModel):
                  train_targets: Tensor, num_samples: int):
         super().__init__(train_input_names, train_target_names, train_inputs,
                          train_targets)
+        
+        print("sparkDag constructor")
         # required for all classes that extend SparkDag
         self.num_samples = num_samples
 
