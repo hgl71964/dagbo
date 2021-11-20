@@ -31,8 +31,6 @@ class Dag(Module):
     predict the value of the metric. We can choose the inputs to each sub-model
     to be real inputs or to be other metrics.
 
-    todo: discuss form of sub-models
-    
     The sub-models are trained independently. Using the running example, the GC
     time of the Java program will be trained separately to the total time of the
     program. I.e.: 
@@ -44,7 +42,8 @@ class Dag(Module):
     then total time uses y=(num_cpus, gc_time) to predict total_time
     """
     def __init__(self, train_input_names: List[str],
-                 train_target_names: List[str], train_inputs: Tensor,
+                 train_target_names: List[str],
+                 train_inputs: Tensor,
                  train_targets: Tensor):
         """
         Args:
@@ -78,7 +77,7 @@ class Dag(Module):
         self.define_dag(batch_shape)
         self._error_unspecified_outputs()
         self._warn_unused_inputs()
-        self.to(train_inputs)
+        self.to(train_inputs)  # tensor dtype and device conversion
 
     def define_dag(self, batch_shape: Size) -> None:
         """
