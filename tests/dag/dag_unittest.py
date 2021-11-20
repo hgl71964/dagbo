@@ -10,7 +10,15 @@ from dagbo.dag_gpytorch_model import DagGPyTorchModel
 
 
 class SIMPLE_DAG(Dag, DagGPyTorchModel):
-    """DAG model for the SQL/Aggregation HiBench Spark benchmark"""
+    """
+    creation a simple tree-like DAG
+
+    x1      x2        x3
+      \     /         |
+        z1           z2
+          \        /
+              y
+    """
     def __init__(self, train_input_names: List[str],
                  train_target_names: List[str], train_inputs: Tensor,
                  train_targets: Tensor, num_samples: int):
@@ -60,17 +68,30 @@ class dag_test(unittest.TestCase):
         # gc
         pass
 
-    @unittest.skip("..")
+    @unittest.skip("no need")
     def test_sample(self):
         #logger.info("sample test")
         print("sample test that is skipped")
 
+    @unittest.skip("ok")
     def test_dag_creation(self):
         print(self.simple_dag)
 
-    @unittest.skip("..")
     def test_dag_forward(self):
-        print(self.simple_dag)
+        a = torch.rand(1,4,5)
+
+        unbind = torch.unbind(a, dim=-1)
+        print(len(unbind))
+        print(a)
+
+        for i in unbind:
+            print(i.shape)
+            print(i)
+
+
+    @unittest.skip("..")
+    def test_dag_backward(self):
+        pass
 
 
 if __name__ == '__main__':

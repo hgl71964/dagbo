@@ -56,23 +56,30 @@ class Dag(Module):
             train_inputs: A batch_shape*q*d-dim Tensor of the training inputs
                 The innermost dim, dim=-1, must follow the same order as
                 train_input_names as this is how the data is split up around
-                the DAG.
+                the DAG. q is the number of available data point, and d is the
+                dimension of BO's input space
             train_targets: A batch_shape*q*m-dim Tensor of the training targets
                 The innermost dim, dim=-1, must follow the same order as
                 train_targets_names as this is how the data is split up around
-                the DAG.
+                the DAG. q is the number of available data point, and m is the
+                dimension of BO's output space
         """
         super().__init__()
         self._num_outputs = len(train_target_names)
         batch_shape = train_inputs.shape[:-2]
+        if len(train_inputs) != 3 or len(train_targets.shape) != 3:
+            raise RuntimeError("train_inputs and train_targets must be 3 dimensional tensor")
+
         self.input_names = train_input_names
         self.target_names = train_target_names
+
         # data is explicitly un-batched in DAG since it will be split up for each sub-model
         # it will then be re-batched before adding it to the submodel
-        self.train_inputs = unpack_to_dict(self.input_names, train_inputs)
-        self.train_targets = unpack_to_dict(self.target_names, train_targets)
-        self.registered_input_names = []
+        self.train_inputs_name2tensor_mapping = unpack_to_dict(self.input_names, train_inputs)
+        self.train_targets_name2tensor_mapping = unpack_to_dict(self.target_names, train_targets)
+
         # nodes themselves will be accessed using self.named_children
+        self.registered_input_names = []
         self.registered_target_names = []
         self.define_dag(batch_shape)
         self._error_unspecified_outputs()
@@ -104,14 +111,14 @@ class Dag(Module):
         self._error_unregistered_inputs(inputs, name)
         X_from_inputs = {
             k: v
-            for k, v in self.train_inputs.items() if k in inputs
+            for k, v in self.train_inputs_name2tensor_mapping.items() if k in inputs
         }
         X_from_outputs = {
             k: v
-            for k, v in self.train_targets.items() if k in inputs
+            for k, v in self.train_targets_name2tensor_mapping.items() if k in inputs
         }
         X = pack_to_tensor(inputs, {**X_from_inputs, **X_from_outputs})
-        y = self.train_targets[name]
+        y = self.train_targets_name2tensor_mapping[name]
         node = Node(inputs, name, X, y, mean)
         self.add_module(name, node)
         self.registered_target_names.append(node.output_name)
