@@ -83,13 +83,17 @@ class Dag(Module):
         self.registered_input_names = []
         self.registered_target_names = []
         self.define_dag(batch_shape)
-        self._error_unspecified_outputs()
         self._error_unused_inputs()
-
-        # TODO at the point registered_input_names = input_names and so target_name, so trim?
+        self._error_unspecified_outputs()
 
         # tensor dtype and device conversion
         self.to(train_inputs)
+
+        # TODO at the point registered_input_names = input_names and so target_names, so del to avoid 
+        # confusion
+        # registered_target is how users actually register, so its order is respected
+        # to generate a dynamic task graph, we might consider traverse the graph to ensure order
+        del self.input_names, self.target_names
 
     def define_dag(self, batch_shape: Size) -> None:
         """
@@ -137,19 +141,6 @@ class Dag(Module):
         self.registered_target_names.append(node.output_name)
         return name
 
-    def _nodes_order(self, order) -> Iterator[Node]:
-        """Returns: iterator over DAG's nodes in `order` order"""
-        for name in order:
-            yield getattr(self, name)
-
-    def nodes_dag_order(self) -> Iterator[Node]:
-        """Returns: iterator over DAG's nodes in the order specified in define_dag"""
-        return self._nodes_order(self.registered_target_names)
-
-    def nodes_output_order(self) -> Iterator[Node]:
-        """Returns: iterator over DAG's nodes in the order specified in train_target_names"""
-        return self._nodes_order(self.target_names)
-
     def forward(
         self, test_inputs: Tensor
     ) -> Union[MultivariateNormal, MultitaskMultivariateNormal]:
@@ -164,7 +155,7 @@ class Dag(Module):
         #   test_inputs_d to store them
         # also need to pack into tensors before passing to sub-models
 
-        test_inputs_d = unpack_to_dict(self.input_names, test_inputs)
+        test_inputs_d = unpack_to_dict(self.registered_input_names, test_inputs)
         test_metrics_d = {}
         for node in self.nodes_dag_order():
             node_inputs_d = {
@@ -177,12 +168,30 @@ class Dag(Module):
             test_metrics_d[node.output_name] = mvn
             prediction = mvn.rsample()
             test_inputs_d[node.output_name] = prediction
-        if len(self.target_names) > 1:
+        if len(self.registered_target_names) > 1:
             # mvns must be in the expected output order
-            mvns = [test_metrics_d[metric] for metric in self.target_names]
+            mvns = [test_metrics_d[metric] for metric in self.registered_target_names]
             return MultitaskMultivariateNormal.from_independent_mvns(mvns)
         else:
-            return test_metrics_d[self.target_names[0]]
+            return test_metrics_d[self.registered_target_names[0]]
+
+    """
+    -------------- ordering --------------
+    """
+
+    def _nodes_order(self, order) -> Iterator[Node]:
+        """Returns: iterator over DAG's nodes in `order` order"""
+        for name in order:
+            yield getattr(self, name)
+
+    def nodes_dag_order(self) -> Iterator[Node]:
+        """Returns: iterator over DAG's nodes in the order specified in define_dag"""
+        return self._nodes_order(self.registered_target_names)
+
+    
+    """
+    -------------- checking --------------
+    """
 
     def _error_missing_names(self, names):
         missing_names = set(names).difference(self.input_names).difference(

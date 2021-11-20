@@ -87,6 +87,7 @@ class dag_test(unittest.TestCase):
         #print(self.simple_dag)
         for node in self.simple_dag.nodes_dag_order():
             print(node.output_name)
+        print("ok")
 
     def test_dag_forward(self):
         a = [str(i) for i in range(3)]
