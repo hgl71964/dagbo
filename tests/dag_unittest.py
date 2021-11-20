@@ -6,13 +6,15 @@ import unittest
 import torch
 from typing import List
 from torch import Size, Tensor
-from dagbo.dag import Dag
-from dagbo.dag_gpytorch_model import DagGPyTorchModel
 
 # hacky way to include the src code dir
 testdir = os.path.dirname(__file__)
 srcdir = "../src"
 sys.path.insert(0, os.path.abspath(os.path.join(testdir, srcdir)))
+
+# import from src
+from dagbo.dag import Dag
+from dagbo.dag_gpytorch_model import DagGPyTorchModel
 
 
 class SIMPLE_DAG(Dag, DagGPyTorchModel):
@@ -26,8 +28,7 @@ class SIMPLE_DAG(Dag, DagGPyTorchModel):
               y
     """
     def __init__(self, train_input_names: List[str],
-                 train_target_names: List[str],
-                 train_inputs: Tensor,
+                 train_target_names: List[str], train_inputs: Tensor,
                  train_targets: Tensor, num_samples: int):
         super().__init__(train_input_names, train_target_names, train_inputs,
                          train_targets)
@@ -71,10 +72,6 @@ class dag_test(unittest.TestCase):
 
         self.simple_dag = SIMPLE_DAG(train_input_names, train_target_names,
                                      train_inputs, train_targets, num_samples)
-        print("check attr")
-        print(hasattr(self.simple_dag, "input_names"))
-        print(hasattr(self.simple_dag, "train_inputs_name2tensor_mapping"))
-        print(hasattr(self.simple_dag, "train_targets_name2tensor_mapping"))
 
     def tearDown(self):
         # gc
@@ -91,24 +88,30 @@ class dag_test(unittest.TestCase):
         for node in self.simple_dag.nodes_dag_order():
             print(node.output_name)
 
-
-        for k, v  in self.simple_dag.train_inputs_name2tensor_mapping.items():
+        for k, v in self.simple_dag.train_inputs_name2tensor_mapping.items():
             print(k)
             print(v.shape)
 
+        print("stack list")
+        stack_name = ["x1", "x2"]
+        print(
+            torch.stack([
+                self.simple_dag.train_inputs_name2tensor_mapping[i]
+                for i in stack_name
+            ],
+                        dim=-1).shape)
 
     def test_dag_forward(self):
         a = torch.stack([
-            torch.tensor([1,2,3]),
+            torch.tensor([1, 2, 3]),
             torch.tensor([4, 5, 6]),
         ])
         print(a)
 
-        b = torch.rand(1,2)
-        c = torch.ones(1,2)
+        b = torch.rand(1, 2)
+        c = torch.ones(1, 2)
 
-        print(torch.stack([b,c ]).shape)
-
+        print(torch.stack([b, c]).shape)
 
     @unittest.skip("..")
     def test_dag_backward(self):

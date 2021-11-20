@@ -74,12 +74,10 @@ class Dag(Module):
 
         # data is explicitly un-batched in DAG since it will be split up for each sub-model
         # it will then be re-batched before adding it to the submodel
-        print("init")
         self.train_inputs_name2tensor_mapping = unpack_to_dict(
             self.input_names, train_inputs)
         self.train_targets_name2tensor_mapping = unpack_to_dict(
             self.target_names, train_targets)
-        print("ok")
 
         # nodes themselves will be accessed using self.named_children
         self.registered_input_names = []
@@ -125,6 +123,7 @@ class Dag(Module):
         }
         X = pack_to_tensor(children, {**X_from_inputs, **X_from_outputs})
         y = self.train_targets_name2tensor_mapping[name]
+        self._check_init_metric_data(name, X, y)
 
         # instantial node
         node = Node(children, name, X, y, mean)
@@ -216,7 +215,7 @@ class Dag(Module):
     def _check_valid_input(self, train_input_names: List[str],
                            train_target_names: List[str], train_inputs: Tensor,
                            train_targets: Tensor):
-        if len(train_inputs) != 3 or len(train_targets.shape) != 3:
+        if len(train_inputs.shape) != 3 or len(train_targets.shape) != 3:
             raise RuntimeError(
                 "train_inputs and train_targets must be 3 dimensional tensor")
 
@@ -230,4 +229,20 @@ class Dag(Module):
             q1, q2 = train_inputs.shape[1], train_targets.shape[1]
             raise RuntimeError(
                 f"q in train_input is {q1} but in train_targets is {q2}, and they should be equal"
+            )
+
+    def _check_init_metric_data(self, name, X, y):
+        batch_size, q, _ = X.shape
+        batch_size2, q2 = y.shape
+        if len(y.shape) != 2:
+            raise RuntimeError(
+                f"node {name} only support 1 output for now, but output data shape {y.shape}"
+            )
+        if batch_size != batch_size2:
+            raise RuntimeError(
+                f"node {name} has input batch size {batch_size} but output batch_size {batch_size2}"
+            )
+        if q != q2:
+            raise RuntimeError(
+                f"node {name} has input data points {q} but output data point {q2}"
             )

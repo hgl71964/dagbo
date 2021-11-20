@@ -19,7 +19,7 @@ def pack_to_tensor(names: List[str], values: Dict[str, Tensor]) -> Tensor:
     Args:
         names: d-length list
         values: d-length Dict[name, value: batch_shape-dim Tensor]
-    Returns: batch_shape * d-dim Tensor
+    Returns: batch_shape * q * len(names)
         d is has the same order as `names`
     """
     return torch.stack(
