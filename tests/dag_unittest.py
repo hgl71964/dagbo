@@ -102,11 +102,6 @@ class dag_test(unittest.TestCase):
                         dim=-1).shape)
 
     def test_dag_forward(self):
-        a = torch.stack([
-            torch.tensor([1, 2, 3]),
-            torch.tensor([4, 5, 6]),
-        ])
-        print(a)
 
         b = torch.rand(1, 2)
         c = torch.ones(1, 2)
