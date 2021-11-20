@@ -17,7 +17,7 @@ from dagbo.dag import Dag
 from dagbo.dag_gpytorch_model import DagGPyTorchModel
 
 
-class SIMPLE_DAG(Dag, DagGPyTorchModel):
+class TREE_DAG(Dag, DagGPyTorchModel):
     """
     creation a simple tree-like DAG
 
@@ -70,8 +70,8 @@ class dag_test(unittest.TestCase):
         train_inputs = torch.rand(batch_size, 3, len(train_input_names))
         train_targets = torch.rand(batch_size, 3, len(train_target_names))
 
-        self.simple_dag = SIMPLE_DAG(train_input_names, train_target_names,
-                                     train_inputs, train_targets, num_samples)
+        self.simple_dag = TREE_DAG(train_input_names, train_target_names,
+                                   train_inputs, train_targets, num_samples)
 
     def tearDown(self):
         # gc

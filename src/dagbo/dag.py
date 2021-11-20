@@ -89,7 +89,7 @@ class Dag(Module):
         # tensor dtype and device conversion
         self.to(train_inputs)
 
-        # TODO at the point registered_input_names = input_names and so target_names, so del to avoid 
+        # TODO at the point registered_input_names = input_names and so target_names, so del to avoid
         # confusion
         # registered_target is how users actually register, so its order is respected
         # to generate a dynamic task graph, we might consider traverse the graph to ensure order
@@ -136,8 +136,8 @@ class Dag(Module):
         # instantial node
         node = Node(children, name, X, y, mean, covar, likelihood)
         self.add_module(
-            name,
-            node)  # nn.Module's method, keep a mapping Dict[name, Module]
+            name, node
+        )  # nn.Module's method, keep a mapping Dict[name, Module] TODO use a dict to explictly manage?
         self.registered_target_names.append(node.output_name)
         return name
 
@@ -150,30 +150,37 @@ class Dag(Module):
         Args:
             test_inputs: batch_shape*q*d-dim tensor
         """
-        # since the nodes must be registered in topological order
+        # since the nodes must be registered in topological order FIXME: user may not know
         #   then we can do the predictions in the same order and use
-        #   test_inputs_d to store them
+        #   test_inputs_dict to store them
         # also need to pack into tensors before passing to sub-models
 
-        test_inputs_d = unpack_to_dict(self.registered_input_names, test_inputs)
+        test_inputs_dict = unpack_to_dict(self.registered_input_names,
+                                          test_inputs)
         test_metrics_d = {}
         for node in self.nodes_dag_order():
             node_inputs_d = {
                 k: v
-                for k, v in test_inputs_d.items() if k in node.input_names
+                for k, v in test_inputs_dict.items() if k in node.input_names
             }
             node_inputs = pack_to_tensor(node.input_names, node_inputs_d)
             # mvn: batch_shape MVN with q points considered jointly
             mvn = node(node_inputs)
             test_metrics_d[node.output_name] = mvn
             prediction = mvn.rsample()
-            test_inputs_d[node.output_name] = prediction
+            test_inputs_dict[node.output_name] = prediction
         if len(self.registered_target_names) > 1:
             # mvns must be in the expected output order
-            mvns = [test_metrics_d[metric] for metric in self.registered_target_names]
+            mvns = [
+                test_metrics_d[metric]
+                for metric in self.registered_target_names
+            ]
             return MultitaskMultivariateNormal.from_independent_mvns(mvns)
         else:
             return test_metrics_d[self.registered_target_names[0]]
+
+    def back_prop(self, ):
+        return None
 
     """
     -------------- ordering --------------
@@ -188,7 +195,6 @@ class Dag(Module):
         """Returns: iterator over DAG's nodes in the order specified in define_dag"""
         return self._nodes_order(self.registered_target_names)
 
-    
     """
     -------------- checking --------------
     """
