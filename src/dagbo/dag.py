@@ -9,7 +9,7 @@ from torch import Size
 from .parametric_mean import ParametricMean
 from .node import Node
 from .tensor_dict_conversions import pack_to_tensor, unpack_to_dict
-from typing import Iterator, List, Optional, Union
+from typing import Iterator, List, Optional, Union, Dict
 from warnings import warn
 
 
@@ -89,18 +89,22 @@ class Dag(Module):
         # tensor dtype and device conversion
         self.to(train_inputs)
 
-        # TODO at the point registered_input_names = input_names and so target_names, so del to avoid
-        # confusion
+        # NOTE: at this point registered_input_names = input_names and so target_names,
+        # so del to avoid confusion
         # registered_target is how users actually register, so its order is respected
-        # to generate a dynamic task graph, we might consider traverse the graph to ensure order
+        # to generate a dynamic task graph, we might consider traverse the graph to ensure topological order
         del self.input_names, self.target_names
+
+    """
+    -------------- materialise DAG --------------
+    """
 
     def define_dag(self, batch_shape: Size) -> None:
         """
         Must be implemented in subclass
         Creates the nodes and edges of the DAG
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def register_input(self, name: str) -> str:
         self._error_missing_names([name])
@@ -141,6 +145,29 @@ class Dag(Module):
         self.registered_target_names.append(node.output_name)
         return name
 
+    """
+    -------------- forward and backward on DAG --------------
+    """
+
+    def SEM_forward(self, input_tensor: Dict[str,
+                                             Tensor]) -> MultivariateNormal:
+        """select a value for each of the input variable, 
+            and get observation for all registered metrics, so after one SEM_forward
+            the data set is augmented by a tuple of (inputs, metric)
+            [does not support batch forward for now]
+
+        Args:
+            input_tensor (Dict[str, Tensor]): [description]
+
+        Returns:
+            MultivariateNormal: [description]
+        """
+        return None
+
+    def SEM_backward(self) -> MultivariateNormal:
+        return None
+
+    # the original forward implementation
     def forward(
         self, test_inputs: Tensor
     ) -> Union[MultivariateNormal, MultitaskMultivariateNormal]:
@@ -157,30 +184,33 @@ class Dag(Module):
 
         test_inputs_dict = unpack_to_dict(self.registered_input_names,
                                           test_inputs)
-        test_metrics_d = {}
+        test_metrics_dict = {}
+
+        # assume traverse in topological order
         for node in self.nodes_dag_order():
-            node_inputs_d = {
+
+            # prepare input to each node
+            node_inputs_dict = {
                 k: v
                 for k, v in test_inputs_dict.items() if k in node.input_names
             }
-            node_inputs = pack_to_tensor(node.input_names, node_inputs_d)
+            node_inputs = pack_to_tensor(node.input_names, node_inputs_dict)
+
+            # make prediction via GP?
             # mvn: batch_shape MVN with q points considered jointly
             mvn = node(node_inputs)
-            test_metrics_d[node.output_name] = mvn
+            test_metrics_dict[node.output_name] = mvn
             prediction = mvn.rsample()
             test_inputs_dict[node.output_name] = prediction
         if len(self.registered_target_names) > 1:
             # mvns must be in the expected output order
             mvns = [
-                test_metrics_d[metric]
+                test_metrics_dict[metric]
                 for metric in self.registered_target_names
             ]
             return MultitaskMultivariateNormal.from_independent_mvns(mvns)
         else:
-            return test_metrics_d[self.registered_target_names[0]]
-
-    def back_prop(self, ):
-        return None
+            return test_metrics_dict[self.registered_target_names[0]]
 
     """
     -------------- ordering --------------
