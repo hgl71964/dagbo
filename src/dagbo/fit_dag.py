@@ -2,6 +2,7 @@ from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikeliho
 from pyro.infer import NUTS, MCMC
 from botorch.fit import fit_gpytorch_model
 from botorch.optim.fit import fit_gpytorch_torch
+from torch.optim import Adam
 from .node import Node
 from .dag import Dag
 from typing import Any, Callable
@@ -38,8 +39,35 @@ def fit_node_with_torch(model: Node, **kwargs: Any) -> None:
 
 def fit_node_with_scipy(model: Node, **kwargs: Any) -> None:
     mll = ExactMarginalLogLikelihood(model.likelihood, model)
-    mll.train()
-    fit_gpytorch_model(mll)
+    mll.train()  # nn.Module will set children to train too
+    fit_gpytorch_model(mll)  # by default it fits with scipy, so L-BFGS-B
+
+
+def fit_node_with_adam(model: Node, **kwargs: Any) -> None:
+
+    model.train()
+    model.likelihood.train()
+    iteration = kwargs.get("iteration", 128)
+    lr = kwargs.get("lr", 0.1)
+    verbose = kwargs.get("verbose", False)
+    optimizer = Adam(model.parameters(), lr=lr)
+
+    # "Loss" for GPs - the marginal log likelihood
+    mll = ExactMarginalLogLikelihood(model.likelihood, model)
+
+    # FIXME need a way to pass train_x train_y in - and the shape must be consistent with gp instantiation
+    for i in range(iteration):
+        optimizer.zero_grad()
+        output = model(train_x)
+        loss = -mll(output, train_y)
+        loss.backward()
+        if verbose:
+            print('Iter %d/%d - Loss: %.3f' % (
+                i + 1,
+                iteration,
+                loss.item(),
+            ))
+        optimizer.step()
 
 
 def fit_dag(dag_model: Dag,

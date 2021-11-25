@@ -67,7 +67,6 @@ class Dag(Module):
         self._check_valid_input(train_input_names, train_target_names,
                                 train_inputs, train_targets)
 
-        self._num_outputs = len(train_target_names)
         batch_shape = train_inputs.shape[:-2]
         self.input_names = train_input_names
         self.target_names = train_target_names
@@ -136,6 +135,10 @@ class Dag(Module):
         X = pack_to_tensor(children, {**X_from_inputs, **X_from_outputs})
         y = self.train_targets_name2tensor_mapping[name]
         self._check_init_metric_data(name, X, y)
+
+        #print(name)
+        #print(X.shape)
+        #print(X)
 
         # instantial node
         node = Node(children, name, X, y, mean, covar, likelihood)

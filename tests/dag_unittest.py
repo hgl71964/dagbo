@@ -1,9 +1,11 @@
 import os
 import sys
+import math
 import warnings
 import logging
 import unittest
 import torch
+from sklearn.metrics import mean_squared_error
 import pandas as pd
 from typing import List
 from torch import Size, Tensor
@@ -71,14 +73,31 @@ class original_dag_test(unittest.TestCase):
         batch_size = 1
         num_samples = 1000
 
-        # random data for now
-        train_inputs = 2 * torch.rand(batch_size, 3,
-                                      len(train_input_names)) - 1
-        train_targets = 2 * torch.rand(batch_size, 3,
-                                       len(train_target_names)) - 1
+        # create data
+        train_inputs = torch.linspace(0, 2, 7)
+        func = lambda x: torch.sin(x * (8 * math.pi)) + torch.cos(x * (
+            3 * math.pi)) + torch.log(x + 0.1) + 3
+        #train_inputs = torch.linspace(0, 1, 7)
+        #func = lambda x: torch.sin(x * math.pi)
 
+        # reshape
+        train_targets = func(train_inputs).reshape(-1, 1).expand(
+            1, 7, 3)  # shape:[1, 7, 3]
+
+        #print(train_targets[..., -1])
+        train_targets[..., -1] = func(train_targets[..., -1].flatten())
+        #print(train_targets[..., -1])
+
+        train_inputs = train_inputs.reshape(-1, 1).expand(1, 7,
+                                                          3)  # shape:[1, 7, 3]
+
+        self.assertEqual(train_inputs.shape, torch.Size([1, 7, 3]))
+        self.assertEqual(train_targets.shape, torch.Size([1, 7, 3]))
+
+        self.func = func
         self.batch_size = batch_size
         self.num_samples = num_samples
+        self.domain = (0, 2)
         self.simple_dag = TREE_DAG(train_input_names, train_target_names,
                                    train_inputs, train_targets, num_samples)
 
@@ -170,6 +189,7 @@ class original_dag_test(unittest.TestCase):
 
     #@unittest.skip(".")
     def test_model_mro(self):
+        print("model MRO")
         print(TREE_DAG.__mro__)
 
     def test_dag_fit(self):
@@ -177,7 +197,53 @@ class original_dag_test(unittest.TestCase):
         test fitting the dag from data
             each initialisation of DAG, it holds original data
         """
+        before = 0
+        after = 0
+
+        for node in self.simple_dag.nodes_dag_order():
+            print("Verifying: ", node.output_name)
+            node.eval()
+
+            if node.output_name == "z2":
+                with torch.no_grad():
+                    test_x = torch.linspace(self.domain[0], self.domain[1],
+                                            100)
+                    test_y = self.func(test_x)
+
+                    # reshape
+                    #test_x = test_x.reshape(self.batch_size, 100, 1)
+                    #test_y = test_y.reshape()
+
+                    pred = node.likelihood(node(test_x))
+                    mean = pred.mean
+                    mean = mean.flatten()
+                    before = mean_squared_error(test_y, mean)
+
+        # fit
         fit_dag(self.simple_dag, fit_node_with_scipy, verbose=True)
+
+        for node in self.simple_dag.nodes_dag_order():
+            print("Verifying: ", node.output_name)
+            node.eval()
+
+            if node.output_name == "z2":
+                with torch.no_grad():
+                    test_x = torch.linspace(self.domain[0], self.domain[1],
+                                            100)
+                    test_y = self.func(test_x)
+
+                    pred = node.likelihood(node(test_x))
+                    mean = pred.mean
+                    lower, upper = pred.confidence_region()
+
+                    mean = mean.flatten()
+                    lower, upper = lower.flatten(), upper.flatten()
+
+                    after = mean_squared_error(test_y, mean)
+                    for i in range(100):
+                        print(test_y[i], mean[i], upper[i], lower[i])
+
+        print(f"MSE before fit: {before:.2f} - after fit: {after:.2f}")
 
     @unittest.skip(".")
     def test_dag_posterior(self):
