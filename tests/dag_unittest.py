@@ -80,7 +80,7 @@ class original_dag_test(unittest.TestCase):
         pass
 
     @unittest.skip("this shows how a ax experiment is done")
-    def test_ax_exp(self):
+    def test_ax_apis(self):
         import ax
         from ax import RangeParameter, ChoiceParameter, ParameterType, \
             SearchSpace, Experiment, OptimizationConfig, Objective, Metric
@@ -140,7 +140,10 @@ class original_dag_test(unittest.TestCase):
         # BOOTSTRAP EVALUATIONS
         num_bootstrap = 2
         sobol = Models.SOBOL(exp.search_space)
-        trial = exp.new_batch_trial(generator_run=sobol.gen(num_bootstrap))
+        generated_run = sobol.gen(num_bootstrap) 
+        print("gen")
+        print(generated_run)
+        trial = exp.new_batch_trial(generator_run=generated_run)
         trial.run()
         trial.mark_completed()
 
@@ -156,6 +159,14 @@ class original_dag_test(unittest.TestCase):
         print("done")
         print(exp.fetch_data().df)
 
+        # to impl a ax model see: https://ax.dev/versions/0.1.3/api/modelbridge.html#model-bridges
+
+    @unittest.skip(".")
+    def test_model_mro(self):
+        print(TREE_DAG.__mro__)
+
+    def test_dag_forward(self):
+        print("test forward")
 
 # SEM modelling
 class SEM_dag_test(unittest.TestCase):

@@ -118,7 +118,8 @@ num_trials = 4
 
 # BOOTSTRAP EVALUATIONS
 sobol = Models.SOBOL(simple_exp.search_space)
-simple_exp.new_batch_trial(generator_run=sobol.gen(num_bootstrap))
+generated_run = sobol.gen(num_bootstrap) 
+simple_exp.new_batch_trial(generator_run=generated_run)  
 data = simple_exp.eval()
 
 # TUNING EVALUATIONS
