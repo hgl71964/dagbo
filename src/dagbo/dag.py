@@ -182,6 +182,8 @@ class Dag(Module):
         #   test_inputs_dict to store them
         # also need to pack into tensors before passing to sub-models
 
+        print("DAG forwarding is called")
+
         test_inputs_dict = unpack_to_dict(self.registered_input_names,
                                           test_inputs)
         test_metrics_dict = {}

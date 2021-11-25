@@ -44,7 +44,10 @@ def fit_node_with_scipy(model: Node, **kwargs: Any) -> None:
 
 def fit_dag(dag_model: Dag,
             node_optimizer: Callable[[Node, Any], None] = fit_node_with_scipy,
+            verbose: bool = False,
             **kwargs: Any):
     #for node in dag_model.nodes_output_order(): deprecated this order
     for node in dag_model.nodes_dag_order():
+        if verbose:
+            print("fitting node: ", node.output_name)
         node_optimizer(node, **kwargs)

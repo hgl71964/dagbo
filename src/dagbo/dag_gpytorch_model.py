@@ -46,6 +46,10 @@ class DagGPyTorchModel(GPyTorchModel):
         posterior = GPyTorchPosterior(mvn=mvn)
         if hasattr(self, "outcome_transform"):
             posterior = self.outcome_transform.untransform_posterior(posterior)
+
+        # TODO inspect posterior here
+
+        # TODO understand SampleAverage Algorithm?
         posterior = SampleAveragePosterior.from_gpytorch_posterior(posterior)
         return posterior
 

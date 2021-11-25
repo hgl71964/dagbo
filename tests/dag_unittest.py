@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(testdir, srcdir)))
 # import from src
 from dagbo.dag import Dag
 from dagbo.dag_gpytorch_model import DagGPyTorchModel
+from dagbo.fit_dag import fit_dag, fit_node_with_scipy
 
 
 class TREE_DAG(Dag, DagGPyTorchModel):
@@ -69,9 +70,15 @@ class original_dag_test(unittest.TestCase):
         ]
         batch_size = 1
         num_samples = 1000
-        train_inputs = 2*torch.rand(batch_size, 3, len(train_input_names))-1
-        train_targets = 2*torch.rand(batch_size, 3, len(train_target_names))-1
 
+        # random data for now
+        train_inputs = 2 * torch.rand(batch_size, 3,
+                                      len(train_input_names)) - 1
+        train_targets = 2 * torch.rand(batch_size, 3,
+                                       len(train_target_names)) - 1
+
+        self.batch_size = batch_size
+        self.num_samples = num_samples
         self.simple_dag = TREE_DAG(train_input_names, train_target_names,
                                    train_inputs, train_targets, num_samples)
 
@@ -79,7 +86,7 @@ class original_dag_test(unittest.TestCase):
         # gc
         pass
 
-    @unittest.skip("this shows how a ax experiment is done")
+    @unittest.skip("this shows ax experiment API")
     def test_ax_apis(self):
         import ax
         from ax import RangeParameter, ChoiceParameter, ParameterType, \
@@ -140,7 +147,7 @@ class original_dag_test(unittest.TestCase):
         # BOOTSTRAP EVALUATIONS
         num_bootstrap = 2
         sobol = Models.SOBOL(exp.search_space)
-        generated_run = sobol.gen(num_bootstrap) 
+        generated_run = sobol.gen(num_bootstrap)
         print("gen")
         print(generated_run)
         trial = exp.new_batch_trial(generator_run=generated_run)
@@ -161,75 +168,30 @@ class original_dag_test(unittest.TestCase):
 
         # to impl a ax model see: https://ax.dev/versions/0.1.3/api/modelbridge.html#model-bridges
 
-    @unittest.skip(".")
+    #@unittest.skip(".")
     def test_model_mro(self):
         print(TREE_DAG.__mro__)
 
-    def test_dag_forward(self):
-        print("test forward")
-
-# SEM modelling
-class SEM_dag_test(unittest.TestCase):
-    def setUp(self):
+    def test_dag_fit(self):
         """
-        setUp is called before each test
+        test fitting the dag from data
+            each initialisation of DAG, it holds original data
         """
-        #warnings.filterwarnings(action="ignore",
-        #                        message="unclosed",
-        #                        category=ResourceWarning)
-        train_input_names = [
-            "x1",
-            "x2",
-            "x3",
-        ]
-        train_target_names = [
-            "z1",
-            "z2",
-            "y",
-        ]
-        batch_size = 1
-        num_samples = 1000
-        train_inputs = torch.rand(batch_size, 3, len(train_input_names))
-        train_targets = torch.rand(batch_size, 3, len(train_target_names))
+        fit_dag(self.simple_dag, fit_node_with_scipy, verbose=True)
 
-        self.simple_dag = TREE_DAG(train_input_names, train_target_names,
-                                   train_inputs, train_targets, num_samples)
+    @unittest.skip(".")
+    def test_dag_posterior(self):
+        """
+        test fitting the dag from data
+            each initialisation of DAG, it holds original data
+        """
+        fit_dag(self.simple_dag, fit_node_with_scipy)
 
-    def tearDown(self):
-        # gc
-        pass
+        train_input_names = ["x1", "x2", "x3"]
+        q = 1
+        new_input = torch.rand(self.batch_size, q, len(train_input_names))
 
-    @unittest.skip("no need")
-    def test_sample(self):
-        #logger.info("sample test")
-        print("sample test that is skipped")
-
-    @unittest.skip("ok")
-    def test_dag_creation(self):
-        #print(self.simple_dag)
-        for node in self.simple_dag.nodes_dag_order():
-            print(node.output_name)
-        print("ok")
-
-    @unittest.skip("ok")
-    def test_fit_dag(self):
-        pass
-
-    @unittest.skip("ok")
-    def test_dag_forward(self):
-        batch_size = 1
-        train_input_names = [
-            "x1",
-            "x2",
-            "x3",
-        ]
-        forward_input = torch.rand(batch_size, 1, len(train_input_names))
-
-        self.simple_dag.forward(forward_input)
-
-    @unittest.skip("..")
-    def test_dag_backward(self):
-        pass
+        pst = self.simple_dag.posterior(new_input)
 
 
 if __name__ == '__main__':
