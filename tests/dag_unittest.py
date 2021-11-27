@@ -190,11 +190,12 @@ class original_dag_test(unittest.TestCase):
 
         # to impl a ax model see: https://ax.dev/versions/0.1.3/api/modelbridge.html#model-bridges
 
-    #@unittest.skip(".")
+    @unittest.skip(".")
     def test_model_mro(self):
         print("model MRO")
         print(TREE_DAG.__mro__)
 
+    #@unittest.skip(".")
     def test_dag_compare_fit(self):
         """
         test fitting the dag from data, with different fit method
@@ -202,10 +203,11 @@ class original_dag_test(unittest.TestCase):
         
         Results:
             fit_node_with_scipy tends to be more numerically stable
+            fit_node_with_adam needs to choose hyper-parameter
         """
         # fit
-        fit_dag(self.simple_dag, fit_node_with_adam, verbose=True)
-        #fit_dag(self.simple_dag, fit_node_with_scipy, verbose=True)
+        #fit_dag(self.simple_dag, fit_node_with_adam, verbose=True)
+        fit_dag(self.simple_dag, fit_node_with_scipy, verbose=True)
 
         for node in self.simple_dag.nodes_dag_order():
             print("Verifying: ", node.output_name)
@@ -225,10 +227,8 @@ class original_dag_test(unittest.TestCase):
                     lower, upper = lower.flatten(), upper.flatten()
 
                     after = mean_squared_error(test_y, mean)
-        #print(f"MSE before fit: {before:.2f} - after fit: {after:.2f}")
         print(f"MSE after fit: {after:.2f}")
 
-    @unittest.skip(".")
     def test_dag_posterior(self):
         """
         test fitting the dag from data

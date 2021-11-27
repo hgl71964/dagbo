@@ -1,6 +1,8 @@
+import torch
 from torch import Size, Tensor
 from torch.nn.parameter import Parameter
 from gpytorch import Module
+from gpytorch.means import Mean
 from gpytorch.priors import Prior
 from gpytorch.constraints.constraints import Interval
 from .tensor_dict_conversions import unpack_to_dict
@@ -72,3 +74,28 @@ class ParametricMean(Module):
         """
         x_d = unpack_to_dict(field_names, x)
         return super().__call__(**x_d)
+
+
+class LinearMean(Mean):
+    """implementation of gpytorch's Linear Mean
+
+    Args:
+        Mean ([Gpytorch's Mean]): [description]
+    """
+    def __init__(self, input_size, batch_shape=torch.Size(), bias=True):
+        super().__init__()
+        self.register_parameter(name="weights",
+                                parameter=torch.nn.Parameter(
+                                    torch.randn(*batch_shape, input_size, 1)))
+        if bias:
+            self.register_parameter(name="bias",
+                                    parameter=torch.nn.Parameter(
+                                        torch.randn(*batch_shape, 1)))
+        else:
+            self.bias = None
+
+    def forward(self, x):
+        res = x.matmul(self.weights).squeeze(-1)
+        if self.bias is not None:
+            res = res + self.bias
+        return res

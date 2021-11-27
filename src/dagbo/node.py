@@ -10,7 +10,7 @@ from gpytorch.means.zero_mean import ZeroMean
 from gpytorch.means.constant_mean import ConstantMean
 from gpytorch.models.exact_gp import ExactGP
 from gpytorch.priors.torch_priors import GammaPrior
-from .parametric_mean import ParametricMean
+from .parametric_mean import ParametricMean, LinearMean
 from typing import List, Optional, Union
 
 MIN_INFERRED_NOISE_LEVEL = 1e-4
@@ -68,8 +68,10 @@ class Node(ExactGP):
         self.input_names = input_names
         self.output_name = output_name
 
-        # TODO change default mean to linear mean
-        self.mean = ConstantMean(
+        #self.mean = ConstantMean(
+        #    batch_shape=batch_shape) if mean is None else mean
+        self.mean = LinearMean(
+            input_size=num_inputs,
             batch_shape=batch_shape) if mean is None else mean
 
         # Use UniformPrior for MCMC, use GammaPrior for Torch/Scipy
