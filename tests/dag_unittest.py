@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(testdir, srcdir)))
 # import from src
 from dagbo.dag import Dag
 from dagbo.dag_gpytorch_model import DagGPyTorchModel
-from dagbo.fit_dag import fit_dag, fit_node_with_scipy
+from dagbo.fit_dag import fit_dag, fit_node_with_scipy, fit_node_with_adam
 
 
 class TREE_DAG(Dag, DagGPyTorchModel):
@@ -74,19 +74,22 @@ class original_dag_test(unittest.TestCase):
         num_samples = 1000
 
         # create data
+        #train_inputs = torch.linspace(0, 1, 7)
         train_inputs = torch.linspace(0, 2, 7)
         func = lambda x: torch.sin(x * (8 * math.pi)) + torch.cos(x * (
             3 * math.pi)) + torch.log(x + 0.1) + 3
-        #train_inputs = torch.linspace(0, 1, 7)
         #func = lambda x: torch.sin(x * math.pi)
 
         # reshape
         train_targets = func(train_inputs).reshape(-1, 1).expand(
-            1, 7, 3)  # shape:[1, 7, 3]
+            1, 7, 2)  # shape:[1, 7, 3]
 
-        #print(train_targets[..., -1])
-        train_targets[..., -1] = func(train_targets[..., -1].flatten())
-        #print(train_targets[..., -1])
+        #print(train_targets[0])
+        new_val = func(train_targets[..., -1].flatten()).reshape(1, 7, 1)
+        train_targets = torch.cat([train_targets, new_val], dim=-1)
+        #print(new_val)
+        #print(train_targets[0])
+        #raise ValueError("ok")
 
         train_inputs = train_inputs.reshape(-1, 1).expand(1, 7,
                                                           3)  # shape:[1, 7, 3]
@@ -192,35 +195,17 @@ class original_dag_test(unittest.TestCase):
         print("model MRO")
         print(TREE_DAG.__mro__)
 
-    def test_dag_fit(self):
+    def test_dag_compare_fit(self):
         """
-        test fitting the dag from data
+        test fitting the dag from data, with different fit method
             each initialisation of DAG, it holds original data
+        
+        Results:
+            fit_node_with_scipy tends to be more numerically stable
         """
-        before = 0
-        after = 0
-
-        for node in self.simple_dag.nodes_dag_order():
-            print("Verifying: ", node.output_name)
-            node.eval()
-
-            if node.output_name == "z2":
-                with torch.no_grad():
-                    test_x = torch.linspace(self.domain[0], self.domain[1],
-                                            100)
-                    test_y = self.func(test_x)
-
-                    # reshape
-                    #test_x = test_x.reshape(self.batch_size, 100, 1)
-                    #test_y = test_y.reshape()
-
-                    pred = node.likelihood(node(test_x))
-                    mean = pred.mean
-                    mean = mean.flatten()
-                    before = mean_squared_error(test_y, mean)
-
         # fit
-        fit_dag(self.simple_dag, fit_node_with_scipy, verbose=True)
+        fit_dag(self.simple_dag, fit_node_with_adam, verbose=True)
+        #fit_dag(self.simple_dag, fit_node_with_scipy, verbose=True)
 
         for node in self.simple_dag.nodes_dag_order():
             print("Verifying: ", node.output_name)
@@ -240,10 +225,8 @@ class original_dag_test(unittest.TestCase):
                     lower, upper = lower.flatten(), upper.flatten()
 
                     after = mean_squared_error(test_y, mean)
-                    for i in range(100):
-                        print(test_y[i], mean[i], upper[i], lower[i])
-
-        print(f"MSE before fit: {before:.2f} - after fit: {after:.2f}")
+        #print(f"MSE before fit: {before:.2f} - after fit: {after:.2f}")
+        print(f"MSE after fit: {after:.2f}")
 
     @unittest.skip(".")
     def test_dag_posterior(self):

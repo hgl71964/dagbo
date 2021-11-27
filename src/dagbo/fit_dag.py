@@ -1,3 +1,4 @@
+import torch
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from pyro.infer import NUTS, MCMC
 from botorch.fit import fit_gpytorch_model
@@ -38,24 +39,66 @@ def fit_node_with_torch(model: Node, **kwargs: Any) -> None:
 
 
 def fit_node_with_scipy(model: Node, **kwargs: Any) -> None:
+
+    before = 0
+    after = 0
+    train_x = kwargs.get("train_x", None)
+    train_y = kwargs.get("train_y", None)
+    verbose = kwargs.get("verbose", False)
+    if train_x is None or train_y is None:
+        raise RuntimeError("no data to show fit")
+
+    # before fit
+    # nn.Module will set children (model and likelihood) to train too
     mll = ExactMarginalLogLikelihood(model.likelihood, model)
-    mll.train()  # nn.Module will set children to train too
+    mll.train()
+    with torch.no_grad():
+        output = model(train_x)
+        loss = -mll(output, train_y)
+        before = loss.item()
+
+    # fit
     fit_gpytorch_model(mll)  # by default it fits with scipy, so L-BFGS-B
+
+    # after fit
+    mll.train()  # fit_gpytorch_model will turn into eval()
+    with torch.no_grad():
+        output = model(train_x)
+        loss = -mll(output, train_y)
+        after = loss.item()
+    if verbose:
+        print(
+            f"Log likelihood before fit: {before:.2f} - after fit: {after:.2f}"
+        )
+    mll.eval()
 
 
 def fit_node_with_adam(model: Node, **kwargs: Any) -> None:
 
     model.train()
     model.likelihood.train()
-    iteration = kwargs.get("iteration", 128)
+    iteration = kwargs.get("iteration", 64)
     lr = kwargs.get("lr", 0.1)
     verbose = kwargs.get("verbose", False)
     optimizer = Adam(model.parameters(), lr=lr)
 
+    # get train data
+    train_x = kwargs.get("train_x", None)
+    train_y = kwargs.get("train_y", None)
+    if train_x is None or train_y is None:
+        raise RuntimeError("no data to train with ADAM")
+
+    if verbose:
+        print("data:")
+        print(train_x)
+        print(train_x.shape)
+        print(train_y)
+        print(train_y.shape)
+
     # "Loss" for GPs - the marginal log likelihood
     mll = ExactMarginalLogLikelihood(model.likelihood, model)
+    mll.train()
 
-    # FIXME need a way to pass train_x train_y in - and the shape must be consistent with gp instantiation
     for i in range(iteration):
         optimizer.zero_grad()
         output = model(train_x)
@@ -68,14 +111,32 @@ def fit_node_with_adam(model: Node, **kwargs: Any) -> None:
                 loss.item(),
             ))
         optimizer.step()
+    mll.eval()
 
 
 def fit_dag(dag_model: Dag,
             node_optimizer: Callable[[Node, Any], None] = fit_node_with_scipy,
             verbose: bool = False,
-            **kwargs: Any):
+            **kwargs: Any) -> None:
+    """"
+    The training data of each node must have been saved to dag_model when instantiation
+
+    Args:
+        dag_model (Dag): the Dag model
+        node_optimizer (Callable[[Node, Any], None], optional): Defaults to fit_node_with_scipy.
+        verbose (bool, optional): print much more info during fitting. Defaults to False.
+    """
     #for node in dag_model.nodes_output_order(): deprecated this order
     for node in dag_model.nodes_dag_order():
         if verbose:
             print("fitting node: ", node.output_name)
+
+        # find saved tensor
+        input_names = node.input_names
+        node_name = node.output_name
+        kwargs["train_x"], kwargs["train_y"] = dag_model.prepare_node_data(
+            node_name, input_names)
+
+        # fit
+        kwargs["verbose"] = verbose
         node_optimizer(node, **kwargs)

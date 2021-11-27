@@ -9,7 +9,7 @@ from torch import Size
 from .parametric_mean import ParametricMean
 from .node import Node
 from .tensor_dict_conversions import pack_to_tensor, unpack_to_dict
-from typing import Iterator, List, Optional, Union, Dict
+from typing import Iterator, List, Optional, Union, Dict, Tuple
 from warnings import warn
 
 
@@ -122,6 +122,21 @@ class Dag(Module):
         self._error_unregistered_inputs(children, name)
 
         # find saved tensor
+        X, y = self.prepare_node_data(name, children)
+        self._check_init_metric_data(name, X, y)
+
+        # instantial node
+        node = Node(children, name, X, y, mean, covar, likelihood)
+        self.add_module(
+            name, node
+        )  # nn.Module's method, keep a mapping Dict[name, Module] TODO use a dict to explictly manage?
+        self.registered_target_names.append(node.output_name)
+        return name
+
+    def prepare_node_data(self, name: str,
+                          children: List[str]) -> Tuple[Tensor, Tensor]:
+
+        # find saved tensor
         X_from_inputs = {
             k: v
             for k, v in self.train_inputs_name2tensor_mapping.items()
@@ -135,18 +150,7 @@ class Dag(Module):
         X = pack_to_tensor(children, {**X_from_inputs, **X_from_outputs})
         y = self.train_targets_name2tensor_mapping[name]
         self._check_init_metric_data(name, X, y)
-
-        #print(name)
-        #print(X.shape)
-        #print(X)
-
-        # instantial node
-        node = Node(children, name, X, y, mean, covar, likelihood)
-        self.add_module(
-            name, node
-        )  # nn.Module's method, keep a mapping Dict[name, Module] TODO use a dict to explictly manage?
-        self.registered_target_names.append(node.output_name)
-        return name
+        return X, y
 
     """
     -------------- forward and backward on DAG --------------

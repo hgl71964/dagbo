@@ -68,6 +68,7 @@ class Node(ExactGP):
         self.input_names = input_names
         self.output_name = output_name
 
+        # TODO change default mean to linear mean
         self.mean = ConstantMean(
             batch_shape=batch_shape) if mean is None else mean
 
