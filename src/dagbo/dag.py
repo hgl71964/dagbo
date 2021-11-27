@@ -176,24 +176,25 @@ class Dag(Module):
 
     # the original forward implementation
     def forward(
-        self, test_inputs: Tensor
+        self, tensor_inputs: Tensor
     ) -> Union[MultivariateNormal, MultitaskMultivariateNormal]:
         """
         This is only used for prediction, since the individual nodes
         are trained independently
         Args:
-            test_inputs: batch_shape*q*d-dim tensor
+            tensor_inputs: batch_shape*q*d-dim tensor
         """
         # since the nodes must be registered in topological order FIXME: user may not know
         #   then we can do the predictions in the same order and use
-        #   test_inputs_dict to store them
+        #   tensor_inputs_dict to store them
         # also need to pack into tensors before passing to sub-models
 
         print("DAG forwarding is called")
+        print(tensor_inputs.shape)
 
-        test_inputs_dict = unpack_to_dict(self.registered_input_names,
-                                          test_inputs)
-        test_metrics_dict = {}
+        tensor_inputs_dict = unpack_to_dict(self.registered_input_names,
+                                            tensor_inputs)
+        node_dict = {}
 
         # assume traverse in topological order
         for node in self.nodes_dag_order():
@@ -201,25 +202,38 @@ class Dag(Module):
             # prepare input to each node
             node_inputs_dict = {
                 k: v
-                for k, v in test_inputs_dict.items() if k in node.input_names
+                for k, v in tensor_inputs_dict.items() if k in node.input_names
             }
             node_inputs = pack_to_tensor(node.input_names, node_inputs_dict)
+
+            print("node: ", node.output_name)
+            print(node_inputs.shape)
 
             # make prediction via GP?
             # mvn: batch_shape MVN with q points considered jointly
             mvn = node(node_inputs)
-            test_metrics_dict[node.output_name] = mvn
+
+            # use batch size mimic i.i.d samples drawn from the same distribution
+            print("mvn:")
+            print(mvn)
+            print(mvn.event_shape, mvn.batch_shape)
+            # seems ok
+            #if node.output_name == "z2":
+            #    print(mvn.loc)
+
+            node_dict[node.output_name] = mvn
             prediction = mvn.rsample()
-            test_inputs_dict[node.output_name] = prediction
+            tensor_inputs_dict[node.output_name] = prediction
+
+        # TODO multi-task?
         if len(self.registered_target_names) > 1:
             # mvns must be in the expected output order
             mvns = [
-                test_metrics_dict[metric]
-                for metric in self.registered_target_names
+                node_dict[metric] for metric in self.registered_target_names
             ]
             return MultitaskMultivariateNormal.from_independent_mvns(mvns)
         else:
-            return test_metrics_dict[self.registered_target_names[0]]
+            return node_dict[self.registered_target_names[0]]
 
     """
     -------------- ordering --------------

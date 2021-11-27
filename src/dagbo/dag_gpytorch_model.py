@@ -32,22 +32,28 @@ class DagGPyTorchModel(GPyTorchModel):
         """
         self.eval()  # make sure model is in eval mode
 
+        verbose = kwargs.get("verbose", False)
+
         original_shape = X.shape
         # create multiple posteriors at identical input points
         expanded_X = X.unsqueeze(dim=0).expand(self.num_samples,
                                                *original_shape)
 
+        if verbose:
+            print("expand X:")
+            print(expanded_X.shape)  # [num_sample, batch_size, q, d]
+
+        # DAG's forward
         with gpt_posterior_settings():
             mvn = self(expanded_X)
             if observation_noise is not False:
+                # TODO this add likelihood, which is a mapping from f to y
                 raise NotImplementedError(
                     "Observation noise is not yet supported for DagGPyTorch models."
                 )
         posterior = GPyTorchPosterior(mvn=mvn)
         if hasattr(self, "outcome_transform"):
             posterior = self.outcome_transform.untransform_posterior(posterior)
-
-        # TODO inspect posterior here
 
         # TODO understand SampleAverage Algorithm?
         posterior = SampleAveragePosterior.from_gpytorch_posterior(posterior)

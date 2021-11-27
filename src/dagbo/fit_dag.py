@@ -68,7 +68,7 @@ def fit_node_with_scipy(model: Node, **kwargs: Any) -> None:
         after = loss.item()
     if verbose:
         print(
-            f"Log likelihood before fit: {before:.2f} - after fit: {after:.2f}"
+            f"Neg log-likelihood before fit: {before:.2f} - after fit: {after:.2f}"
         )
     mll.eval()
 

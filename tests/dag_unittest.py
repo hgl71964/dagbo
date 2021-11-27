@@ -202,8 +202,8 @@ class original_dag_test(unittest.TestCase):
             each initialisation of DAG, it holds original data
         
         Results:
-            fit_node_with_scipy tends to be more numerically stable
-            fit_node_with_adam needs to choose hyper-parameter
+            fit_node_with_scipy tends to be more numerically stable, botorch's default fit
+            fit_node_with_adam needs to choose epochs, lr, etc
         """
         # fit
         #fit_dag(self.simple_dag, fit_node_with_adam, verbose=True)
@@ -240,7 +240,9 @@ class original_dag_test(unittest.TestCase):
         q = 1
         new_input = torch.rand(self.batch_size, q, len(train_input_names))
 
-        pst = self.simple_dag.posterior(new_input)
+        print("input shape: ", new_input.shape)
+
+        pst = self.simple_dag.posterior(new_input, **{"verbose": True})
 
 
 if __name__ == '__main__':
