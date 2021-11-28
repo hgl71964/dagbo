@@ -34,14 +34,15 @@ class DagGPyTorchModel(GPyTorchModel):
 
         verbose = kwargs.get("verbose", False)
 
-        original_shape = X.shape
         # create multiple posteriors at identical input points
+        # use multiple identical batch to represent i.i.d sample from posterior
+        # expanded_X [num_sample, batch_size, q, d]
+        original_shape = X.shape
         expanded_X = X.unsqueeze(dim=0).expand(self.num_samples,
                                                *original_shape)
-
         if verbose:
             print("expand X:")
-            print(expanded_X.shape)  # [num_sample, batch_size, q, d]
+            print(expanded_X.shape)
 
         # DAG's forward
         with gpt_posterior_settings():

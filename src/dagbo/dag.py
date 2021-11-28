@@ -189,14 +189,14 @@ class Dag(Module):
         #   tensor_inputs_dict to store them
         # also need to pack into tensors before passing to sub-models
 
-        print("DAG forwarding is called")
-        print(tensor_inputs.shape)
+        #print("DAG forwarding is called")
+        #print(tensor_inputs.shape)
 
         tensor_inputs_dict = unpack_to_dict(self.registered_input_names,
                                             tensor_inputs)
         node_dict = {}
 
-        # assume traverse in topological order
+        # ensure traverse in topological order
         for node in self.nodes_dag_order():
 
             # prepare input to each node
@@ -206,32 +206,31 @@ class Dag(Module):
             }
             node_inputs = pack_to_tensor(node.input_names, node_inputs_dict)
 
-            print("node: ", node.output_name)
-            print(node_inputs.shape)
+            #print("node: ", node.output_name)
+            #print(node_inputs.shape)
 
-            # make prediction via GP?
+            # make prediction via GP
             # mvn: batch_shape MVN with q points considered jointly
             mvn = node(node_inputs)
 
-            # use batch size mimic i.i.d samples drawn from the same distribution
-            print("mvn:")
-            print(mvn)
-            print(mvn.event_shape, mvn.batch_shape)
-            # seems ok
+            #print("mvn:")
+            #print(mvn)
+            #print(mvn.event_shape, mvn.batch_shape)
             #if node.output_name == "z2":
-            #    print(mvn.loc)
+            #    print(mvn.loc)  # can verify identical mvn
 
             node_dict[node.output_name] = mvn
             prediction = mvn.rsample()
             tensor_inputs_dict[node.output_name] = prediction
 
-        # TODO multi-task?
+        # aggregate posterior from all nodes/metrics
         if len(self.registered_target_names) > 1:
             # mvns must be in the expected output order
             mvns = [
                 node_dict[metric] for metric in self.registered_target_names
             ]
             return MultitaskMultivariateNormal.from_independent_mvns(mvns)
+        # cannot have 1 task in MultitaskMultivariateNormal
         else:
             return node_dict[self.registered_target_names[0]]
 
