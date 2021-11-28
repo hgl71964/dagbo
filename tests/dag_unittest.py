@@ -16,12 +16,12 @@ srcdir = "../src"
 sys.path.insert(0, os.path.abspath(os.path.join(testdir, srcdir)))
 
 # import from src
-from dagbo.dag import Dag
-from dagbo.dag_gpytorch_model import DagGPyTorchModel
+from dagbo.dag import Dag, simple_Dag
+from dagbo.dag_gpytorch_model import DagGPyTorchModel, simple_DagGPyTorchModel
 from dagbo.fit_dag import fit_dag, fit_node_with_scipy, fit_node_with_adam
 
 
-class TREE_DAG(Dag, DagGPyTorchModel):
+class TREE_DAG(simple_Dag, simple_DagGPyTorchModel):
     """
     creation a simple tree-like DAG
 

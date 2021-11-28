@@ -46,7 +46,7 @@ def fit_node_with_scipy(model: Node, **kwargs: Any) -> None:
     train_y = kwargs.get("train_y", None)
     verbose = kwargs.get("verbose", False)
     if train_x is None or train_y is None:
-        raise RuntimeError("no data to show fit")
+        raise RuntimeError("no data to show fit scipy")
 
     # before fit
     # nn.Module will set children (model and likelihood) to train too

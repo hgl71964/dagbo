@@ -156,24 +156,6 @@ class Dag(Module):
     -------------- forward and backward on DAG --------------
     """
 
-    def SEM_forward(self, input_tensor: Dict[str,
-                                             Tensor]) -> MultivariateNormal:
-        """select a value for each of the input variable, 
-            and get observation for all registered metrics, so after one SEM_forward
-            the data set is augmented by a tuple of (inputs, metric)
-            [does not support batch forward for now]
-
-        Args:
-            input_tensor (Dict[str, Tensor]): [description]
-
-        Returns:
-            MultivariateNormal: [description]
-        """
-        return None
-
-    def SEM_backward(self) -> MultivariateNormal:
-        return None
-
     # the original forward implementation
     def forward(
         self, tensor_inputs: Tensor
@@ -206,13 +188,11 @@ class Dag(Module):
             }
             node_inputs = pack_to_tensor(node.input_names, node_inputs_dict)
 
-            #print("node: ", node.output_name)
-            #print(node_inputs.shape)
-
             # make prediction via GP
-            # mvn: batch_shape MVN with q points considered jointly
             mvn = node(node_inputs)
 
+            #print("node: ", node.output_name)
+            #print(node_inputs.shape)
             #print("mvn:")
             #print(mvn)
             #print(mvn.event_shape, mvn.batch_shape)
@@ -333,3 +313,65 @@ class Dag(Module):
             raise RuntimeError(
                 f"node {name} has input data points {q} but output data point {q2}"
             )
+
+
+class simple_Dag(Dag):
+    """a Dag only return sink node's multi-variate normal distribution
+
+    Args:
+        Dag ([type]): see above
+    """
+    def __init__(self, train_input_names: List[str],
+                 train_target_names: List[str], train_inputs: Tensor,
+                 train_targets: Tensor):
+        super().__init__(train_input_names, train_target_names, train_inputs,
+                         train_targets)
+
+    def define_dag(self, batch_shape: Size) -> None:
+        """
+        Must be implemented in subclass
+        Creates the nodes and edges of the DAG
+        """
+        raise NotImplementedError
+
+    def forward(self, tensor_inputs: Tensor) -> MultivariateNormal:
+        # since the nodes must be registered in topological order FIXME: user may not know
+        #   then we can do the predictions in the same order and use
+        #   tensor_inputs_dict to store them
+        # also need to pack into tensors before passing to sub-models
+
+        #print("DAG forwarding is called")
+        #print(tensor_inputs.shape)
+
+        tensor_inputs_dict = unpack_to_dict(self.registered_input_names,
+                                            tensor_inputs)
+        node_dict = {}
+        sink_node_name = None
+
+        # ensure traverse in topological order
+        for node in self.nodes_dag_order():
+
+            # prepare input to each node
+            node_inputs_dict = {
+                k: v
+                for k, v in tensor_inputs_dict.items() if k in node.input_names
+            }
+            node_inputs = pack_to_tensor(node.input_names, node_inputs_dict)
+
+            # make prediction via GP
+            mvn = node(node_inputs)
+
+            #print("node: ", node.output_name)
+            #print(node_inputs.shape)
+            #print("mvn:")
+            #print(mvn)
+            #print(mvn.event_shape, mvn.batch_shape)
+            #if node.output_name == "z2":
+            #    print(mvn.loc)  # can verify identical mvn
+
+            node_dict[node.output_name] = mvn
+            prediction = mvn.rsample()
+            tensor_inputs_dict[node.output_name] = prediction
+            sink_node_name = node.output_name
+
+        return node_dict[sink_node_name]
