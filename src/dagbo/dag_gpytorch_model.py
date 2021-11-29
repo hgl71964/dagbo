@@ -1,3 +1,4 @@
+import logging
 from torch import Tensor
 from typing import Any, List, Union
 from botorch.models.gpytorch import GPyTorchModel
@@ -59,7 +60,7 @@ class DagGPyTorchModel(GPyTorchModel):
         expanded_X = X.unsqueeze(dim=0).expand(self.num_samples,
                                                *original_shape)
         if verbose:
-            print("expand X:")
+            logging.info("expand X:")
             print(expanded_X.shape)
 
         # DAG's forward
@@ -74,7 +75,7 @@ class DagGPyTorchModel(GPyTorchModel):
         # mvn: [num_samples, batch_shape, q, num_nodes]
         posterior = GPyTorchPosterior(mvn=mvn)
         if verbose:
-            print("DAG's final mvn")
+            logging.info("DAG's final mvn")
             print(mvn)
             print(mvn.loc)
             print(posterior.event_shape, posterior.mean.shape)
@@ -84,8 +85,6 @@ class DagGPyTorchModel(GPyTorchModel):
 
         # SampleAverage uses a multi-variate normal distribution to approximate complex posterior
         posterior = SampleAveragePosterior.from_gpytorch_posterior(posterior)
-        print(posterior.num_samples, posterior.event_shape,
-              posterior.mean.shape)
         return posterior
 
     def condition_on_observations(self, X: Tensor, Y: Tensor,

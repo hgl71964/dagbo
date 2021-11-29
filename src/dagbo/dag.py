@@ -1,3 +1,4 @@
+import logging
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from torch import Tensor
 from gpytorch.kernels.kernel import Kernel
@@ -170,6 +171,7 @@ class Dag(Module):
         #   then we can do the predictions in the same order and use
         #   tensor_inputs_dict to store them
         # also need to pack into tensors before passing to sub-models
+        # FIXME, add support for MOBO? so multiple sink nodes?
 
         #print("DAG forwarding is called")
         #print(tensor_inputs.shape)
@@ -291,6 +293,9 @@ class Dag(Module):
                     train_target_names):
             raise RuntimeError(
                 "train_inputs and train_targets must be 3 dimensional tensor")
+
+        if train_inputs.shape[0] != 1 or train_targets.shape[0] != 1:
+            raise RuntimeError(f"what does batch dimension means in SBO?")
 
         if train_inputs.shape[1] != train_targets.shape[1]:
             q1, q2 = train_inputs.shape[1], train_targets.shape[1]

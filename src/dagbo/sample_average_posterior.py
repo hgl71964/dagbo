@@ -1,3 +1,4 @@
+import logging
 from torch import Tensor, Size
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.settings import fast_computations
@@ -83,6 +84,10 @@ class SampleAveragePosterior(GPyTorchPosterior):
         return super().variance.mean(dim=0) + super().mean.square().mean(
             dim=0) - super().mean.mean(dim=0).square()
 
+    @property
+    def is_multitask(self) -> bool:
+        return self._is_mt
+
     def _replacement_super_rsample(
         self,
         sample_shape: Optional[Size] = None,
@@ -138,6 +143,10 @@ class SampleAveragePosterior(GPyTorchPosterior):
             sample_shape: shape of the additional sample dimensions
             base_samples: sample_shape * event_shape Tensor
         """
+        logging.info("sampler: ")
+        print(sample_shape)
+        print(base_samples.shape)
+
         sample_average_dim = len(sample_shape)
         if base_samples is not None:
             # expand

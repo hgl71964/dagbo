@@ -10,6 +10,7 @@ from typing import List
 from torch import Size, Tensor
 from sklearn.metrics import mean_squared_error
 from botorch.posteriors.gpytorch import GPyTorchPosterior
+from botorch.sampling.samplers import SobolQMCNormalSampler
 
 # hacky way to include the src code dir
 testdir = os.path.dirname(__file__)
@@ -247,26 +248,26 @@ class original_dag_test(unittest.TestCase):
 
         pst = self.simple_dag.posterior(new_input, **{"verbose": True})
 
-        print("MRO:")
-        print(SampleAveragePosterior.__mro__)
-        print(isinstance(pst, SampleAveragePosterior))
-        print(pst.num_samples)
-        print(pst.mean)
-        print(pst.event_shape)
-        print(pst.rsample())
+        print()
+        print("posterior:")
+        print(pst.mean, pst.num_samples, pst.event_shape)
+        print("sampling from posterior")
+        sampler = SobolQMCNormalSampler(num_samples=2048, seed=1234)
+        samples = sampler(pst)
+        print(samples.shape)
 
 
 if __name__ == '__main__':
 
-    #logger = logging.getLogger()
-    #logger.setLevel(logging.INFO)
-    #handler = logging.StreamHandler()
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    handler = logging.StreamHandler()
 
-    ## create formatter and add it to the handler
-    #formatter = logging.Formatter(
-    #    '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    #handler.setFormatter(formatter)
-    ## add the handler to the logger
-    #logger.addHandler(handler)
+    # create formatter and add it to the handler
+    formatter = logging.Formatter(
+        '%(asctime)s - %(filename)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    # add the handler to the logger
+    logger.addHandler(handler)
 
     unittest.main()
