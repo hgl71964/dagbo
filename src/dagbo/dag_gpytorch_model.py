@@ -83,7 +83,6 @@ class DagGPyTorchModel(GPyTorchModel):
             raise RuntimeError("does not support outcome_transform atm")
 
         # SampleAverage uses a multi-variate normal distribution to approximate complex posterior
-        # TODO benchmark this will standard SBO?
         posterior = SampleAveragePosterior.from_gpytorch_posterior(posterior)
         print(posterior.num_samples, posterior.event_shape,
               posterior.mean.shape)

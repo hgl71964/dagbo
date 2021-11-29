@@ -5,10 +5,11 @@ import warnings
 import logging
 import unittest
 import torch
-from sklearn.metrics import mean_squared_error
 import pandas as pd
 from typing import List
 from torch import Size, Tensor
+from sklearn.metrics import mean_squared_error
+from botorch.posteriors.gpytorch import GPyTorchPosterior
 
 # hacky way to include the src code dir
 testdir = os.path.dirname(__file__)
@@ -17,11 +18,13 @@ sys.path.insert(0, os.path.abspath(os.path.join(testdir, srcdir)))
 
 # import from src
 from dagbo.dag import Dag, simple_Dag
+from dagbo.sample_average_posterior import SampleAveragePosterior
 from dagbo.dag_gpytorch_model import DagGPyTorchModel, simple_DagGPyTorchModel
 from dagbo.fit_dag import fit_dag, fit_node_with_scipy, fit_node_with_adam
 
 
-class TREE_DAG(simple_Dag, simple_DagGPyTorchModel):
+#class TREE_DAG(simple_Dag, simple_DagGPyTorchModel):
+class TREE_DAG(Dag, DagGPyTorchModel):
     """
     creation a simple tree-like DAG
 
@@ -243,6 +246,14 @@ class original_dag_test(unittest.TestCase):
         print("input shape: ", new_input.shape)
 
         pst = self.simple_dag.posterior(new_input, **{"verbose": True})
+
+        print("MRO:")
+        print(SampleAveragePosterior.__mro__)
+        print(isinstance(pst, SampleAveragePosterior))
+        print(pst.num_samples)
+        print(pst.mean)
+        print(pst.event_shape)
+        print(pst.rsample())
 
 
 if __name__ == '__main__':

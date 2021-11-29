@@ -317,6 +317,7 @@ class Dag(Module):
 
 class simple_Dag(Dag):
     """a Dag only return sink node's multi-variate normal distribution
+    and does not expand to use batch-dim to represent sample-dim
 
     Args:
         Dag ([type]): see above
@@ -328,21 +329,9 @@ class simple_Dag(Dag):
                          train_targets)
 
     def define_dag(self, batch_shape: Size) -> None:
-        """
-        Must be implemented in subclass
-        Creates the nodes and edges of the DAG
-        """
         raise NotImplementedError
 
     def forward(self, tensor_inputs: Tensor) -> MultivariateNormal:
-        # since the nodes must be registered in topological order FIXME: user may not know
-        #   then we can do the predictions in the same order and use
-        #   tensor_inputs_dict to store them
-        # also need to pack into tensors before passing to sub-models
-
-        #print("DAG forwarding is called")
-        #print(tensor_inputs.shape)
-
         tensor_inputs_dict = unpack_to_dict(self.registered_input_names,
                                             tensor_inputs)
         node_dict = {}

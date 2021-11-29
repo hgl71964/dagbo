@@ -39,6 +39,8 @@ class SampleAveragePosterior(GPyTorchPosterior):
     """
     def __init__(self, mvn: MultivariateNormal) -> None:
         """
+        will automatically infer: Union[MultivariateNormal, MultitaskMultivariateNormal]:
+
         Args:
             mvn: Batch MultivariateNormal
                 Outermost dimension (dim=0) of mvn is filled with samples.
