@@ -251,9 +251,9 @@ class original_dag_test(unittest.TestCase):
         print()
         print("posterior:")
         print(pst.mean, pst.num_samples, pst.event_shape)
-        print("sampling from posterior")
         sampler = SobolQMCNormalSampler(num_samples=2048, seed=1234)
         samples = sampler(pst)
+        print("sampling from posterior")
         print(samples.shape)
 
 

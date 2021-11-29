@@ -6,6 +6,7 @@ from botorch.posteriors.gpytorch import GPyTorchPosterior
 from typing import Optional, Type, TypeVar
 
 T = TypeVar('T', bound='SampleAveragePosterior')
+T_2 = TypeVar('T_2', bound='SampleAveragePosterior_v2')
 
 
 class SampleAveragePosterior(GPyTorchPosterior):
@@ -160,4 +161,112 @@ class SampleAveragePosterior(GPyTorchPosterior):
     @classmethod
     def from_gpytorch_posterior(cls: Type[T],
                                 posterior: GPyTorchPosterior) -> T:
+        return cls(mvn=posterior.mvn)
+
+
+class SampleAveragePosterior_v2(GPyTorchPosterior):
+    def __init__(self, mvn: MultivariateNormal) -> None:
+        """
+        will automatically infer: Union[MultivariateNormal, MultitaskMultivariateNormal]:
+
+        Args:
+            mvn: Batch MultivariateNormal
+                Outermost dimension (dim=0) of mvn is filled with samples.
+                These samples will be combined by taking their mean.
+        """
+        super().__init__(mvn)
+
+    @property
+    def num_samples(self) -> int:
+        """The number of samples that the posterior is averaged over."""
+        return super().event_shape[0]
+
+    @property
+    def event_shape(self) -> Size():
+        """The event shape (i.e. the shape of a single sample) of the posterior."""
+        return super().event_shape[1:]
+
+    @property
+    def mean(self) -> Tensor:
+        """
+        The posterior mean.
+        = mean of each Gaussian
+
+        Reference:
+        https://stats.stackexchange.com/questions/16608/what-is-the-variance-of-the-weighted-mixture-of-two-gaussians
+        We have num_samples Gaussians, and since each Gaussian is drawn using Monte Carlo, then each Gaussian has equal weight
+        """
+        return super().mean.mean(dim=0)
+
+    @property
+    def variance(self) -> Tensor:
+        """
+        The posterior variance.
+        = avg of variance + gvg of squared mean - square of avg mean
+
+        Reference:
+        https://stats.stackexchange.com/questions/16608/what-is-the-variance-of-the-weighted-mixture-of-two-gaussians
+        We have num_samples Gaussians, and since each Gaussian is drawn using Monte Carlo, then each Gaussian has equal weight
+        """
+        return super().variance.mean(dim=0) + super().mean.square().mean(
+            dim=0) - super().mean.mean(dim=0).square()
+
+    @property
+    def is_multitask(self) -> bool:
+        return self._is_mt
+
+    def rsample(
+        self,
+        sample_shape: Optional[Size] = None,
+        base_samples: Optional[Tensor] = None,
+    ) -> Tensor:
+        """Sample from the posterior (with gradients).
+        
+        Args:
+            sample_shape: A `torch.Size` object specifying the sample shape. To
+                draw `n` samples, set to `torch.Size([n])`. To draw `b` batches
+                of `n` samples each, set to `torch.Size([b, n])`.
+            base_samples: An (optional) Tensor of `N(0, I)` base samples of
+                appropriate dimension, typically obtained from a `Sampler`.
+                This is used for deterministic optimization.
+
+        Returns:
+            A `sample_shape x event_shape`-dim Tensor of samples from the posterior.
+        """
+        logging.info("sampler: ")
+        print(sample_shape)
+        print(base_samples.shape)
+
+        if sample_shape is None:
+            sample_shape = Size([1])
+        if base_samples is not None:
+            if base_samples.shape[:len(sample_shape)] != sample_shape:
+                raise RuntimeError(
+                    "sample_shape disagrees with shape of base_samples.")
+            # get base_samples to the correct shape
+            # THIS IS THE LINE I HAVE CHANGED
+            base_samples = base_samples.expand(sample_shape +
+                                               Size([self.num_samples]) +
+                                               self.event_shape)
+            # remove output dimension in single output case
+            if not self._is_mt:
+                base_samples = base_samples.squeeze(-1)
+        
+        # TODO check gpytorch's new implementation of rsample
+        with fast_computations(covar_root_decomposition=False):
+            samples = self.mvn.rsample(sample_shape=sample_shape,
+                                       base_samples=base_samples)
+        # make sure there always is an output dimension
+        if not self._is_mt:
+            samples = samples.unsqueeze(-1)
+        
+        # average over all mixture of posterior
+        # then squeeze all singleton dimension
+        samples = samples.mean(dim=1)
+        samples = samples.squeeze()
+        return samples
+
+    @classmethod
+    def from_gpytorch_posterior(cls: Type[T_2],
+                                posterior: GPyTorchPosterior) -> T_2:
         return cls(mvn=posterior.mvn)

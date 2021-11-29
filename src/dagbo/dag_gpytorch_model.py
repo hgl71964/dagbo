@@ -8,7 +8,7 @@ from botorch.models.utils import gpt_posterior_settings
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.distributions.multitask_multivariate_normal import MultitaskMultivariateNormal
 
-from .sample_average_posterior import SampleAveragePosterior
+from .sample_average_posterior import SampleAveragePosterior, SampleAveragePosterior_v2
 
 
 class DagGPyTorchModel(GPyTorchModel):
@@ -84,7 +84,8 @@ class DagGPyTorchModel(GPyTorchModel):
             raise RuntimeError("does not support outcome_transform atm")
 
         # SampleAverage uses a multi-variate normal distribution to approximate complex posterior
-        posterior = SampleAveragePosterior.from_gpytorch_posterior(posterior)
+        #posterior = SampleAveragePosterior.from_gpytorch_posterior(posterior)
+        posterior = SampleAveragePosterior_v2.from_gpytorch_posterior(posterior)
         return posterior
 
     def condition_on_observations(self, X: Tensor, Y: Tensor,
