@@ -175,6 +175,18 @@ class dag_test(unittest.TestCase):
         print("sampling from posterior")
         print(samples.shape)
 
+    def test_dag_acqf_opt(self):
+        """
+        test optimise the acquisition function 
+        """
+        fit_dag(self.simple_dag, fit_node_with_scipy)
+
+        train_input_names = ["x1", "x2", "x3"]
+        q = 1
+        new_input = torch.rand(self.batch_size, q, len(train_input_names))
+
+        # TODO
+
 
 if __name__ == '__main__':
 

@@ -66,59 +66,39 @@ def init_and_fit(train_input_names: List[str], train_target_names: List[str],
                  num_samples: int) -> TREE_DAG:
     """instantiate tree_dag from data and fit
     TODO
-
-    Args:
-        train_input_names (List[str]): [description]
-        train_target_names (List[str]): [description]
-        train_inputs (Tensor): [description]
-        train_targets (Tensor): [description]
-        num_samples (int): [description]
-
-    Returns:
-        TREE_DAG: [description]
     """
     return None
 
 
-class CustomMetric(Metric):
-    """impl a metric for Ax
-
-    Args:
-        Metric ([type]): [description]
-
-    Returns:
-        [type]: [description]
+def model_to_generator_run():
     """
+    model's suggestion -> Arm -> Generator run
+    TODO
+    """
+    return
 
-    # must impl this method
+
+class CustomMetric(Metric):
     def fetch_trial_data(self, trial, **kwargs):
         records = []
         for arm_name, arm in trial.arms_by_name.items():
+            params = arm.parameters
             records.append({
                 "arm_name": arm_name,
                 "metric_name": self.name,
-                "mean": 0.0,  # mean value of this metric when this arm is used
-                "sem": 0.2,  # standard error of the above mean
+                "mean": params["x1"] + params["x2"],
+                "sem": 0,  # 0 for noiseless experiment
                 "trial_index": trial.index,
             })
-            print("from metric")
-            print(arm_name)
-            print(arm)
         return ax.core.data.Data(df=pd.DataFrame.from_records(records))
 
 
 class dummy_runner(ax.Runner):
-    """control how experiment is deployed
+    """control how experiment is deployed, i.e. locally or dispatch to external system
         mapping from arms to other APIs
-
-    Args:
-        ax ([type]): [description]
     """
     def run(self, trial):
         trial_metadata = {"from_runner - name": str(trial.index)}
-        print("dummy runner")
-        print(trial.arms)
-        print(trial.index)
         return trial_metadata
 
 
@@ -170,20 +150,18 @@ class ax_api_test(unittest.TestCase):
 
         # opt config
         self.optimization_config = OptimizationConfig(
-            Objective(metric=CustomMetric(name="custom_obj"), minimize=True))
+            Objective(metric=CustomMetric(name="custom_obj"), minimize=False))
 
     def tearDown(self):
         # gc
         pass
 
     def test_ax_apis(self):
-
         # experiment
         exp = Experiment(name="test_exp",
-                         search_space=search_space,
-                         optimization_config=optimization_config,
+                         search_space=self.search_space,
+                         optimization_config=self.optimization_config,
                          runner=dummy_runner())
-        print(exp)
 
         # BOOTSTRAP EVALUATIONS
         num_bootstrap = 2
@@ -209,20 +187,15 @@ class ax_api_test(unittest.TestCase):
         # to impl a ax model see: https://ax.dev/versions/0.1.3/api/modelbridge.html#model-bridges
 
     def test_dag_bayes_loop(self):
-
         # experiment
         exp = Experiment(name="test_exp",
-                         search_space=search_space,
-                         optimization_config=optimization_config,
+                         search_space=self.search_space,
+                         optimization_config=self.optimization_config,
                          runner=dummy_runner())
-        print(exp)
-
         # BOOTSTRAP
         num_bootstrap = 2
         sobol = Models.SOBOL(exp.search_space)
         generated_run = sobol.gen(num_bootstrap)
-        print("gen")
-        print(generated_run)
         trial = exp.new_batch_trial(generator_run=generated_run)
         trial.run()
         trial.mark_completed()
@@ -230,9 +203,8 @@ class ax_api_test(unittest.TestCase):
         # BO
         epochs = 3
         for i in range(epochs):
-            # Reinitialize GP+EI model at each step with updated data.
-            gpei = Models.BOTORCH(experiment=exp, data=exp.fetch_data())
-            generator_run = gpei.gen(n=1)
+            model = TODO
+            generator_run = TODO
             trial = exp.new_trial(generator_run=generator_run)
             trial.run()
             trial.mark_completed()
