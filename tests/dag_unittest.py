@@ -153,8 +153,8 @@ class dag_test(unittest.TestCase):
     @unittest.skip("both mvn or multi-mvn samples seems ok")
     def test_dag_posterior(self):
         """
-        test fitting the dag from data
-            each initialisation of DAG, it holds original data
+        test posterior returned by the DAG, 
+            as well as samplings from this posterior
         """
         fit_dag(self.simple_dag, fit_node_with_scipy)
 
@@ -174,6 +174,14 @@ class dag_test(unittest.TestCase):
         print()
         print("sampling from posterior")
         print(samples.shape)
+
+    def test_dag_bayes_loop(self):
+        """
+        test full bayesian optimisation loop
+        """
+        fit_dag(self.simple_dag, fit_node_with_scipy)
+
+        # TODO
 
 
 if __name__ == '__main__':
