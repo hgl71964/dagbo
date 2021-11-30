@@ -38,7 +38,15 @@ def fit_node_with_torch(model: Node, **kwargs: Any) -> None:
     fit_gpytorch_model(mll, fit_gpytorch_torch)
 
 
-def fit_node_with_scipy(model: Node, **kwargs: Any) -> None:
+def test_fit_node_with_scipy(model: Node, **kwargs: Any) -> None:
+    """print stats to verify fitting process
+
+    Args:
+        model (Node): [description]
+
+    Raises:
+        RuntimeError: [description]
+    """
 
     before = 0
     after = 0
@@ -71,6 +79,13 @@ def fit_node_with_scipy(model: Node, **kwargs: Any) -> None:
             f"Neg log-likelihood before fit: {before:.2f} - after fit: {after:.2f}"
         )
     mll.eval()
+
+
+def fit_node_with_scipy(model: Node, **kwargs: Any) -> None:
+
+    mll = ExactMarginalLogLikelihood(model.likelihood, model)
+    mll.train()
+    fit_gpytorch_model(mll)  # by default it fits with scipy, so L-BFGS-B
 
 
 def fit_node_with_adam(model: Node, **kwargs: Any) -> None:

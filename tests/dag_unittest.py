@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(testdir, srcdir)))
 from dagbo.dag import Dag, SO_Dag
 from dagbo.sample_average_posterior import SampleAveragePosterior
 from dagbo.dag_gpytorch_model import DagGPyTorchModel
-from dagbo.fit_dag import fit_dag, fit_node_with_scipy, fit_node_with_adam
+from dagbo.fit_dag import fit_dag, fit_node_with_scipy, test_fit_node_with_scipy, fit_node_with_adam
 
 
 #class TREE_DAG(Dag, DagGPyTorchModel):
@@ -128,7 +128,7 @@ class dag_test(unittest.TestCase):
         """
         # fit
         #fit_dag(self.simple_dag, fit_node_with_adam, verbose=True)
-        fit_dag(self.simple_dag, fit_node_with_scipy, verbose=True)
+        fit_dag(self.simple_dag, test_fit_node_with_scipy, verbose=True)
 
         for node in self.simple_dag.nodes_dag_order():
             print("Verifying: ", node.output_name)
