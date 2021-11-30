@@ -175,14 +175,6 @@ class dag_test(unittest.TestCase):
         print("sampling from posterior")
         print(samples.shape)
 
-    def test_dag_bayes_loop(self):
-        """
-        test full bayesian optimisation loop
-        """
-        fit_dag(self.simple_dag, fit_node_with_scipy)
-
-        # TODO
-
 
 if __name__ == '__main__':
 

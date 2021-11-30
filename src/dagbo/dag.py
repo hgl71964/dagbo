@@ -11,7 +11,7 @@ from .parametric_mean import ParametricMean
 from .node import Node
 from .tensor_dict_conversions import pack_to_tensor, unpack_to_dict
 from typing import Iterator, List, Optional, Union, Dict, Tuple
-from warnings import warn
+from .fit_dag import fit_dag
 
 
 class Dag(Module):
