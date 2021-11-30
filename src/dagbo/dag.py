@@ -1,8 +1,8 @@
 import logging
-from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from torch import Tensor
 from gpytorch.kernels.kernel import Kernel
 from gpytorch.likelihoods.gaussian_likelihood import _GaussianLikelihoodBase
+from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.distributions.multitask_multivariate_normal import MultitaskMultivariateNormal
 from gpytorch.means.mean import Mean
 from gpytorch.module import Module
@@ -320,9 +320,10 @@ class Dag(Module):
             )
 
 
-class simple_Dag(Dag):
-    """a Dag only return sink node's multi-variate normal distribution
-    and does not expand to use batch-dim to represent sample-dim
+class SO_Dag(Dag):
+    """
+    Single objective Dag:
+        a Dag only return sink node's multi-variate normal distribution
 
     Args:
         Dag ([type]): see above
@@ -355,13 +356,51 @@ class simple_Dag(Dag):
             # make prediction via GP
             mvn = node(node_inputs)
 
-            #print("node: ", node.output_name)
-            #print(node_inputs.shape)
-            #print("mvn:")
-            #print(mvn)
-            #print(mvn.event_shape, mvn.batch_shape)
-            #if node.output_name == "z2":
-            #    print(mvn.loc)  # can verify identical mvn
+            node_dict[node.output_name] = mvn
+            prediction = mvn.rsample()
+            tensor_inputs_dict[node.output_name] = prediction
+            sink_node_name = node.output_name
+
+        return node_dict[sink_node_name]
+
+
+class MO_Dag(Dag):
+    """
+    Multi objective Dag:
+        a Dag that support multiple sink nodes
+
+    TODO: add support for MO
+
+    Args:
+        Dag ([type]): see above
+    """
+    def __init__(self, train_input_names: List[str],
+                 train_target_names: List[str], train_inputs: Tensor,
+                 train_targets: Tensor):
+        super().__init__(train_input_names, train_target_names, train_inputs,
+                         train_targets)
+
+    def define_dag(self, batch_shape: Size) -> None:
+        raise NotImplementedError
+
+    def forward(self, tensor_inputs: Tensor) -> MultivariateNormal:
+        tensor_inputs_dict = unpack_to_dict(self.registered_input_names,
+                                            tensor_inputs)
+        node_dict = {}
+        sink_node_name = None
+
+        # ensure traverse in topological order
+        for node in self.nodes_dag_order():
+
+            # prepare input to each node
+            node_inputs_dict = {
+                k: v
+                for k, v in tensor_inputs_dict.items() if k in node.input_names
+            }
+            node_inputs = pack_to_tensor(node.input_names, node_inputs_dict)
+
+            # make prediction via GP
+            mvn = node(node_inputs)
 
             node_dict[node.output_name] = mvn
             prediction = mvn.rsample()

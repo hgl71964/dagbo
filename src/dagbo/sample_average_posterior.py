@@ -1,5 +1,7 @@
 import logging
+from contextlib import ExitStack
 from torch import Tensor, Size
+from gpytorch import settings as gpt_settings
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.settings import fast_computations
 from botorch.posteriors.gpytorch import GPyTorchPosterior
@@ -233,9 +235,9 @@ class SampleAveragePosterior_v2(GPyTorchPosterior):
         Returns:
             A `sample_shape x event_shape`-dim Tensor of samples from the posterior.
         """
-        logging.info("sampler: ")
-        print(sample_shape)
-        print(base_samples.shape)
+        #logging.info("sampler: ")
+        #print(sample_shape)
+        #print(base_samples.shape)
 
         if sample_shape is None:
             sample_shape = Size([1])
@@ -251,19 +253,24 @@ class SampleAveragePosterior_v2(GPyTorchPosterior):
             # remove output dimension in single output case
             if not self._is_mt:
                 base_samples = base_samples.squeeze(-1)
-        
-        # TODO check gpytorch's new implementation of rsample
-        with fast_computations(covar_root_decomposition=False):
+
+        # check gpytorch's implementation of rsample
+        #with fast_computations(covar_root_decomposition=False):
+        with ExitStack() as es:
+            if gpt_settings._fast_covar_root_decomposition.is_default():
+                es.enter_context(
+                    gpt_settings._fast_covar_root_decomposition(False))
             samples = self.mvn.rsample(sample_shape=sample_shape,
                                        base_samples=base_samples)
         # make sure there always is an output dimension
         if not self._is_mt:
             samples = samples.unsqueeze(-1)
-        
+
         # average over all mixture of posterior
-        # then squeeze all singleton dimension
+        # then squeeze singleton dimension, i.e. batch-dim
+        #print(samples.shape)
         samples = samples.mean(dim=1)
-        samples = samples.squeeze()
+        samples = samples.squeeze(dim=1)
         return samples
 
     @classmethod
