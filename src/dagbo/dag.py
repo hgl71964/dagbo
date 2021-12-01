@@ -297,8 +297,7 @@ class Dag(Module):
             raise RuntimeError(
                 f"""instantiate DAG does not allow batch shape > 1, 
                 however the batch dimension must be kept 
-                for later acquisition function optimisation"""
-            )
+                for later acquisition function optimisation""")
 
         if train_inputs.shape[1] != train_targets.shape[1]:
             q1, q2 = train_inputs.shape[1], train_targets.shape[1]

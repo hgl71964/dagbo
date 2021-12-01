@@ -266,7 +266,7 @@ class SampleAveragePosterior_v2(GPyTorchPosterior):
         if not self._is_mt:
             samples = samples.unsqueeze(-1)
 
-        # average over all mixture of posterior, aka SampleAveragePosterior 
+        # average over all mixture of posterior, aka SampleAveragePosterior
         #print(samples.shape)
         samples = samples.mean(dim=1)
         return samples
@@ -275,6 +275,7 @@ class SampleAveragePosterior_v2(GPyTorchPosterior):
     def from_gpytorch_posterior(cls: Type[T_2],
                                 posterior: GPyTorchPosterior) -> T_2:
         return cls(mvn=posterior.mvn)
+
 
 class ApproximatePosterior(GPyTorchPosterior):
     def __init__(self, mvn: MultivariateNormal) -> None:
