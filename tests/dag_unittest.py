@@ -162,8 +162,9 @@ class dag_test(unittest.TestCase):
         fit_dag(self.simple_dag, fit_node_with_scipy)
 
         train_input_names = ["x1", "x2", "x3"]
-        q = 2
-        new_input = torch.rand(self.batch_size, q, len(train_input_names))
+        q = 1
+        #new_input = torch.rand(self.batch_size, q, len(train_input_names))
+        new_input = torch.rand(1, q, len(train_input_names))
 
         print("input shape: ", new_input.shape)
 
@@ -176,8 +177,9 @@ class dag_test(unittest.TestCase):
         samples = sampler(pst)
         print()
         print("sampling from posterior")
-        print(samples.shape)
+        print(samples.shape)  # [sampler's num_samples, batch_size of input, q, DAG's num_of_output]
 
+    #@unittest.skip("..")
     def test_dag_inner_loop(self):
         """
         test optimise the acquisition function 
@@ -192,7 +194,7 @@ class dag_test(unittest.TestCase):
         self.simple_dag.posterior(new_input, **{"verbose": True})
         """ --- Botorch's acquisition function input to posterior ---"""
         print()
-        logging.info("Botorch input input: ")
+        logging.info("Botorch input shape: ")
         sampler = SobolQMCNormalSampler(num_samples=2048, seed=1234)
         acq = botorch.acquisition.monte_carlo.qExpectedImprovement(
             model=self.simple_dag,
@@ -209,8 +211,8 @@ class dag_test(unittest.TestCase):
                 [1, 1, 1],
             ], dtype=torch.float32),
             q=q,
-            num_restarts=24,
-            raw_samples=48,
+            num_restarts=24,  # create batch shape for optimise acquisition func
+            raw_samples=48,   # this create initial batch shape for optimise acquisition func
             sequential=False,  # joint optimisation of q
         )
         query = candidates.detach()

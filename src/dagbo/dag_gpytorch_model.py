@@ -36,6 +36,9 @@ class DagGPyTorchModel(GPyTorchModel):
         """Computes the posterior over model outputs at the provided points.
         acquisition function will call this to generate samples
 
+        When calling botorch's optimize_acqf, the batch dimension of X
+                                                    is the number of restarts          
+
         Args:
             X: A `(batch_shape) x q x d`-dim Tensor, where `d` is the dimension
                 of the feature space and `q` is the number of points considered
@@ -59,10 +62,6 @@ class DagGPyTorchModel(GPyTorchModel):
         original_shape = X.shape
         expanded_X = X.unsqueeze(dim=0).expand(self.num_samples,
                                                *original_shape)
-        if verbose:
-            logging.info("expand X:")
-            print(expanded_X.shape)
-
         # DAG's forward
         with gpt_posterior_settings():
             mvn = self(expanded_X)
@@ -75,9 +74,10 @@ class DagGPyTorchModel(GPyTorchModel):
         # mvn: [num_samples, batch_shape, q, num_nodes]
         posterior = GPyTorchPosterior(mvn=mvn)
         if verbose:
-            logging.info("DAG's final mvn")
-            print(mvn, mvn.loc.shape)
-            print(posterior.event_shape, posterior.mean.shape)
+            logging.info("DAG's posterior: ")
+            print("expanded_X: ", expanded_X.shape)
+            print("mvn: ", mvn, mvn.loc.shape)
+            print("posterior: ", posterior.event_shape, posterior.mean.shape)
         if hasattr(self, "outcome_transform"):
             # posterior = self.outcome_transform.untransform_posterior(posterior)
             raise RuntimeError("does not support outcome_transform atm")

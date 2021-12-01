@@ -266,14 +266,77 @@ class SampleAveragePosterior_v2(GPyTorchPosterior):
         if not self._is_mt:
             samples = samples.unsqueeze(-1)
 
-        # average over all mixture of posterior
-        # then squeeze singleton dimension, i.e. batch-dim
+        # average over all mixture of posterior, aka SampleAveragePosterior 
         #print(samples.shape)
         samples = samples.mean(dim=1)
-        samples = samples.squeeze(dim=1)
         return samples
 
     @classmethod
     def from_gpytorch_posterior(cls: Type[T_2],
                                 posterior: GPyTorchPosterior) -> T_2:
         return cls(mvn=posterior.mvn)
+
+class ApproximatePosterior(GPyTorchPosterior):
+    def __init__(self, mvn: MultivariateNormal) -> None:
+        """
+        TODO
+        a `true` monte carlo posterior
+             may be need to work with custom sampler
+
+        Args:
+            mvn: Batch MultivariateNormal
+                Outermost dimension (dim=0) of mvn is filled with samples.
+                These samples will be combined by taking their mean.
+        """
+        super().__init__(mvn)
+
+    @property
+    def num_samples(self) -> int:
+        """The number of samples that the posterior is averaged over."""
+        return super().event_shape[0]
+
+    @property
+    def event_shape(self) -> Size():
+        """The event shape (i.e. the shape of a single sample) of the posterior."""
+        return super().event_shape[1:]
+
+    @property
+    def mean(self) -> Tensor:
+        """
+        The posterior mean.
+        = mean of each Gaussian
+
+        Reference:
+        https://stats.stackexchange.com/questions/16608/what-is-the-variance-of-the-weighted-mixture-of-two-gaussians
+        We have num_samples Gaussians, and since each Gaussian is drawn using Monte Carlo, then each Gaussian has equal weight
+        """
+        return super().mean.mean(dim=0)
+
+    @property
+    def variance(self) -> Tensor:
+        """
+        The posterior variance.
+        = avg of variance + gvg of squared mean - square of avg mean
+
+        Reference:
+        https://stats.stackexchange.com/questions/16608/what-is-the-variance-of-the-weighted-mixture-of-two-gaussians
+        We have num_samples Gaussians, and since each Gaussian is drawn using Monte Carlo, then each Gaussian has equal weight
+        """
+        return super().variance.mean(dim=0) + super().mean.square().mean(
+            dim=0) - super().mean.mean(dim=0).square()
+
+    @property
+    def is_multitask(self) -> bool:
+        return self._is_mt
+
+    def rsample(
+        self,
+        sample_shape: Optional[Size] = None,
+        base_samples: Optional[Tensor] = None,
+    ) -> Tensor:
+        raise NotImplementedError()
+
+    @classmethod
+    def from_gpytorch_posterior(cls: Type[T_2],
+                                posterior: GPyTorchPosterior) -> T_2:
+        raise NotImplementedError()
