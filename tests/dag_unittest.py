@@ -9,8 +9,11 @@ import pandas as pd
 from typing import List
 from torch import Size, Tensor
 from sklearn.metrics import mean_squared_error
+
+import botorch
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.sampling.samplers import SobolQMCNormalSampler
+from botorch.optim import optimize_acqf
 
 # hacky way to include the src code dir
 testdir = os.path.dirname(__file__)
@@ -175,17 +178,44 @@ class dag_test(unittest.TestCase):
         print("sampling from posterior")
         print(samples.shape)
 
-    def test_dag_acqf_opt(self):
+    def test_dag_inner_loop(self):
         """
         test optimise the acquisition function 
         """
         fit_dag(self.simple_dag, fit_node_with_scipy)
-
+        """ --- desire input shape to posterior ---"""
+        print()
+        logging.info("ordinary input: ")
         train_input_names = ["x1", "x2", "x3"]
         q = 1
         new_input = torch.rand(self.batch_size, q, len(train_input_names))
+        self.simple_dag.posterior(new_input, **{"verbose": True})
+        """ --- Botorch's acquisition function input to posterior ---"""
+        print()
+        logging.info("Botorch input input: ")
+        sampler = SobolQMCNormalSampler(num_samples=2048, seed=1234)
+        acq = botorch.acquisition.monte_carlo.qExpectedImprovement(
+            model=self.simple_dag,
+            best_f=torch.tensor([1.]),
+            sampler=sampler,
+            objective=None,  # use when model has multiple output
+        )
 
-        # TODO
+        # inner loop
+        candidates, val = botorch.optim.optimize_acqf(
+            acq_function=acq,
+            bounds=torch.tensor([
+                [0, 0, 0],
+                [1, 1, 1],
+            ], dtype=torch.float32),
+            q=q,
+            num_restarts=24,
+            raw_samples=48,
+            sequential=False,  # joint optimisation of q
+        )
+        query = candidates.detach()
+        logging.info("inner loop: ")
+        print(query, val.detach())
 
 
 if __name__ == '__main__':

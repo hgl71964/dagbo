@@ -11,7 +11,6 @@ from .parametric_mean import ParametricMean
 from .node import Node
 from .tensor_dict_conversions import pack_to_tensor, unpack_to_dict
 from typing import Iterator, List, Optional, Union, Dict, Tuple
-from .fit_dag import fit_dag
 
 
 class Dag(Module):
@@ -334,10 +333,17 @@ class SO_Dag(Dag):
         super().__init__(train_input_names, train_target_names, train_inputs,
                          train_targets)
 
+        # NOTE: this will be used by Botorch's API
+        self._num_outputs = 1
+
     def define_dag(self, batch_shape: Size) -> None:
         raise NotImplementedError
 
     def forward(self, tensor_inputs: Tensor) -> MultivariateNormal:
+        """
+        Args:
+            tensor_inputs: batch_shape*q*d-dim tensor
+        """
         tensor_inputs_dict = unpack_to_dict(self.registered_input_names,
                                             tensor_inputs)
         node_dict = {}
