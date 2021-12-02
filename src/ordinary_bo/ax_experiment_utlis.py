@@ -1,5 +1,6 @@
 import ax
 import torch
+import pandas as pd
 from ax import SearchSpace, Experiment, OptimizationConfig, Runner, Objective
 from ax import ParameterType
 from ax.core.generator_run import GeneratorRun
@@ -46,6 +47,15 @@ def get_bounds(exp: Experiment, params: List) -> Tensor:
 
     # XXX bounds should be set as float?
     return torch.tensor(bounds, dtype=torch.float32).reshape(-1, 2).T
+
+
+def print_experiment_result(exp: Experiment) -> None:
+    """print experiment metric + arms"""
+    df = exp.fetch_data().df.set_index("arm_name")
+    arms_df = pd.DataFrame.from_dict(
+        {k: v.parameters
+         for k, v in exp.arms_by_name.items()}, orient="index")
+    return df.join(arms_df)
 
 
 def _check_name_consistency(all_params):
