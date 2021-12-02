@@ -5,6 +5,7 @@ from typing import Dict
 from botorch.models import SingleTaskGP
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.sampling.samplers import MCSampler
+from botorch.sampling.samplers import SobolQMCNormalSampler
 
 
 def opt_acq_func(model: SingleTaskGP, acq_name: str, bounds: Tensor,
@@ -62,6 +63,8 @@ def make_acq_func(model: SingleTaskGP, acq_name: str, sampler: MCSampler,
         )
     else:
         raise NameError("acquisition function name not recognise")
+
+    return acq
 
 
 def make_sampler(acq_func_config: Dict) -> MCSampler:

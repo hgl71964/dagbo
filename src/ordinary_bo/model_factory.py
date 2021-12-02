@@ -7,7 +7,7 @@ from botorch.fit import fit_gpytorch_model
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 
 
-def make_gps(x: Tensor, y: Tensor, name: str) -> SingleTaskGP:
+def make_gps(x: Tensor, y: Tensor, gp_name: str) -> SingleTaskGP:
 
     # noiseless modelling
     likelihood = gpytorch.likelihoods.GaussianLikelihood()
@@ -19,7 +19,7 @@ def make_gps(x: Tensor, y: Tensor, name: str) -> SingleTaskGP:
 
     # equip
     model.likelihood = likelihood
-    model.covar_module = make_kernels(name)
+    model.covar_module = make_kernels(gp_name)
     return model
 
 

@@ -1,6 +1,7 @@
 import ax
 import torch
 from ax import SearchSpace, Experiment, OptimizationConfig, Runner, Objective
+from ax import ParameterType
 from ax.core.generator_run import GeneratorRun
 from ax.core.data import Data
 from torch import Tensor
@@ -8,7 +9,7 @@ from typing import Dict, List, Tuple
 from copy import deepcopy
 
 
-def exp2tensor(exp: Experiment, params: List) -> Tuple[Tensor, Tensor]:
+def get_tensor(exp: Experiment, params: List) -> Tuple[Tensor, Tensor]:
     """convert data from experiment to tensor
     single objective ONLY
 
@@ -35,8 +36,16 @@ def exp2tensor(exp: Experiment, params: List) -> Tuple[Tensor, Tensor]:
                 torch.tensor(exp.fetch_data().df["mean"], dtype=torch.float32).reshape(-1, 1)
 
 
-def exp2bounds(exp: Experiment, params: List) -> Tuple[Tensor, Tensor]:
-    return None
+def get_bounds(exp: Experiment, params: List) -> Tensor:
+    """get bounds for each parameters"""
+    bounds = []
+    for p in params:
+        ax_param = exp.parameters[p]
+        bounds.append(ax_param.lower)
+        bounds.append(ax_param.upper)
+
+    # XXX bounds should be set as float?
+    return torch.tensor(bounds, dtype=torch.float32).reshape(-1, 2).T
 
 
 def _check_name_consistency(all_params):
