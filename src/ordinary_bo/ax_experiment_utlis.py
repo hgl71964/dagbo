@@ -1,13 +1,18 @@
-import ax
+import os
+from os.path import join, abspath, exists
 import torch
 import pandas as pd
+from torch import Tensor
+from typing import Dict, List, Tuple
+from copy import deepcopy
+
+import ax
 from ax import SearchSpace, Experiment, OptimizationConfig, Runner, Objective
 from ax import ParameterType
 from ax.core.generator_run import GeneratorRun
 from ax.core.data import Data
-from torch import Tensor
-from typing import Dict, List, Tuple
-from copy import deepcopy
+from ax.storage.json_store.load import load_experiment
+from ax.storage.json_store.save import save_experiment
 
 
 def get_tensor(exp: Experiment, params: List) -> Tuple[Tensor, Tensor]:
@@ -56,6 +61,29 @@ def print_experiment_result(exp: Experiment) -> None:
         {k: v.parameters
          for k, v in exp.arms_by_name.items()}, orient="index")
     return df.join(arms_df)
+
+
+def save_exp(exp: Experiment, name: str) -> None:
+    directory = os.path.dirname(__file__)
+    data_dir = join(directory, "../../benchmarks/data")
+    file_name = name + ".json"
+    full_path = join(data_dir, file_name)
+
+    if exists(full_path):
+        print(f"Experiment {file_name} exists!")
+        return None
+
+    save_experiment(exp, full_path)
+    print(f"save as {name}.json")
+    return None
+
+
+def load_exp(name: str) -> Experiment:
+    directory = os.path.dirname(__file__)
+    data_dir = join(directory, "../../benchmarks/data")
+    file_name = name + ".json"
+    print(f"load from {name}.json")
+    return load_experiment(join(data_dir, file_name))
 
 
 def _check_name_consistency(all_params):
