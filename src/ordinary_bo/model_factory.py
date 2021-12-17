@@ -14,7 +14,7 @@ def make_gps(x: Tensor, y: Tensor, gp_name: str) -> SingleTaskGP:
     likelihood.noise = 1e-4
     likelihood.noise_covar.raw_noise.requires_grad_(False)
 
-    # get kernel
+    # get model
     model = SingleTaskGP(x, y, likelihood)
 
     # equip
