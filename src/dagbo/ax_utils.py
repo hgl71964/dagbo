@@ -4,7 +4,7 @@ from ax.storage.runner_registry import register_runner
 from .node import Node
 from .dag import Dag
 from .fit_dag import fit_dag, fit_node_with_mcmc, fit_node_with_scipy, fit_node_with_torch
-from typing import Callable, List, Any, Optional, Dict
+from typing import Callable, list, Any, Optional, dict
 
 
 # These classes can be serialised by Ax
@@ -26,9 +26,9 @@ class FitNodeWithSciPy:
 class AxDagModelConstructor:
     def __init__(self,
                  delayed_model_init: Callable[
-                     [List[str], List[str], Tensor, Tensor, int], Dag],
-                 train_input_names: List[str],
-                 train_target_names: List[str],
+                     [list[str], list[str], Tensor, Tensor, int], Dag],
+                 train_input_names: list[str],
+                 train_target_names: list[str],
                  node_optimizer: Callable[[Node, Any],
                                           None] = FitNodeWithSciPy(),
                  num_samples: int = 128,
@@ -52,22 +52,22 @@ class AxDagModelConstructor:
     # FYI: Ax puts inputs in order defined by SearchSpace
     # FYI: Ax requires targets in alphabetical order
     def __call__(self,
-                 Xs: List[Tensor],
-                 Ys: List[Tensor],
-                 Yvars: List[Tensor],
-                 task_features: List[int],
-                 fidelity_features: List[int],
-                 metric_names: List[str],
-                 state_dict: Optional[Dict[str, Tensor]] = None,
+                 Xs: list[Tensor],
+                 Ys: list[Tensor],
+                 Yvars: list[Tensor],
+                 task_features: list[int],
+                 fidelity_features: list[int],
+                 metric_names: list[str],
+                 state_dict: Optional[dict[str, Tensor]] = None,
                  **kwargs: Any) -> Model:
         """Instantiates and fits a DagGPyTorchModel using the given data.
 
         Args:
-            Xs: List of X data, one tensor per outcome.
-            Ys: List of Y data, one tensor per outcome.
-            Yvars: List of observed variance of Ys.
-            task_features: List of columns of X that are tasks.
-            fidelity_features: List of columns of X that are fidelity parameters.
+            Xs: list of X data, one tensor per outcome.
+            Ys: list of Y data, one tensor per outcome.
+            Yvars: list of observed variance of Ys.
+            task_features: list of columns of X that are tasks.
+            fidelity_features: list of columns of X that are fidelity parameters.
             metric_names: Names of each outcome Y in Ys.
             state_dict: If provided, will set model parameters to this state
                 dictionary. Otherwise, will fit the model.

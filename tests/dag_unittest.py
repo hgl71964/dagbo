@@ -6,7 +6,6 @@ import logging
 import unittest
 import torch
 import pandas as pd
-from typing import List
 from torch import Size, Tensor
 from sklearn.metrics import mean_squared_error
 
@@ -38,8 +37,8 @@ class TREE_DAG(SO_Dag, DagGPyTorchModel):
           \        /
               y
     """
-    def __init__(self, train_input_names: List[str],
-                 train_target_names: List[str], train_inputs: Tensor,
+    def __init__(self, train_input_names: list[str],
+                 train_target_names: list[str], train_inputs: Tensor,
                  train_targets: Tensor, num_samples: int):
         super().__init__(train_input_names, train_target_names, train_inputs,
                          train_targets)

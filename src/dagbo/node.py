@@ -11,7 +11,7 @@ from gpytorch.means.constant_mean import ConstantMean
 from gpytorch.models.exact_gp import ExactGP
 from gpytorch.priors.torch_priors import GammaPrior
 from .parametric_mean import ParametricMean, LinearMean
-from typing import List, Optional, Union
+from typing import list, Optional, Union
 
 MIN_INFERRED_NOISE_LEVEL = 1e-4
 
@@ -25,7 +25,7 @@ class Node(ExactGP):
     Priors for Likelihood and Kernel are borrowed from BoTorch SingleTaskGP
     """
     def __init__(self,
-                 input_names: List[str],
+                 input_names: list[str],
                  output_name: str,
                  train_inputs: Tensor,
                  train_targets: Tensor,
@@ -34,7 +34,7 @@ class Node(ExactGP):
                  likelihood: Optional[_GaussianLikelihoodBase] = None):
         """
         Args:
-            input_names: a d-length List of the names of each input
+            input_names: a d-length list of the names of each input
                 defining the order of the inputs in the innermost
                 dimension of train_inputs.
             output_name: the names of the metric this node is modelling

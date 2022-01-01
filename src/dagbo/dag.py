@@ -10,7 +10,7 @@ from torch import Size
 from .parametric_mean import ParametricMean
 from .node import Node
 from .tensor_dict_conversions import pack_to_tensor, unpack_to_dict
-from typing import Iterator, List, Optional, Union, Dict, Tuple
+from typing import Iterator, Optional, Union
 
 
 class Dag(Module):
@@ -41,15 +41,15 @@ class Dag(Module):
     GC time uses x=(heap_size, num_cpus) to predict gc_time
     then total time uses y=(num_cpus, gc_time) to predict total_time
     """
-    def __init__(self, train_input_names: List[str],
-                 train_target_names: List[str], train_inputs: Tensor,
+    def __init__(self, train_input_names: list[str],
+                 train_target_names: list[str], train_inputs: Tensor,
                  train_targets: Tensor):
         """
         Args:
-            train_input_names: a d-length List of the names of each input
+            train_input_names: a d-length list of the names of each input
                 defining the order of the inputs in the innermost
                 dimension of train_inputs.
-            train_target_names: a m-length List of the names of each target
+            train_target_names: a m-length list of the names of each target
                 defining the order of the inputs in the innermost
                 dimension of train_targets.
             train_inputs: A batch_shape*q*d-dim Tensor of the training inputs
@@ -113,7 +113,7 @@ class Dag(Module):
     def register_metric(
             self,
             name: str,
-            children: List[str],
+            children: list[str],
             mean: Optional[Union[Mean, ParametricMean]] = None,
             covar: Optional[Kernel] = None,
             likelihood: Optional[_GaussianLikelihoodBase] = None) -> str:
@@ -129,12 +129,12 @@ class Dag(Module):
         node = Node(children, name, X, y, mean, covar, likelihood)
         self.add_module(
             name, node
-        )  # nn.Module's method, keep a mapping Dict[name, Module] TODO use a dict to explictly manage?
+        )  # nn.Module's method, keep a mapping dict[name, Module] TODO use a dict to explictly manage?
         self.registered_target_names.append(node.output_name)
         return name
 
     def prepare_node_data(self, name: str,
-                          children: List[str]) -> Tuple[Tensor, Tensor]:
+                          children: list[str]) -> tuple[Tensor, Tensor]:
 
         # find saved tensor
         X_from_inputs = {
@@ -274,8 +274,8 @@ class Dag(Module):
                 str(missing_fields) +
                 " defined in train_input_names but not used in DAG.")
 
-    def _check_valid_input(self, train_input_names: List[str],
-                           train_target_names: List[str], train_inputs: Tensor,
+    def _check_valid_input(self, train_input_names: list[str],
+                           train_target_names: list[str], train_inputs: Tensor,
                            train_targets: Tensor):
         if len(set(train_input_names)) != len(train_input_names):
             raise RuntimeError("train_input_names has duplicated name")
@@ -330,8 +330,8 @@ class SO_Dag(Dag):
     Args:
         Dag ([type]): see above
     """
-    def __init__(self, train_input_names: List[str],
-                 train_target_names: List[str], train_inputs: Tensor,
+    def __init__(self, train_input_names: list[str],
+                 train_target_names: list[str], train_inputs: Tensor,
                  train_targets: Tensor):
         super().__init__(train_input_names, train_target_names, train_inputs,
                          train_targets)
@@ -383,8 +383,8 @@ class MO_Dag(Dag):
     Args:
         Dag ([type]): see above
     """
-    def __init__(self, train_input_names: List[str],
-                 train_target_names: List[str], train_inputs: Tensor,
+    def __init__(self, train_input_names: list[str],
+                 train_target_names: list[str], train_inputs: Tensor,
                  train_targets: Tensor):
         super().__init__(train_input_names, train_target_names, train_inputs,
                          train_targets)

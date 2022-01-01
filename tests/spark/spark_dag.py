@@ -1,5 +1,5 @@
 import torch
-from typing import List
+from typing import list
 from torch import Size, Tensor
 from dagbo.dag import Dag
 from dagbo.dag_gpytorch_model import DagGPyTorchModel
@@ -7,8 +7,8 @@ from dagbo.dag_gpytorch_model import DagGPyTorchModel
 
 class SparkDag(Dag, DagGPyTorchModel):
     """DAG model for the SQL/Aggregation HiBench Spark benchmark"""
-    def __init__(self, train_input_names: List[str],
-                 train_target_names: List[str], train_inputs: Tensor,
+    def __init__(self, train_input_names: list[str],
+                 train_target_names: list[str], train_inputs: Tensor,
                  train_targets: Tensor, num_samples: int):
         super().__init__(train_input_names, train_target_names, train_inputs,
                          train_targets)

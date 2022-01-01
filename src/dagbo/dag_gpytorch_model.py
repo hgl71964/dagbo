@@ -1,6 +1,6 @@
 import logging
 from torch import Tensor
-from typing import Any, List, Union
+from typing import Any, list, Union
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import Model
 from botorch.posteriors.gpytorch import GPyTorchPosterior
@@ -94,7 +94,7 @@ class DagGPyTorchModel(GPyTorchModel):
             "Condition on observations is not yet supported for DagGPyTorch models"
         )
 
-    def subset_output(self, idcs: List[int]) -> Model:
+    def subset_output(self, idcs: list[int]) -> Model:
         raise NotImplementedError(
             "Condition on observations is not yet supported for DagGPyTorch models"
         )

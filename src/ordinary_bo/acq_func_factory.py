@@ -1,7 +1,7 @@
 import botorch
 import gpytorch
 from torch import Tensor
-from typing import Dict
+from typing import dict
 from botorch.models import SingleTaskGP
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.sampling.samplers import MCSampler
@@ -9,7 +9,7 @@ from botorch.sampling.samplers import SobolQMCNormalSampler
 
 
 def opt_acq_func(model: SingleTaskGP, acq_name: str, bounds: Tensor,
-                 acq_func_config: Dict) -> Tensor:
+                 acq_func_config: dict) -> Tensor:
 
     sampler = make_sampler(acq_func_config)
     acq_func = make_acq_func(model, acq_name, sampler, acq_func_config)
@@ -27,7 +27,7 @@ def opt_acq_func(model: SingleTaskGP, acq_name: str, bounds: Tensor,
 
 
 def make_acq_func(model: SingleTaskGP, acq_name: str, sampler: MCSampler,
-                  acq_func_config: Dict) -> AcquisitionFunction:
+                  acq_func_config: dict) -> AcquisitionFunction:
     if acq_name == "qKG":
         acq = botorch.acquisition.qKnowledgeGradient(
             model=model,
@@ -67,7 +67,7 @@ def make_acq_func(model: SingleTaskGP, acq_name: str, sampler: MCSampler,
     return acq
 
 
-def make_sampler(acq_func_config: Dict) -> MCSampler:
+def make_sampler(acq_func_config: dict) -> MCSampler:
     """SBO should always use quasi-MC sampler"""
     return SobolQMCNormalSampler(num_samples=acq_func_config["num_samples"],
                                  seed=1234)

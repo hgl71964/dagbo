@@ -6,7 +6,7 @@ import logging
 import unittest
 import torch
 import pandas as pd
-from typing import List
+from typing import list
 from torch import Size, Tensor
 from sklearn.metrics import mean_squared_error
 from botorch.posteriors.gpytorch import GPyTorchPosterior
@@ -41,8 +41,8 @@ class TREE_DAG(SO_Dag, DagGPyTorchModel):
           \        /
               y
     """
-    def __init__(self, train_input_names: List[str],
-                 train_target_names: List[str], train_inputs: Tensor,
+    def __init__(self, train_input_names: list[str],
+                 train_target_names: list[str], train_inputs: Tensor,
                  train_targets: Tensor, num_samples: int):
         super().__init__(train_input_names, train_target_names, train_inputs,
                          train_targets)
@@ -61,7 +61,7 @@ class TREE_DAG(SO_Dag, DagGPyTorchModel):
         y = self.register_metric("y", [z_1, z_2])
 
 
-def init_and_fit(train_input_names: List[str], train_target_names: List[str],
+def init_and_fit(train_input_names: list[str], train_target_names: list[str],
                  train_inputs: Tensor, train_targets: Tensor,
                  num_samples: int) -> TREE_DAG:
     """instantiate tree_dag from data and fit

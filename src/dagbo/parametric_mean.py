@@ -6,7 +6,7 @@ from gpytorch.means import Mean
 from gpytorch.priors import Prior
 from gpytorch.constraints.constraints import Interval
 from .tensor_dict_conversions import unpack_to_dict
-from typing import Dict, List
+from typing import dict, list
 
 
 class ParametricMean(Module):
@@ -39,7 +39,7 @@ class ParametricMean(Module):
         """
         raise NotImplementedError()
 
-    def forward(self, **kwargs: Dict[str, Tensor]) -> Tensor:
+    def forward(self, **kwargs: dict[str, Tensor]) -> Tensor:
         """
         Must be implemented in subclass
 
@@ -65,9 +65,9 @@ class ParametricMean(Module):
         """
         raise NotImplementedError()
 
-    def __call__(self, x: Tensor, field_names: List[str]) -> Tensor:
+    def __call__(self, x: Tensor, field_names: list[str]) -> Tensor:
         """
-        Converts from b*d-dim Tensor of unnamed inputs to Dict[str, b-dim Tensor] of size d
+        Converts from b*d-dim Tensor of unnamed inputs to dict[str, b-dim Tensor] of size d
         Args:
             x: b*d-dim Tensor of unnamed inputs.
             field_names: d-length of input names in the same order as the inner dim of x

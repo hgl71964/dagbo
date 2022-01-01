@@ -3,7 +3,7 @@ from os.path import join, abspath, exists
 import torch
 import pandas as pd
 from torch import Tensor
-from typing import Dict, List, Tuple
+from typing import dict, list, tuple
 from copy import deepcopy
 
 import ax
@@ -15,13 +15,13 @@ from ax.storage.json_store.load import load_experiment
 from ax.storage.json_store.save import save_experiment
 
 
-def get_tensor(exp: Experiment, params: List) -> Tuple[Tensor, Tensor]:
+def get_tensor(exp: Experiment, params: list) -> tuple[Tensor, Tensor]:
     """convert data from experiment to tensor
     single objective ONLY
 
     Args:
         exp (Experiment): Ax.Experiment
-        params (List): MUST be orderred
+        params (list): MUST be orderred
 
     Returns:
         x: [num_arms, dim_arm]
@@ -42,7 +42,7 @@ def get_tensor(exp: Experiment, params: List) -> Tuple[Tensor, Tensor]:
                 torch.tensor(exp.fetch_data().df["mean"], dtype=torch.float32).reshape(-1, 1)
 
 
-def get_bounds(exp: Experiment, params: List) -> Tensor:
+def get_bounds(exp: Experiment, params: list) -> Tensor:
     """get bounds for each parameters"""
     bounds = []
     for p in params:

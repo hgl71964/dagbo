@@ -1,6 +1,6 @@
 import os
 import sys
-from typing import List, Dict
+from typing import list, dict
 
 import torch
 from torch import Tensor
@@ -41,7 +41,7 @@ class MyRunner(Runner):
         return trial_metadata
 
 
-def get_fitted_model(exp: Experiment, params: List) -> SingleTaskGP:
+def get_fitted_model(exp: Experiment, params: list) -> SingleTaskGP:
     """instantiate and fit a gp"""
 
     x, y = get_tensor(exp, params)
@@ -50,15 +50,15 @@ def get_fitted_model(exp: Experiment, params: List) -> SingleTaskGP:
     return gpr
 
 
-def inner_loop(exp: Experiment, model: SingleTaskGP, params: List,
-               acq_name: str, acq_func_config: Dict) -> Tensor:
+def inner_loop(exp: Experiment, model: SingleTaskGP, params: list,
+               acq_name: str, acq_func_config: dict) -> Tensor:
     """acquisition function optimisation"""
     bounds = get_bounds(exp, params)
     return opt_acq_func(model, acq_name, bounds, acq_func_config)
 
 
 def candidates_to_generator_run(exp: Experiment, candidate: Tensor,
-                                params: List) -> GeneratorRun:
+                                params: list) -> GeneratorRun:
     """
     Args:
         candidate: [q, dim]
