@@ -8,7 +8,6 @@ from botorch.posteriors.gpytorch import GPyTorchPosterior
 from typing import Optional, Type, TypeVar
 
 T = TypeVar('T', bound='approximate_posterior')
-
 """
 TODO: implement the `exact` approximate posterior distribution from sbo
 """

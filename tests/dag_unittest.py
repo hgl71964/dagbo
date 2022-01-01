@@ -177,7 +177,9 @@ class dag_test(unittest.TestCase):
         samples = sampler(pst)
         print()
         print("sampling from posterior")
-        print(samples.shape)  # [sampler's num_samples, batch_size of input, q, DAG's num_of_output]
+        print(
+            samples.shape
+        )  # [sampler's num_samples, batch_size of input, q, DAG's num_of_output]
 
     #@unittest.skip("..")
     def test_dag_inner_loop(self):
@@ -212,7 +214,8 @@ class dag_test(unittest.TestCase):
             ], dtype=torch.float32),
             q=q,
             num_restarts=24,  # create batch shape for optimise acquisition func
-            raw_samples=48,   # this create initial batch shape for optimise acquisition func
+            raw_samples=
+            48,  # this create initial batch shape for optimise acquisition func
             sequential=False,  # joint optimisation of q
         )
         query = candidates.detach()
