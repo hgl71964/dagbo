@@ -6,7 +6,6 @@ import logging
 import unittest
 import torch
 import pandas as pd
-from typing import list
 from torch import Size, Tensor
 from sklearn.metrics import mean_squared_error
 from botorch.posteriors.gpytorch import GPyTorchPosterior

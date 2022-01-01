@@ -4,7 +4,7 @@ from pyro.infer import NUTS, MCMC
 from botorch.fit import fit_gpytorch_model
 from botorch.optim.fit import fit_gpytorch_torch
 from torch.optim import Adam
-from .node import Node
+from .models.node import Node
 from .dag import Dag
 from typing import Any, Callable
 

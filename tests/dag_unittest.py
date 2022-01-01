@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(testdir, srcdir)))
 
 # import from src
 from dagbo.dag import Dag, SO_Dag
-from dagbo.sample_average_posterior import SampleAveragePosterior
+from dagbo.models.sample_average_posterior import SampleAveragePosterior
 from dagbo.dag_gpytorch_model import DagGPyTorchModel
 from dagbo.fit_dag import fit_dag, fit_node_with_scipy, test_fit_node_with_scipy, fit_node_with_adam
 

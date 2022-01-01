@@ -1,6 +1,5 @@
 import torch
 from torch import Tensor
-from typing import dict, list
 
 
 def unpack_to_dict(names: list[str], values: Tensor) -> dict[str, Tensor]:

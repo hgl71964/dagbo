@@ -11,7 +11,7 @@ from gpytorch.means.constant_mean import ConstantMean
 from gpytorch.models.exact_gp import ExactGP
 from gpytorch.priors.torch_priors import GammaPrior
 from .parametric_mean import ParametricMean, LinearMean
-from typing import list, Optional, Union
+from typing import Optional, Union
 
 MIN_INFERRED_NOISE_LEVEL = 1e-4
 

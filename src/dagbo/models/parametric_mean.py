@@ -5,8 +5,6 @@ from gpytorch import Module
 from gpytorch.means import Mean
 from gpytorch.priors import Prior
 from gpytorch.constraints.constraints import Interval
-from .tensor_dict_conversions import unpack_to_dict
-from typing import dict, list
 
 
 class ParametricMean(Module):

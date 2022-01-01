@@ -1,5 +1,6 @@
 import logging
 from torch import Tensor
+from typing import Iterator, Optional, Union
 from gpytorch.kernels.kernel import Kernel
 from gpytorch.likelihoods.gaussian_likelihood import _GaussianLikelihoodBase
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
@@ -7,10 +8,9 @@ from gpytorch.distributions.multitask_multivariate_normal import MultitaskMultiv
 from gpytorch.means.mean import Mean
 from gpytorch.module import Module
 from torch import Size
-from .parametric_mean import ParametricMean
-from .node import Node
-from .tensor_dict_conversions import pack_to_tensor, unpack_to_dict
-from typing import Iterator, Optional, Union
+from .models.parametric_mean import ParametricMean
+from .models.node import Node
+from .utlis.tensor_dict_conversions import pack_to_tensor, unpack_to_dict
 
 
 class Dag(Module):

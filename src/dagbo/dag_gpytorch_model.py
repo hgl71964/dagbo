@@ -1,6 +1,6 @@
 import logging
 from torch import Tensor
-from typing import Any, list, Union
+from typing import Any, Union
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import Model
 from botorch.posteriors.gpytorch import GPyTorchPosterior
@@ -8,7 +8,7 @@ from botorch.models.utils import gpt_posterior_settings
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.distributions.multitask_multivariate_normal import MultitaskMultivariateNormal
 
-from .sample_average_posterior import SampleAveragePosterior, SampleAveragePosterior_v2
+from .models.sample_average_posterior import SampleAveragePosterior, SampleAveragePosterior_v2
 
 
 class DagGPyTorchModel(GPyTorchModel):
