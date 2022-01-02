@@ -1,0 +1,24 @@
+Build:
+
+as of hiBench version 29224b9c
+
+build with java 8: sudo apt install openjdk-8-jdk
+
+maven version: 3.2.5
+
+apache spark version 2.4.5
+
+apacha hadoop version 2.7.7
+
+Fail to run Spark Bench:
+
+1. fail to launch because container run beyond virtual memory limit,
+this is found from log -> {hadoop home}/logs/yarn-gh512-resourcemanager
+
+solutions:
+        we have the minimum RAM for a Container (yarn.scheduler.minimum-allocation-mb) = 2 GB
+        this is configurable in {hadoop home}/etc/hadoop/mapred-site.xml
+
+        I simply set executor memory = 6g (2 executors) solve the problem
+
+
