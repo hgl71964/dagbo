@@ -1,4 +1,4 @@
-Build:
+BUILD:
 
 as of hiBench version 29224b9c
 
@@ -10,7 +10,12 @@ apache spark version 2.4.5
 
 apacha hadoop version 2.7.7
 
-Failuer to run hiBench:
+CONFIG DIR:
+
+1. {hadoop home}/etc/hadoop
+2. {hibench home}/conf
+
+FAILUER:
 
 Spark Bench:
 
