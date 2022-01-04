@@ -13,6 +13,7 @@ apacha hadoop version 2.7.7
 CONFIG DIR:
 
 1. {hadoop home}/etc/hadoop
+        - core-site.xml, yarn-site.xml, hdfs-site.xml
 2. {hibench home}/conf
 
 FAILUER:
