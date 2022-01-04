@@ -10,9 +10,15 @@ apache spark version 2.4.5
 
 apacha hadoop version 2.7.7
 
-Fail to run Spark Bench:
+Failuer to run hiBench:
+
+Spark Bench:
+
+GENERALLY, rebuild Hibench & restart all services
 
 1. fail to launch because container run beyond virtual memory limit,
+
+it could be a problem for java 8
 this is found from log -> {hadoop home}/logs/yarn-gh512-resourcemanager
 
 solutions:
