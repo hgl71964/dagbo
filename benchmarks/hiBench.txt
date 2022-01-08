@@ -32,6 +32,11 @@ CONFIG DIR:
         - core-site.xml, yarn-site.xml, hdfs-site.xml
 2. {hibench home}/conf
 
+NOTE:
+
+1. when run with YARN, don't have to start-master.sh/start-slave.sh by ourselves
+        only need to spark-submit with --master yarn
+
 FAILUER:
 
 Spark Bench:
