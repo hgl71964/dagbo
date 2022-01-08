@@ -10,6 +10,22 @@ apache spark version 2.4.5
 
 apacha hadoop version 2.7.7
 
+ENV VARIABLES(change accordingly):
+
+export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64  # use jvm 8 to work with hiBench
+export M2_HOME=/local/scratch/opt/apache-maven-3.2.5
+export MAVEN_HOME=/local/scratch/opt/apache-maven-3.2.5
+export PATH=${M2_HOME}/bin:${PATH}
+
+# spark & hadoop
+export HADOOP_CONF_DIR=/local/scratch/opt/hadoop-2.7.7/etc/hadoop
+export HADOOP_HOME=/local/scratch/opt/hadoop-2.7.7
+export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
+export SPARK_HOME=/local/scratch/opt/spark-2.4.5-bin-hadoop2.7
+export PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin
+export PYSPARK_PYTHON=/usr/bin/python3.7
+
+
 CONFIG DIR:
 
 1. {hadoop home}/etc/hadoop
