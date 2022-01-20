@@ -22,7 +22,7 @@ class Dag(Module):
     DAG "inputs" are configurable parameters of the experiment. For example, when
     benchmarking a Java program we might configure the heap size and the number
     of CPUs.
-    
+
     DAG "metrics" are the measurable outcomes of the experiment. For example,
     when benchmarking a Java program we might measure the total program time
     and also garbage-collection time.
@@ -33,7 +33,7 @@ class Dag(Module):
 
     The sub-models are trained independently. Using the running example, the GC
     time of the Java program will be trained separately to the total time of the
-    program. I.e.: 
+    program. I.e.:
     the GC time will be trained on data {x: (heap_size, num_cpus), y: gc_time}
     and total time will be trained on data {x: (num_cpus, gc_time), y: total_time}
 
@@ -295,8 +295,8 @@ class Dag(Module):
 
         if train_inputs.shape[0] != 1 or train_targets.shape[0] != 1:
             raise RuntimeError(
-                f"""instantiate DAG does not allow batch shape > 1, 
-                however the batch dimension must be kept 
+                f"""instantiate DAG does not allow batch shape > 1,
+                however the batch dimension must be kept
                 for later acquisition function optimisation""")
 
         if train_inputs.shape[1] != train_targets.shape[1]:
@@ -353,6 +353,7 @@ class SO_Dag(Dag):
         sink_node_name = None
 
         # ensure traverse in topological order
+        # FIXME ensure input does not draw r sample twice inside a forward pass
         for node in self.nodes_dag_order():
 
             # prepare input to each node
