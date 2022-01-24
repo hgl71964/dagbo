@@ -1,4 +1,6 @@
 # parse the performance model from graphviz's source file
+# IMPORTANT: the graphviz's model is assumed to have 3 subgraphs in order
+# 1. parameter space 2. monitoring metrics 3. objectives
 
 def population_spaces(path:str):
     c = -1
