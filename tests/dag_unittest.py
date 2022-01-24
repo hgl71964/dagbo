@@ -15,9 +15,9 @@ from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.optim import optimize_acqf
 
 # hacky way to include the src code dir
-testdir = os.path.dirname(__file__)
-srcdir = "../src"
-sys.path.insert(0, os.path.abspath(os.path.join(testdir, srcdir)))
+#testdir = os.path.dirname(__file__)
+#srcdir = "../src"
+#sys.path.insert(0, os.path.abspath(os.path.join(testdir, srcdir)))
 
 # import from src
 from dagbo.dag import Dag, SO_Dag
@@ -123,7 +123,7 @@ class dag_test(unittest.TestCase):
         """
         test fitting the dag from data, with different fit method
             each initialisation of DAG, it holds original data
-        
+
         Results:
             fit_node_with_scipy tends to be more numerically stable, botorch's default fit
             fit_node_with_adam needs to choose epochs, lr, etc
@@ -155,7 +155,7 @@ class dag_test(unittest.TestCase):
     @unittest.skip("both mvn or multi-mvn samples seems ok")
     def test_dag_posterior(self):
         """
-        test posterior returned by the DAG, 
+        test posterior returned by the DAG,
             as well as samplings from this posterior
         """
         fit_dag(self.simple_dag, fit_node_with_scipy)
@@ -183,7 +183,7 @@ class dag_test(unittest.TestCase):
     #@unittest.skip("..")
     def test_dag_inner_loop(self):
         """
-        test optimise the acquisition function 
+        test optimise the acquisition function
         """
         fit_dag(self.simple_dag, fit_node_with_scipy)
         """ --- desire input shape to posterior ---"""

@@ -18,9 +18,9 @@ from ax import RangeParameter, ChoiceParameter, ParameterType, \
 from ax.modelbridge.registry import Models
 
 # hacky way to include the src code dir
-testdir = os.path.dirname(__file__)
-srcdir = "../src"
-sys.path.insert(0, os.path.abspath(os.path.join(testdir, srcdir)))
+#testdir = os.path.dirname(__file__)
+#srcdir = "../src"
+#sys.path.insert(0, os.path.abspath(os.path.join(testdir, srcdir)))
 
 # import from src
 from dagbo.dag import Dag, SO_Dag
