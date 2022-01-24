@@ -1,0 +1,67 @@
+digraph "spark-performance-model" {
+	graph [rankdir=LR]
+	subgraph cluster_0 {
+		color=lightgrey style=filled
+		label=param
+		"executor.num[*]" [label="executor.num[*]" shape=triangle]
+		"executor.memory" [label="executor.memory" shape=circle]
+		"executor.cores" [label="executor.cores" shape=triangle]
+		"default.parallelism" [label="default.parallelism" shape=triangle]
+		"memory.fraction" [label="memory.fraction" shape=circle]
+		"shuffle.compress" [label="shuffle.compress" shape=triangle]
+		"shuffle.spill.compress" [label="shuffle.spill.compress" shape=triangle]
+		"spark.speculation" [label="spark.speculation" shape=triangle]
+		"spark.serializer" [label="spark.serializer" shape=triangle]
+		"rdd.compress" [label="rdd.compress" shape=triangle]
+	}
+	subgraph cluster_1 {
+		color=blue
+		duration [label=duration]
+		executorRunTime [label=executorRunTime]
+		executorCpuTime [label=executorCpuTime]
+		executorDeserializeTime [label=executorDeserializeTime]
+		executorDeserializeCpuTime [label=executorDeserializeCpuTime]
+		jvmGCTime [label=jvmGCTime]
+		memoryBytesSpilled [label=memoryBytesSpilled]
+		diskBytesSpilled [label=diskBytesSpilled]
+		label="intermediate metrics"
+	}
+	subgraph cluster_2 {
+		throughput [label=throughput]
+	}
+	"executor.num[*]" -> executorCpuTime
+	"executor.num[*]" -> executorDeserializeCpuTime
+	"executor.cores" -> executorCpuTime
+	"executor.cores" -> executorDeserializeCpuTime
+	"executor.cores" -> jvmGCTime
+	"executor.memory" -> jvmGCTime
+	"executor.memory" -> memoryBytesSpilled
+	"executor.memory" -> diskBytesSpilled
+	"default.parallelism" -> executorDeserializeCpuTime
+	"default.parallelism" -> executorCpuTime
+	"memory.fraction" -> jvmGCTime
+	"memory.fraction" -> diskBytesSpilled
+	"memory.fraction" -> memoryBytesSpilled
+	"shuffle.compress" -> executorDeserializeCpuTime
+	"shuffle.compress" -> executorCpuTime
+	"shuffle.spill.compress" -> diskBytesSpilled
+	"shuffle.spill.compress" -> memoryBytesSpilled
+	"spark.speculation" -> executorRunTime
+	executorCpuTime -> executorRunTime
+	jvmGCTime -> executorCpuTime [color=red]
+	jvmGCTime -> executorRunTime [color=red]
+	executorDeserializeCpuTime -> executorDeserializeTime
+	memoryBytesSpilled -> executorRunTime
+	diskBytesSpilled -> executorRunTime
+	executorRunTime -> duration
+	executorDeserializeTime -> duration
+	"spark.serializer" -> executorCpuTime
+	"spark.serializer" -> executorDeserializeCpuTime
+	"spark.serializer" -> memoryBytesSpilled
+	"spark.serializer" -> diskBytesSpilled
+	"rdd.compress" -> executorCpuTime
+	"rdd.compress" -> executorDeserializeCpuTime
+	"rdd.compress" -> memoryBytesSpilled
+	"rdd.compress" -> diskBytesSpilled
+	duration -> throughput
+}
