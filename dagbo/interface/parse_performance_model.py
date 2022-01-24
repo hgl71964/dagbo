@@ -2,10 +2,11 @@
 # IMPORTANT: the graphviz's model is assumed to have 3 subgraphs in order
 # 1. parameter space 2. monitoring metrics 3. objectives
 
-def population_spaces(path:str):
+
+def population_spaces(path: str):
     c = -1
     param_space = {}  # key: param name - val: continuous or categorical var
-    metric_space = {} # key: param name
+    metric_space = {}  # key: param name
     obj_space = {}  # key: param name
     with open(path) as f:
         lines = f.readlines()
@@ -16,10 +17,10 @@ def population_spaces(path:str):
                 continue
 
             elif "}" in l:
-                c=-1
+                c = -1
                 continue
 
-            if c==0:  # param
+            if c == 0:  # param
                 if '=' not in l[0]:  # ok
                     #print(l[0].strip("\""))
                     param_name = l[0].strip("\"")
@@ -28,12 +29,12 @@ def population_spaces(path:str):
                     ppt = "continuous" if "circle" in shape else "categorical"
                     param_space[param_name] = ppt
 
-            elif c==1:  # metric
+            elif c == 1:  # metric
                 if '=' not in l[0]:  # ok
                     name = l[0].strip("\"")
                     metric_space[name] = 0
 
-            elif c==2:  # obj
+            elif c == 2:  # obj
                 if '=' not in l[0]:  # ok
                     name = l[0].strip("\"")
                     obj_space[name] = 0
@@ -43,6 +44,7 @@ def population_spaces(path:str):
     #print(obj_space)
     return param_space, metric_space, obj_space
 
+
 def parse_model(path):
     param_space, metric_space, obj_space = population_spaces(path)
     edges = {}  # from key to val
@@ -51,7 +53,7 @@ def parse_model(path):
         lines = f.readlines()
         for line in lines:
             l = line.strip().split()
-            if len(l) >=3 and l[1] == '->':
+            if len(l) >= 3 and l[1] == '->':
                 src = l[0].strip("\"")
                 dst = l[2].strip("\"")
 
@@ -64,6 +66,7 @@ def parse_model(path):
     #print(type(edges))
     return param_space, metric_space, obj_space, edges
 
+
 if __name__ == '__main__':
-    path= 'dagbo/interface/spark_performance_model.txt'
+    path = 'dagbo/interface/spark_performance_model.txt'
     parse_model(path)
