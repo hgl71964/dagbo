@@ -1,5 +1,7 @@
 import os
 import sys
+from absl import app
+from absl import flags
 
 import torch
 from torch import Tensor
@@ -16,27 +18,17 @@ from ax.storage.runner_registry import register_runner
 import botorch
 from botorch.models import SingleTaskGP
 
-# hacky way to include the src code dir
-testdir = os.path.dirname(__file__)
-srcdir = "../src"
-sys.path.insert(0, os.path.abspath(os.path.join(testdir, srcdir)))
-
-from ordinary_bo.model_factory import make_gps, fit_gpr
-from ordinary_bo.acq_func_factory import opt_acq_func
-from ordinary_bo.ax_experiment_utlis import (get_tensor, get_bounds,
+from dagbo.other_opt.model_factory import make_gps, fit_gpr
+from dagbo.other_opt.acq_func_factory import opt_acq_func
+from dagbo.other_opt.ax_experiment_utlis import (get_tensor, get_bounds,
                                              print_experiment_result, save_exp,
                                              load_exp)
 
 from basic_exp import get_fitted_model, inner_loop, candidates_to_generator_run
 
+FLAGS = flags.FLAGS
 
-class MyRunner(Runner):
-    def run(self, trial):
-        trial_metadata = {"name": str(trial.index)}
-        return trial_metadata
-
-
-if __name__ == "__main__":
+def main(_):
     # load
     param_names = [f"x{i}" for i in range(6)]  # must respect order
     NUM_SOBOL_TRIALS = 5
@@ -78,3 +70,12 @@ if __name__ == "__main__":
     print("Done!")
     print(exp.fetch_data().df)
     print(print_experiment_result(exp))
+
+class MyRunner(Runner):
+    def run(self, trial):
+        trial_metadata = {"name": str(trial.index)}
+        return trial_metadata
+
+
+if __name__ == "__main__":
+    app.run(main)
