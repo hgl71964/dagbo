@@ -39,6 +39,8 @@ digraph "spark-performance-model" {
 	"executor.memory" -> diskBytesSpilled
 	"default.parallelism" -> executorDeserializeCpuTime
 	"default.parallelism" -> executorCpuTime
+	"default.parallelism" -> diskBytesSpilled
+	"default.parallelism" -> memoryBytesSpilled
 	"memory.fraction" -> jvmGCTime
 	"memory.fraction" -> diskBytesSpilled
 	"memory.fraction" -> memoryBytesSpilled
