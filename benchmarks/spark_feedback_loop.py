@@ -18,17 +18,10 @@ from ax.storage.runner_registry import register_runner
 import botorch
 from botorch.models import SingleTaskGP
 
-from dagbo.other_opt.model_factory import make_gps, fit_gpr
-from dagbo.other_opt.acq_func_factory import opt_acq_func
-from dagbo.other_opt.ax_experiment_utlis import (get_tensor, get_bounds,
-                                             print_experiment_result, save_exp,
-                                             load_exp)
 """
-Create an experiment and initial SOBOL points,
-    and save this experiment
+run the whole spark feedback loop
+"""
 
-so that all algorithms have the same initial conditions by loading this experiment
-"""
 FLAGS = flags.FLAGS
 flags.DEFINE_string('name', 'Jane Random', 'Your name.')
 flags.DEFINE_integer('age', None, 'Your age in years.', lower_bound=0)
@@ -49,7 +42,6 @@ def main(_):
     build_spark_dag()
     # TODO
 
-    pass
 
 class MyRunner(Runner):
     def run(self, trial):

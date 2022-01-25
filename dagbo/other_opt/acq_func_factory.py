@@ -1,7 +1,6 @@
 import botorch
 import gpytorch
 from torch import Tensor
-from typing import dict
 from botorch.models import SingleTaskGP
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.sampling.samplers import MCSampler
