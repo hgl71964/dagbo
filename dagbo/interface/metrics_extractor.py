@@ -2,6 +2,7 @@ import requests
 from absl import app
 from absl import flags
 from tqdm import tqdm
+from typing import Union
 """
 workflow to interface with hiBench & Spark
 
@@ -35,7 +36,8 @@ def main(_):
     request_history_server(base_url, app_id)
 
 
-def request_history_server(base_url, app_id):
+def request_history_server(base_url,
+                           app_id) -> dict[str, dict[str, Union[int, float]]]:
     """
     send request to spark's history_server, and extract monitoring metrics
 

@@ -1,4 +1,5 @@
 import logging
+from torch import Size
 from torch import Tensor
 from typing import Iterator, Optional, Union
 from gpytorch.kernels.kernel import Kernel
@@ -7,7 +8,6 @@ from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.distributions.multitask_multivariate_normal import MultitaskMultivariateNormal
 from gpytorch.means.mean import Mean
 from gpytorch.module import Module
-from torch import Size
 from .models.parametric_mean import ParametricMean
 from .models.node import Node
 from .utlis.tensor_dict_conversions import pack_to_tensor, unpack_to_dict
@@ -175,45 +175,46 @@ class Dag(Module):
         #print("DAG forwarding is called")
         #print(tensor_inputs.shape)
 
-        tensor_inputs_dict = unpack_to_dict(self.registered_input_names,
-                                            tensor_inputs)
-        node_dict = {}
+        #tensor_inputs_dict = unpack_to_dict(self.registered_input_names,
+        #                                    tensor_inputs)
+        #node_dict = {}
 
-        # ensure traverse in topological order
-        for node in self.nodes_dag_order():
+        ## MUST traverse in topological order
+        #for node in self.nodes_dag_order():
 
-            # prepare input to each node
-            node_inputs_dict = {
-                k: v
-                for k, v in tensor_inputs_dict.items() if k in node.input_names
-            }
-            node_inputs = pack_to_tensor(node.input_names, node_inputs_dict)
+        #    # prepare input to each node
+        #    node_inputs_dict = {
+        #        k: v
+        #        for k, v in tensor_inputs_dict.items() if k in node.input_names
+        #    }
+        #    node_inputs = pack_to_tensor(node.input_names, node_inputs_dict)
 
-            # make prediction via GP
-            mvn = node(node_inputs)
+        #    # make prediction via GP
+        #    mvn = node(node_inputs)
 
-            #print("node: ", node.output_name)
-            #print(node_inputs.shape)
-            #print("mvn:")
-            #print(mvn)
-            #print(mvn.event_shape, mvn.batch_shape)
-            #if node.output_name == "z2":
-            #    print(mvn.loc)  # can verify identical mvn
+        #    #print("node: ", node.output_name)
+        #    #print(node_inputs.shape)
+        #    #print("mvn:")
+        #    #print(mvn)
+        #    #print(mvn.event_shape, mvn.batch_shape)
+        #    #if node.output_name == "z2":
+        #    #    print(mvn.loc)  # can verify identical mvn
 
-            node_dict[node.output_name] = mvn
-            prediction = mvn.rsample()
-            tensor_inputs_dict[node.output_name] = prediction
+        #    node_dict[node.output_name] = mvn
+        #    prediction = mvn.rsample()
+        #    tensor_inputs_dict[node.output_name] = prediction
 
-        # aggregate posterior from all nodes/metrics
-        if len(self.registered_target_names) > 1:
-            # mvns must be in the expected output order
-            mvns = [
-                node_dict[metric] for metric in self.registered_target_names
-            ]
-            return MultitaskMultivariateNormal.from_independent_mvns(mvns)
-        # cannot have 1 task in MultitaskMultivariateNormal
-        else:
-            return node_dict[self.registered_target_names[0]]
+        ## aggregate posterior from all nodes/metrics
+        #if len(self.registered_target_names) > 1:
+        #    # mvns must be in the expected output order
+        #    mvns = [
+        #        node_dict[metric] for metric in self.registered_target_names
+        #    ]
+        #    return MultitaskMultivariateNormal.from_independent_mvns(mvns)
+        ## cannot have 1 task in MultitaskMultivariateNormal
+        #else:
+        #    return node_dict[self.registered_target_names[0]]
+        raise NotImplementedError
 
     """
     -------------- ordering --------------

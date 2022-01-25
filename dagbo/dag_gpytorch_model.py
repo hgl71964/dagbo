@@ -17,15 +17,6 @@ class DagGPyTorchModel(GPyTorchModel):
 
     Args:
         GPyTorchModel ([type]): BoTorch's model with a posterior methods
-
-    Raises:
-        NotImplementedError: [description]
-        RuntimeError: [description]
-        NotImplementedError: [description]
-        NotImplementedError: [description]
-
-    Returns:
-        [type]: [description]
     """
     num_samples: int
 
@@ -37,7 +28,7 @@ class DagGPyTorchModel(GPyTorchModel):
         acquisition function will call this to generate samples
 
         When calling botorch's optimize_acqf, the batch dimension of X
-                                                    is the number of restarts          
+                                                    is the number of restarts
 
         Args:
             X: A `(batch_shape) x q x d`-dim Tensor, where `d` is the dimension

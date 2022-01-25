@@ -1,9 +1,13 @@
 # parse the performance model from graphviz's source file
-# IMPORTANT: the graphviz's model is assumed to have 3 subgraphs in order
-# 1. parameter space 2. monitoring metrics 3. objectives
+"""
+# IMPORTANT: the graphviz's model is assumed to have 3 subgraphs in ORDER
+  1. parameter space
+  2. monitoring metrics
+  3. objectives
+"""
 
 
-def population_spaces(path: str):
+def _population_spaces(path: str):
     c = -1
     param_space = {}  # key: param name - val: continuous or categorical var
     metric_space = {}  # key: param name
@@ -46,7 +50,7 @@ def population_spaces(path: str):
 
 
 def parse_model(path):
-    param_space, metric_space, obj_space = population_spaces(path)
+    param_space, metric_space, obj_space = _population_spaces(path)
     edges = {}  # from key to val
 
     with open(path) as f:

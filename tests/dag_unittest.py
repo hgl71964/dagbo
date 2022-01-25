@@ -19,7 +19,7 @@ from botorch.optim import optimize_acqf
 #srcdir = "../src"
 #sys.path.insert(0, os.path.abspath(os.path.join(testdir, srcdir)))
 
-# import from src
+# import from dagbo
 from dagbo.dag import Dag, SO_Dag
 from dagbo.models.sample_average_posterior import SampleAveragePosterior
 from dagbo.dag_gpytorch_model import DagGPyTorchModel
