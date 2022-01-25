@@ -36,6 +36,12 @@ def main(_):
 
 
 def request_history_server(base_url, app_id):
+    """
+    send request to spark's history_server, and extract monitoring metrics
+
+    Returns:
+        exec_map. key: executor id - val: k, v pair of metric (map[str, union[int, float]])
+    """
     stage_ids = _get_stages(base_url, app_id)
     exec_map = _get_executors_metric(base_url, app_id, stage_ids)
     return _post_processing(exec_map)
