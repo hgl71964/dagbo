@@ -21,9 +21,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    packages=find_packages(),
     #package_dir={"": "dagbo"},
-    #packages=find_packages(),
-    #packages=find_packages(where="dagbo"),
-    #packages=[package for package in find_packages() if package.startswith('dagbo')],
     python_requires=">=3.9",
 )
