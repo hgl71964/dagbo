@@ -10,7 +10,7 @@ from gpytorch.means.mean import Mean
 from gpytorch.module import Module
 from .models.parametric_mean import ParametricMean
 from .models.node import Node
-from .utlis.tensor_dict_conversions import pack_to_tensor, unpack_to_dict
+from .utils.tensor_dict_conversions import pack_to_tensor, unpack_to_dict
 
 
 class Dag(Module):
