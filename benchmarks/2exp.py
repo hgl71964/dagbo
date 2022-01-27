@@ -20,7 +20,7 @@ from botorch.models import SingleTaskGP
 
 from dagbo.other_opt.model_factory import make_gps, fit_gpr
 from dagbo.other_opt.acq_func_factory import opt_acq_func
-from dagbo.other_opt.ax_experiment_utlis import (get_tensor, get_bounds,
+from dagbo.utils.ax_experiment_utlis import (get_tensor, get_bounds,
                                              print_experiment_result, save_exp,
                                              load_exp)
 

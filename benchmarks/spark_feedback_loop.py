@@ -18,12 +18,14 @@ from ax.storage.runner_registry import register_runner
 import botorch
 from botorch.models import SingleTaskGP
 
+from dagbo.interface.parse_performance_model import parse_model
+
 """
 run the whole spark feedback loop
 """
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string('name', 'Jane Random', 'Your name.')
+flags.DEFINE_string("performance_model_path", "dagbo/interface/spark_performance_model.txt", "graphviz source path")
 flags.DEFINE_integer('age', None, 'Your age in years.', lower_bound=0)
 flags.DEFINE_boolean('debug', False, 'Produces debugging output.')
 flags.DEFINE_enum('job', 'running', ['running', 'stopped'], 'Job status.')
@@ -39,8 +41,10 @@ acq_func_config = {
 }
 
 def main(_):
-    build_spark_dag()
-    # TODO
+    param_space, metric_space, obj_space, edges = parse_model(FLAGS.performance_model_path)
+    print(param_space)
+    print(edges)
+
 
 
 class MyRunner(Runner):

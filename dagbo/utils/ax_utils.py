@@ -5,6 +5,9 @@ from .node import Node
 from .dag import Dag
 from .fit_dag import fit_dag, fit_node_with_mcmc, fit_node_with_scipy, fit_node_with_torch
 from typing import Callable, Any, Optional
+"""
+deprecated ax_utlis
+"""
 
 
 # These classes can be serialised by Ax

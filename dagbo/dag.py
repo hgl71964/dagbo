@@ -375,6 +375,58 @@ class SO_Dag(Dag):
         return node_dict[sink_node_name]
 
 
+class lazy_SO_Dag(Dag):
+    """
+    Lazily initialized single objective Dag:
+        define_dag is postponed to execute
+
+    Args:
+        Dag ([type]): see above
+    """
+    def __init__(self, train_input_names: list[str],
+                 train_target_names: list[str], train_inputs: Tensor,
+                 train_targets: Tensor):
+        super().__init__(train_input_names, train_target_names, train_inputs,
+                         train_targets)
+
+        # NOTE: this will be used by Botorch's API
+        self._num_outputs = 1
+
+    def define_dag(self, batch_shape: Size) -> None:
+        pass
+
+    def forward(self, tensor_inputs: Tensor) -> MultivariateNormal:
+        """
+        Args:
+            tensor_inputs: batch_shape*q*d-dim tensor
+        """
+        tensor_inputs_dict = unpack_to_dict(self.registered_input_names,
+                                            tensor_inputs)
+        node_dict = {}
+        sink_node_name = None
+
+        # ensure traverse in topological order
+        # FIXME ensure input does not draw r sample twice inside a forward pass
+        for node in self.nodes_dag_order():
+
+            # prepare input to each node
+            node_inputs_dict = {
+                k: v
+                for k, v in tensor_inputs_dict.items() if k in node.input_names
+            }
+            node_inputs = pack_to_tensor(node.input_names, node_inputs_dict)
+
+            # make prediction via GP
+            mvn = node(node_inputs)
+
+            node_dict[node.output_name] = mvn
+            prediction = mvn.rsample()
+            tensor_inputs_dict[node.output_name] = prediction
+            sink_node_name = node.output_name
+
+        return node_dict[sink_node_name]
+
+
 class MO_Dag(Dag):
     """
     Multi objective Dag:
