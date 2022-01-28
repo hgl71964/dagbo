@@ -33,13 +33,18 @@ def candidates_to_generator_run(exp: Experiment, candidate: Tensor,
     return GeneratorRun(arms=arms)
 
 
+def get_tensor_to_dict(exp: Experiment, train_inputs_dict: dict,
+                       train_targets_dict: dict) -> tuple[dict, dict]:
+    return train_inputs_dict, train_targets_dict
+
+
 def get_tensor(exp: Experiment, params: list[str]) -> tuple[Tensor, Tensor]:
-    """convert data from experiment to tensor
+    """retrieve data from experiment to tensor
     single objective ONLY
 
     Args:
         exp (Experiment): Ax.Experiment
-        params (list): MUST be orderred
+        params (list): MUST be topological sorted order
 
     Returns:
         x: [num_arms, dim_arm]

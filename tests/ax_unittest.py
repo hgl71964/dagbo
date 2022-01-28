@@ -22,20 +22,12 @@ from dagbo.dag_gpytorch_model import DagGPyTorchModel
 from dagbo.fit_dag import fit_dag, fit_node_with_scipy, fit_node_with_adam
 
 from dagbo.other_opt.bo_utils import get_fitted_model, inner_loop
-from dagbo.utils.ax_experiment_utils import candidates_to_generator_run
+from dagbo.utils.ax_experiment_utils import candidates_to_generator_run, get_tensor_to_dict
+from dagbo.utils.perf_model_utils import build_perf_model_from_spec
 
 
 #class TREE_DAG(Dag, DagGPyTorchModel):
 class TREE_DAG(SO_Dag, DagGPyTorchModel):
-    """
-    creation a simple tree-like DAG
-
-    x1      x2        x3
-      \     /         |
-        z1           z2
-          \        /
-              y
-    """
     def __init__(self, train_input_names: list[str],
                  train_target_names: list[str], train_inputs: Tensor,
                  train_targets: Tensor, num_samples: int):
@@ -163,36 +155,51 @@ class test_basic_ax_apis(unittest.TestCase):
         print("done")
         print(self.exp.fetch_data().df)
 
-    @unittest.skip("not ready")
+    #@unittest.skip("not ready")
     def test_ax_with_dagbo(self):
+        """
+        dag:
+        x1      x2        x3
+          \     /         |
+            z1           z2
+              \        /
+                  y
+        """
 
-        train_input_names = ["x1", "x2", "x3"]
-        train_target_names = ["z1", "z2", "y"]
+        param_space = {
+                "x1": "continuous",
+                "x2": "continuous",
+                "x3": "continuous",
+                }
+        metric_space = {
+                "z1": "continuous",
+                "z2": "continuous",
+                }
+        obj_space = {"y": "continuous"}
+
+        edges = {
+                "x1": ["z1"],
+                "x2": ["z1"],
+                "x3": ["z2"],
+                "z1": ["y"],
+                "z2": ["y"],
+                }
         num_samples = 1024
 
-        # TODO create data according to the custom metric
-        # because of dag's definition, data are added manually
-        #train_inputs =
-        #train_targets =
-
-        #train_inputs = torch.linspace(0, 2, 7)
-        #func = lambda x: torch.sin(x * (8 * math.pi)) + torch.cos(x * (
-        #    3 * math.pi)) + torch.log(x + 0.1) + 3
-        ##func = lambda x: torch.sin(x * math.pi)
-
-        ## reshape
-        #train_targets = func(train_inputs).reshape(-1, 1).expand(
-        #    1, 7, 2)
-        #new_val = func(train_targets[..., -1].flatten()).reshape(1, 7, 1)
-        #train_targets = torch.cat([train_targets, new_val], dim=-1) # shape:[1, 7, 3]
-
-        #train_inputs = train_inputs.reshape(-1, 1).expand(1, 7,
-        #                                                  3)  # shape:[1, 7, 3]
-
-        dag = TREE_DAG(train_input_names, train_target_names,
-                                   train_inputs, train_targets, num_samples)
+        # TODO
+        train_inputs_dict = {}
+        train_targets_dict = {}
 
         for i in range(self.epoch):
+            # get model & get candidates
+            dag = build_perf_model_from_spec(train_inputs_dict,
+                               train_targets_dict,
+                               num_samples,
+                               param_space,
+                               metric_spacem,
+                               obj_space,
+                               edges,
+                               )
             fit_dag(dag)
             candidates = inner_loop(exp,
                                     dag,
@@ -208,6 +215,9 @@ class test_basic_ax_apis(unittest.TestCase):
                 trial = exp.new_batch_trial(generator_run=gen_run)
             trial.run()
             trial.mark_completed()
+
+            # append to dataset
+            train_inputs_dict, train_targets_dict = get_tensor_to_dict(exp, train_inputs_dict, train_targets_dict)
 
         print("done")
         print(exp.fetch_data().df)

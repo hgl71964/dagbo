@@ -6,11 +6,20 @@ from dagbo.dag_gpytorch_model import DagGPyTorchModel
 
 def build_perf_model_from_spec(train_inputs_dict: dict[str, Tensor],
                                train_targets_dict: dict[str, Tensor],
-                               num_samples: int, param_space: dict,
-                               metric_space: dict, obj_space: dict,
+                               num_samples: int, param_space: dict[str, str],
+                               metric_space: dict[str,
+                                                  str], obj_space: dict[str,
+                                                                        str],
                                edges: dict[str, list[str]]) -> Dag:
     """
-    Core utils func to build perf_dag from given spec
+    build perf_dag from given spec
+
+    Core Args:
+        param_space: key: param name - val: `categorical` or `continuous`
+        metric_space: key: metric name - val: no meaning
+        obj_space: key: obj name - val: no meaning
+        edges: key: node names - val: list of name this node point to
+            NOTE: edges are forward directions, i.e. from param_space -> metric_space -> obj_space
     """
     class perf_DAG(lazy_SO_Dag, DagGPyTorchModel):
         """dynamically define dag
