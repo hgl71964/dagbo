@@ -37,7 +37,7 @@ def build_input_by_topological_order(
         train_inputs_dict: dict[str, Tensor], train_targets_dict: dict[str,
                                                                        Tensor],
         param_space: dict, metric_space: dict, obj_space: dict,
-        node_order: list[str]) -> tuple(list[str], list[str], Tensor, Tensor):
+        node_order: list[str]) -> tuple[list[str], list[str], Tensor, Tensor]:
     """
     node names and their corresponding tensor must match
 

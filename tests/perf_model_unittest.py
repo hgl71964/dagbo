@@ -26,12 +26,13 @@ class perf_model_test(unittest.TestCase):
         A topological sort of a dag G = (V,E) is a linear ordering of all its vertices such that if G contains an edge (u,v),
             then u appears before v in the ordering.
         """
-        for key, val in self.edges.items():
-            for node in order:
-                if key == node:  # find key first, ok
-                    break
-                elif val == node:
-                    raise RuntimeError("not topological order")
+        for key in self.edges:
+            for val in self.edges[key]:
+                for node in order:
+                    if key == node:  # find key first, ok
+                        break
+                    elif val == node:
+                        raise RuntimeError("not topological order")
 
 
 if __name__ == "__main__":
