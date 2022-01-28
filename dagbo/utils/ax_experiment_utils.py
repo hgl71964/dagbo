@@ -6,12 +6,32 @@ from torch import Tensor
 from copy import deepcopy
 
 import ax
-from ax import SearchSpace, Experiment, OptimizationConfig, Runner, Objective
 from ax import ParameterType
-from ax.core.generator_run import GeneratorRun
+from ax.core.arm import Arm
 from ax.core.data import Data
+from ax.core.generator_run import GeneratorRun
+from ax import SearchSpace, Experiment, OptimizationConfig, Runner, Objective
 from ax.storage.json_store.load import load_experiment
 from ax.storage.json_store.save import save_experiment
+
+
+def candidates_to_generator_run(exp: Experiment, candidate: Tensor,
+                                params: list[str]) -> GeneratorRun:
+    """
+    Args:
+        candidate: [q, dim]
+    """
+    n = exp.num_trials
+    q = candidate.shape[0]
+    arms = []
+    for i in range(q):
+        p = {}
+        for j, name in enumerate(params):
+            p[name] = float(candidate[
+                i,
+                j])  # need to convert back to python type, XXX not support int
+        arms.append(Arm(parameters=p, name=f"{n}_{i}"))
+    return GeneratorRun(arms=arms)
 
 
 def get_tensor(exp: Experiment, params: list[str]) -> tuple[Tensor, Tensor]:

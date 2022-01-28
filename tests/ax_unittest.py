@@ -21,7 +21,9 @@ from dagbo.dag import Dag, SO_Dag
 from dagbo.models.sample_average_posterior import SampleAveragePosterior
 from dagbo.dag_gpytorch_model import DagGPyTorchModel
 from dagbo.fit_dag import fit_dag, fit_node_with_scipy, fit_node_with_adam
-from dagbo.other_opt.bo_utils import get_fitted_model, inner_loop, candidates_to_generator_run
+
+from dagbo.other_opt.bo_utils import get_fitted_model, inner_loop
+from dagbo.utils.ax_experiment_utils import candidates_to_generator_run
 
 
 #class TREE_DAG(Dag, DagGPyTorchModel):

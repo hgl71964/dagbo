@@ -16,8 +16,8 @@ from ax.storage.runner_registry import register_runner
 import botorch
 from botorch.models import SingleTaskGP
 
-from dagbo.other_opt.bo_utils import get_fitted_model, inner_loop, candidates_to_generator_run
-from dagbo.utils.ax_experiment_utlis import (
+from dagbo.other_opt.bo_utils import get_fitted_model, inner_loop
+from dagbo.utils.ax_experiment_utils import (candidates_to_generator_run,
                                              print_experiment_result,
                                              load_exp)
 """
