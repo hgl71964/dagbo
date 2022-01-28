@@ -202,7 +202,7 @@ class test_basic_ax_apis(unittest.TestCase):
 
 
 
-class test_dag_ax_apis(unittest.TestCase):
+class test_dag_with_ax_apis(unittest.TestCase):
     def setUp(self):
         #
         """--- bo ---"""
@@ -227,10 +227,11 @@ class test_dag_ax_apis(unittest.TestCase):
             "z2",
             "y",
         ]
+        self.param_names = ["x1", "x2", "x3", "z1", "z2", "y"]
         batch_size = 1
         num_samples = 1024
 
-        # create data TODO
+        # create data
         train_inputs = torch.linspace(0, 2, 7)
         func = lambda x: torch.sin(x * (8 * math.pi)) + torch.cos(x * (
             3 * math.pi)) + torch.log(x + 0.1) + 3
