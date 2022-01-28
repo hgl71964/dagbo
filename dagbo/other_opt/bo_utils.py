@@ -2,14 +2,11 @@ import botorch
 import gpytorch
 from torch import Tensor
 from botorch.models import SingleTaskGP
-
-from ax import SearchSpace, Experiment, OptimizationConfig, Runner, Objective
+from ax import Experiment
 
 from dagbo.other_opt.model_factory import make_gps, fit_gpr
 from dagbo.other_opt.acq_func_factory import opt_acq_func
-from dagbo.utils.ax_experiment_utils import (get_tensor, get_bounds,
-                                             print_experiment_result, save_exp,
-                                             load_exp)
+from dagbo.utils.ax_experiment_utils import get_tensor, get_bounds
 
 
 def get_fitted_model(exp: Experiment, params: list[str]) -> SingleTaskGP:

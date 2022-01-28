@@ -18,7 +18,6 @@ from ax import RangeParameter, ChoiceParameter, ParameterType, \
 from ax.modelbridge.registry import Models
 
 from dagbo.dag import Dag, SO_Dag
-from dagbo.models.sample_average_posterior import SampleAveragePosterior
 from dagbo.dag_gpytorch_model import DagGPyTorchModel
 from dagbo.fit_dag import fit_dag, fit_node_with_scipy, fit_node_with_adam
 

@@ -1,3 +1,5 @@
+from typing import Union
+
 import botorch
 import gpytorch
 from torch import Tensor
@@ -6,9 +8,11 @@ from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.sampling.samplers import MCSampler
 from botorch.sampling.samplers import SobolQMCNormalSampler
 
+from dagbo.dag import Dag
 
-def opt_acq_func(model: SingleTaskGP, acq_name: str, bounds: Tensor,
-                 acq_func_config: dict) -> Tensor:
+
+def opt_acq_func(model: Union[SingleTaskGP, Dag], acq_name: str,
+                 bounds: Tensor, acq_func_config: dict) -> Tensor:
 
     sampler = make_sampler(acq_func_config)
     acq_func = make_acq_func(model, acq_name, sampler, acq_func_config)
@@ -30,7 +34,7 @@ def make_acq_func(model: SingleTaskGP, acq_name: str, sampler: MCSampler,
     if acq_name == "qKG":
         acq = botorch.acquisition.qKnowledgeGradient(
             model=model,
-            num_fantasies=128,
+            num_fantasies=acq_func_config.get("num_fantasies", 128),
             sampler=sampler,
             objective=None,
         )
@@ -69,4 +73,4 @@ def make_acq_func(model: SingleTaskGP, acq_name: str, sampler: MCSampler,
 def make_sampler(acq_func_config: dict) -> MCSampler:
     """SBO should always use quasi-MC sampler"""
     return SobolQMCNormalSampler(num_samples=acq_func_config["num_samples"],
-                                 seed=1234)
+                                 seed=acq_func_config.get("seed", 1234))
