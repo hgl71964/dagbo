@@ -27,9 +27,8 @@ def candidates_to_generator_run(exp: Experiment, candidate: Tensor,
     for i in range(q):
         p = {}
         for j, name in enumerate(params):
-            p[name] = float(candidate[
-                i,
-                j])  # need to convert back to python type, XXX not support int
+            # need to convert back to python type, XXX not support int
+            p[name] = float(candidate[i, j])
         arms.append(Arm(parameters=p, name=f"{n}_{i}"))
     return GeneratorRun(arms=arms)
 

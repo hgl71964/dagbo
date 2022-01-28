@@ -12,8 +12,7 @@ from dagbo.utils.ax_experiment_utils import get_tensor, get_bounds
 
 
 def get_fitted_model(exp: Experiment, params: list[str]) -> SingleTaskGP:
-    """instantiate and fit a gp"""
-
+    """ `freshly` instantiate and fit a gp"""
     x, y = get_tensor(exp, params)
     gpr = make_gps(x=x, y=y, gp_name="MA")
     fit_gpr(gpr)

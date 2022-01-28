@@ -63,7 +63,7 @@ class CustomMetric(Metric):
             records.append({
                 "arm_name": arm_name,
                 "metric_name": self.name,
-                "mean": params["x1"] + params["x2"],
+                "mean": params["x1"] + params["x2"] - params["x3"],
                 "sem": 0,  # 0 for noiseless experiment
                 "trial_index": trial.index,
             })
@@ -94,15 +94,12 @@ class test_basic_ax_apis(unittest.TestCase):
         #
         """--- set up Ax ---"""
         # parameter space
-        self.param_names = ["x1", "x2", "x3", "z1", "z2", "y"]
-        x1 = RangeParameter("x1", ParameterType.FLOAT, lower=-1, upper=1)
-        x2 = RangeParameter("x2", ParameterType.FLOAT, lower=-1, upper=1)
-        x3 = RangeParameter("x3", ParameterType.FLOAT, lower=-1, upper=1)
-        z1 = RangeParameter("z1", ParameterType.FLOAT, lower=-1, upper=1)
-        z2 = RangeParameter("z2", ParameterType.FLOAT, lower=-1, upper=1)
-        y = RangeParameter("y", ParameterType.FLOAT, lower=-1, upper=1)
-        parameters = [x1, x2, x3, z1, z2, y]
-        self.search_space = SearchSpace(parameters)
+        #self.param_names = ["x1", "x2", "x3", "z1", "z2", "y"]
+        self.param_names = ["x1", "x2", "x3"]
+        self.search_space = SearchSpace([RangeParameter("x1", ParameterType.FLOAT, lower=-1, upper=1),
+            RangeParameter("x2", ParameterType.FLOAT, lower=-1, upper=1),
+            RangeParameter("x3", ParameterType.FLOAT, lower=-1, upper=1),
+            ])
 
         # opt config
         self.optimization_config = OptimizationConfig(
@@ -134,44 +131,49 @@ class test_basic_ax_apis(unittest.TestCase):
             # Reinitialize GP+EI model at each step with updated data.
             gpei = Models.BOTORCH(experiment=self.exp, data=self.exp.fetch_data())
             generator_run = gpei.gen(n=1)
-            trial = exp.new_trial(generator_run=generator_run)
+            trial = self.exp.new_trial(generator_run=generator_run)
             trial.run()
             trial.mark_completed()
+
         print("done")
-        print(exp.fetch_data().df)
+        print(self.exp.fetch_data().df)
         # to impl a ax model see: https://ax.dev/versions/0.1.3/api/modelbridge.html#model-bridges
 
     def test_ax_with_custom_bo(self):
         # run custom-BO
         for i in range(self.epoch):
+
+            # get model & get candidates
             model = get_fitted_model(self.exp, self.param_names)
             candidates = inner_loop(self.exp,
                                     model,
                                     self.param_names,
                                     acq_name="qUCB",
                                     acq_func_config=self.acq_func_config)
-            gen_run = candidates_to_generator_run(exp, candidates, self.param_names)
-            """ax APIs"""
+            gen_run = candidates_to_generator_run(self.exp, candidates, self.param_names)
+
+            # apply to system & append to dataset
             if self.acq_func_config["q"] == 1:
-                trial = exp.new_trial(generator_run=gen_run)
+                trial = self.exp.new_trial(generator_run=gen_run)
             else:
-                trial = exp.new_batch_trial(generator_run=gen_run)
+                trial = self.exp.new_batch_trial(generator_run=gen_run)
             trial.run()
             trial.mark_completed()
 
         print("done")
-        print(exp.fetch_data().df)
+        print(self.exp.fetch_data().df)
 
+    @unittest.skip("not ready")
     def test_ax_with_dagbo(self):
 
-        train_input_names = [ "x1", "x2", "x3"]
-        train_target_names = [ "z1", "z2", "y"]
+        train_input_names = ["x1", "x2", "x3"]
+        train_target_names = ["z1", "z2", "y"]
         num_samples = 1024
 
         # TODO create data according to the custom metric
-        # create data
-        train_inputs =
-        train_targets =
+        # because of dag's definition, data are added manually
+        #train_inputs =
+        #train_targets =
 
         #train_inputs = torch.linspace(0, 2, 7)
         #func = lambda x: torch.sin(x * (8 * math.pi)) + torch.cos(x * (
@@ -282,6 +284,7 @@ class test_dag_with_ax_apis(unittest.TestCase):
         self.optimization_config = OptimizationConfig(
             Objective(metric=CustomMetric(name="custom_obj"), minimize=False))
 
+    @unittest.skip("runnable")
     def test_dag_bayes_loop(self):
         """
         the result is not meanful, just to test if it can run
