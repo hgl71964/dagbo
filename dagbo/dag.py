@@ -82,17 +82,9 @@ class Dag(Module):
         self.registered_input_names = []
         self.registered_target_names = []
         self.define_dag(batch_shape)
-        self._error_unused_inputs()
-        self._error_unspecified_outputs()
 
         # tensor dtype and device conversion
         self.to(train_inputs)
-
-        # NOTE: at this point registered_input_names = input_names and so target_names,
-        # so del to avoid confusion
-        # registered_target is how users actually register, so its order is respected
-        # to generate a dynamic task graph, we might consider traverse the graph to ensure topological order
-        del self.input_names, self.target_names
 
     """
     -------------- materialise DAG --------------
@@ -250,30 +242,6 @@ class Dag(Module):
             raise NameError(
                 str(unregisted_inputs) + " defined as input to " +
                 output_name + " before being registered.")
-
-    def _error_unspecified_outputs(self):
-        if len(set(self.registered_target_names)) != len(
-                self.registered_target_names):
-            raise RuntimeError("registered_target_names has duplicated name")
-
-        unspecified_outputs = set(self.target_names).difference(
-            self.registered_target_names)
-        if unspecified_outputs:
-            raise RuntimeError(
-                "All train_targets_names must be specified in DAG model, but "
-                + str(unspecified_outputs) + " are not.")
-
-    def _error_unused_inputs(self):
-        if len(set(self.registered_input_names)) != len(
-                self.registered_input_names):
-            raise RuntimeError("registered_input_names has duplicated name")
-
-        missing_fields = set(self.input_names).difference(
-            self.registered_input_names)
-        if missing_fields:
-            raise RuntimeError(
-                str(missing_fields) +
-                " defined in train_input_names but not used in DAG.")
 
     def _check_valid_input(self, train_input_names: list[str],
                            train_target_names: list[str], train_inputs: Tensor,

@@ -1,32 +1,40 @@
 import torch
 from torch import Tensor
 from dagbo.dag import lazy_SO_Dag, Dag
+from dagbo.dag_gpytorch_model import DagGPyTorchModel
 
 
-def build_perf_model_from_text(train_inputs_dict: dict[str, Tensor],
+def build_perf_model_from_spec(train_inputs_dict: dict[str, Tensor],
                                train_targets_dict: dict[str, Tensor],
                                num_samples: int, param_space: dict,
                                metric_space: dict, obj_space: dict,
                                edges: dict[str, list[str]]) -> Dag:
+    class perf_DAG(lazy_SO_Dag, DagGPyTorchModel):
+        """dynamically define dag
+        """
+        def __init__(self, train_input_names: list[str],
+                     train_target_names: list[str], train_inputs: Tensor,
+                     train_targets: Tensor, num_samples: int):
+            super().__init__(train_input_names, train_target_names,
+                             train_inputs, train_targets)
+            self.num_samples = num_samples
 
     # build
+    reversed_edge = find_inverse_edges(edges)
     node_order = get_dag_topological_order(obj_space, edges)
     train_input_names, train_target_names, train_inputs, train_targets = build_input_by_topological_order(
         train_inputs_dict, train_targets_dict, param_space, metric_space,
         obj_space, node_order)
+    dag = perf_DAG(train_input_names, train_target_names, train_inputs,
+                   train_targets, num_samples)
 
-    dag = lazy_SO_Dag(train_input_names, train_target_names, train_inputs,
-                      train_targets, num_samples)
-
-    # register nodes, must register in topological order
+    # register nodes, MUST register in topological order
     # input space, TODO address for categorical variable in the future
-    # TODO
     for node in node_order:
         if node in param_space:
             dag.register_input(node)
         elif node in metric_space or node in obj_space:
-            #dag.register_metric(node, [??])
-            pass
+            dag.register_metric(node, [i for i in reversed_edge[node]])
         else:
             raise RuntimeError("unknown node")
 

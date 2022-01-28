@@ -19,6 +19,7 @@ import botorch
 from botorch.models import SingleTaskGP
 
 from dagbo.interface.parse_performance_model import parse_model
+from dagbo.utils.perf_model_utlis import build_perf_model_from_spec
 
 """
 run the whole spark feedback loop
@@ -44,6 +45,20 @@ def main(_):
     param_space, metric_space, obj_space, edges = parse_model(FLAGS.performance_model_path)
     print(param_space)
     print(edges)
+
+    # make fake input tensor
+    train_inputs_dict = {i: torch.rand(acq_func_config["q"]) for i in list(param_space.keys())}
+    train_targets_dict = {i: torch.rand(acq_func_config["q"]) for i in list(metric_space.keys()) + list(obj_space.keys())}
+
+    # build
+    dag = build_perf_model_from_spec(train_inputs_dict,
+                               train_targets_dict,
+                               acq_func_config["num_samples"],
+                               param_space,
+                               metric_space,
+                               obj_space,
+                               edges)
+    print(dag)
 
 
 
