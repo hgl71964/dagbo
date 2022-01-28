@@ -106,40 +106,5 @@ class MyRunner(Runner):
         return trial_metadata
 
 
-def get_fitted_model(exp: Experiment, params: list) -> SingleTaskGP:
-    """instantiate and fit a gp"""
-
-    x, y = get_tensor(exp, params)
-    gpr = make_gps(x=x, y=y, gp_name="MA")
-    fit_gpr(gpr)
-    return gpr
-
-
-def inner_loop(exp: Experiment, model: SingleTaskGP, params: list,
-               acq_name: str, acq_func_config: dict) -> Tensor:
-    """acquisition function optimisation"""
-    bounds = get_bounds(exp, params)
-    return opt_acq_func(model, acq_name, bounds, acq_func_config)
-
-
-def candidates_to_generator_run(exp: Experiment, candidate: Tensor,
-                                params: list) -> GeneratorRun:
-    """
-    Args:
-        candidate: [q, dim]
-    """
-    n = exp.num_trials
-    q = candidate.shape[0]
-    arms = []
-    for i in range(q):
-        p = {}
-        for j, name in enumerate(params):
-            p[name] = float(candidate[
-                i,
-                j])  # need to convert back to python type, XXX not support int
-        arms.append(Arm(parameters=p, name=f"{n}_{i}"))
-    return GeneratorRun(arms=arms)
-
-
 if __name__ == "__main__":
     app.run(main)

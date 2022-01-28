@@ -9,6 +9,9 @@ def build_perf_model_from_spec(train_inputs_dict: dict[str, Tensor],
                                num_samples: int, param_space: dict,
                                metric_space: dict, obj_space: dict,
                                edges: dict[str, list[str]]) -> Dag:
+    """
+    Core utils func to build perf_dag from given spec
+    """
     class perf_DAG(lazy_SO_Dag, DagGPyTorchModel):
         """dynamically define dag
         """

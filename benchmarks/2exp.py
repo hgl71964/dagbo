@@ -8,8 +8,6 @@ from torch import Tensor
 
 import ax
 from ax import SearchSpace, Experiment, OptimizationConfig, Runner, Objective
-from ax.core.arm import Arm
-from ax.core.generator_run import GeneratorRun
 from ax.metrics.hartmann6 import Hartmann6Metric
 from ax.modelbridge.registry import Models
 from ax.storage.metric_registry import register_metric
@@ -18,13 +16,13 @@ from ax.storage.runner_registry import register_runner
 import botorch
 from botorch.models import SingleTaskGP
 
-from dagbo.other_opt.model_factory import make_gps, fit_gpr
-from dagbo.other_opt.acq_func_factory import opt_acq_func
-from dagbo.utils.ax_experiment_utlis import (get_tensor, get_bounds,
-                                             print_experiment_result, save_exp,
+from dagbo.other_opt.bo_utils import get_fitted_model, inner_loop, candidates_to_generator_run
+from dagbo.utils.ax_experiment_utlis import (
+                                             print_experiment_result,
                                              load_exp)
-
-from basic_exp import get_fitted_model, inner_loop, candidates_to_generator_run
+"""
+demonstration of resuming from saved experiments
+"""
 
 FLAGS = flags.FLAGS
 

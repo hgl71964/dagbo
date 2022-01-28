@@ -17,16 +17,11 @@ from ax import RangeParameter, ChoiceParameter, ParameterType, \
     SearchSpace, Experiment, OptimizationConfig, Objective, Metric
 from ax.modelbridge.registry import Models
 
-# hacky way to include the src code dir
-#testdir = os.path.dirname(__file__)
-#srcdir = "../src"
-#sys.path.insert(0, os.path.abspath(os.path.join(testdir, srcdir)))
-
-# import from src
 from dagbo.dag import Dag, SO_Dag
-from dagbo.sample_average_posterior import SampleAveragePosterior
+from dagbo.models.sample_average_posterior import SampleAveragePosterior
 from dagbo.dag_gpytorch_model import DagGPyTorchModel
 from dagbo.fit_dag import fit_dag, fit_node_with_scipy, fit_node_with_adam
+from dagbo.other_opt.bo_utils import get_fitted_model, inner_loop, candidates_to_generator_run
 
 
 #class TREE_DAG(Dag, DagGPyTorchModel):
@@ -101,9 +96,127 @@ class dummy_runner(ax.Runner):
         return trial_metadata
 
 
-class ax_api_test(unittest.TestCase):
+class test_basic_ax_apis(unittest.TestCase):
     def setUp(self):
-        """--- data generation ---"""
+        #
+        """--- bo ---"""
+        self.acq_func_config = {
+            "q": 2,
+            "num_restarts": 48,
+            "raw_samples": 128,
+            "num_samples": 2048,
+            "y_max": torch.tensor([1.]),  # for EI
+            "beta": 1,
+        }
+
+        #
+        """--- set up Ax ---"""
+        # parameter space
+        self.param_names = ["x1", "x2", "x3", "z1", "z2", "y"]
+        x1 = RangeParameter("x1", ParameterType.FLOAT, lower=-1, upper=1)
+        x2 = RangeParameter("x2", ParameterType.FLOAT, lower=-1, upper=1)
+        x3 = RangeParameter("x3", ParameterType.FLOAT, lower=-1, upper=1)
+        z1 = RangeParameter("z1", ParameterType.FLOAT, lower=-1, upper=1)
+        z2 = RangeParameter("z2", ParameterType.FLOAT, lower=-1, upper=1)
+        y = RangeParameter("y", ParameterType.FLOAT, lower=-1, upper=1)
+        parameters = [x1, x2, x3, z1, z2, y]
+        self.search_space = SearchSpace(parameters)
+
+        # opt config
+        self.optimization_config = OptimizationConfig(
+            Objective(metric=CustomMetric(name="custom_obj"), minimize=False))
+
+    def tearDown(self):
+        # gc
+        pass
+
+    #@unittest.skip("ok")
+    def test_ax_experiment_custom_metric(self):
+        print("test ax custom metric")
+        # experiment
+        exp = Experiment(name="test_exp",
+                         search_space=self.search_space,
+                         optimization_config=self.optimization_config,
+                         runner=dummy_runner())
+
+        # BOOTSTRAP EVALUATIONS
+        num_bootstrap = 2
+        sobol = Models.SOBOL(exp.search_space)
+        generated_run = sobol.gen(num_bootstrap)
+        print("gen")
+        print(generated_run)
+        trial = exp.new_batch_trial(generator_run=generated_run)
+        trial.run()
+        trial.mark_completed()
+
+        # run ax-BO
+        epochs = 3
+        for i in range(epochs):
+            # Reinitialize GP+EI model at each step with updated data.
+            gpei = Models.BOTORCH(experiment=exp, data=exp.fetch_data())
+            generator_run = gpei.gen(n=1)
+            trial = exp.new_trial(generator_run=generator_run)
+            trial.run()
+            trial.mark_completed()
+        print("done")
+        print(exp.fetch_data().df)
+        # to impl a ax model see: https://ax.dev/versions/0.1.3/api/modelbridge.html#model-bridges
+
+    def test_ax_with_custom_bo(self):
+        # experiment
+        exp = Experiment(name="test_exp",
+                         search_space=self.search_space,
+                         optimization_config=self.optimization_config,
+                         runner=dummy_runner())
+
+        # BOOTSTRAP EVALUATIONS
+        num_bootstrap = 2
+        sobol = Models.SOBOL(exp.search_space)
+        generated_run = sobol.gen(num_bootstrap)
+        print("gen")
+        print(generated_run)
+        trial = exp.new_batch_trial(generator_run=generated_run)
+        trial.run()
+        trial.mark_completed()
+
+        # run custom-BO
+        epochs = 3
+        for i in range(epochs):
+            model = get_fitted_model(exp, self.param_names)
+            candidates = inner_loop(exp,
+                                    model,
+                                    self.param_names,
+                                    acq_name="qUCB",
+                                    acq_func_config=self.acq_func_config)
+            gen_run = candidates_to_generator_run(exp, candidates, self.param_names)
+            """ax APIs"""
+            if self.acq_func_config["q"] == 1:
+                trial = exp.new_trial(generator_run=gen_run)
+            else:
+                trial = exp.new_batch_trial(generator_run=gen_run)
+            trial.run()
+            trial.mark_completed()
+
+        print("done")
+        print(exp.fetch_data().df)
+
+
+
+class test_dag_ax_apis(unittest.TestCase):
+    def setUp(self):
+        #
+        """--- bo ---"""
+        self.acq_func_config = {
+            "q": 2,
+            "num_restarts": 48,
+            "raw_samples": 128,
+            "num_samples": 2048,
+            "y_max": torch.tensor([1.]),  # for EI
+            "beta": 1,
+        }
+
+        #
+        """--- dag ---"""
         train_input_names = [
             "x1",
             "x2",
@@ -125,17 +238,18 @@ class ax_api_test(unittest.TestCase):
 
         # reshape
         train_targets = func(train_inputs).reshape(-1, 1).expand(
-            1, 7, 2)  # shape:[1, 7, 3]
+            1, 7, 2)
         new_val = func(train_targets[..., -1].flatten()).reshape(1, 7, 1)
-        train_targets = torch.cat([train_targets, new_val], dim=-1)
+        train_targets = torch.cat([train_targets, new_val], dim=-1) # shape:[1, 7, 3]
 
         train_inputs = train_inputs.reshape(-1, 1).expand(1, 7,
                                                           3)  # shape:[1, 7, 3]
-        """--- generate DAG ---"""
         self.func = func
         self.batch_size = batch_size
         self.num_samples = num_samples
         self.domain = (0, 2)
+
+        #
         """--- set up Ax ---"""
         # parameter space
         x1 = RangeParameter("x1", ParameterType.FLOAT, lower=-1, upper=1)
@@ -151,41 +265,9 @@ class ax_api_test(unittest.TestCase):
         self.optimization_config = OptimizationConfig(
             Objective(metric=CustomMetric(name="custom_obj"), minimize=False))
 
-    def tearDown(self):
-        # gc
-        pass
-
-    def test_ax_apis(self):
-        # experiment
-        exp = Experiment(name="test_exp",
-                         search_space=self.search_space,
-                         optimization_config=self.optimization_config,
-                         runner=dummy_runner())
-
-        # BOOTSTRAP EVALUATIONS
-        num_bootstrap = 2
-        sobol = Models.SOBOL(exp.search_space)
-        generated_run = sobol.gen(num_bootstrap)
-        print("gen")
-        print(generated_run)
-        trial = exp.new_batch_trial(generator_run=generated_run)
-        trial.run()
-        trial.mark_completed()
-
-        # run BO
-        epochs = 3
-        for i in range(epochs):
-            # Reinitialize GP+EI model at each step with updated data.
-            gpei = Models.BOTORCH(experiment=exp, data=exp.fetch_data())
-            generator_run = gpei.gen(n=1)
-            trial = exp.new_trial(generator_run=generator_run)
-            trial.run()
-            trial.mark_completed()
-        print("done")
-        print(exp.fetch_data().df)
-        # to impl a ax model see: https://ax.dev/versions/0.1.3/api/modelbridge.html#model-bridges
-
     def test_dag_bayes_loop(self):
+        print("test tree dag bayes loop")
+
         # experiment
         exp = Experiment(name="test_exp",
                          search_space=self.search_space,
@@ -199,17 +281,13 @@ class ax_api_test(unittest.TestCase):
         trial.run()
         trial.mark_completed()
 
-        # BO
+        print("start bo:")
         epochs = 3
         for i in range(epochs):
-            model = TODO
-            generator_run = TODO
-            trial = exp.new_trial(generator_run=generator_run)
-            trial.run()
-            trial.mark_completed()
+            # TODO
+            pass
         print("done")
         print(exp.fetch_data().df)
-
 
 if __name__ == '__main__':
 

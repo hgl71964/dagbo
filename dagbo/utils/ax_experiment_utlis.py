@@ -14,7 +14,7 @@ from ax.storage.json_store.load import load_experiment
 from ax.storage.json_store.save import save_experiment
 
 
-def get_tensor(exp: Experiment, params: list) -> tuple[Tensor, Tensor]:
+def get_tensor(exp: Experiment, params: list[str]) -> tuple[Tensor, Tensor]:
     """convert data from experiment to tensor
     single objective ONLY
 
@@ -41,7 +41,7 @@ def get_tensor(exp: Experiment, params: list) -> tuple[Tensor, Tensor]:
                 torch.tensor(exp.fetch_data().df["mean"], dtype=torch.float32).reshape(-1, 1)
 
 
-def get_bounds(exp: Experiment, params: list) -> Tensor:
+def get_bounds(exp: Experiment, params: list[str]) -> Tensor:
     """get bounds for each parameters"""
     bounds = []
     for p in params:
