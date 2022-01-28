@@ -1,5 +1,5 @@
 import  unittest
-from dagbo.utils.perf_model_utlis import *
+from dagbo.utils.perf_model_utils import *
 from dagbo.interface.parse_performance_model import parse_model
 from dagbo.interface.metrics_extractor import request_history_server
 
