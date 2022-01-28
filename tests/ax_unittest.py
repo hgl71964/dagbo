@@ -55,24 +55,6 @@ class TREE_DAG(SO_Dag, DagGPyTorchModel):
 
         y = self.register_metric("y", [z_1, z_2])
 
-
-def init_and_fit(train_input_names: list[str], train_target_names: list[str],
-                 train_inputs: Tensor, train_targets: Tensor,
-                 num_samples: int) -> TREE_DAG:
-    """instantiate tree_dag from data and fit
-    TODO
-    """
-    return None
-
-
-def model_to_generator_run():
-    """
-    model's suggestion -> Arm -> Generator run
-    TODO
-    """
-    return
-
-
 class CustomMetric(Metric):
     def fetch_trial_data(self, trial, **kwargs):
         records = []
@@ -86,7 +68,6 @@ class CustomMetric(Metric):
                 "trial_index": trial.index,
             })
         return ax.core.data.Data(df=pd.DataFrame.from_records(records))
-
 
 class dummy_runner(ax.Runner):
     """control how experiment is deployed, i.e. locally or dispatch to external system
@@ -127,34 +108,31 @@ class test_basic_ax_apis(unittest.TestCase):
         self.optimization_config = OptimizationConfig(
             Objective(metric=CustomMetric(name="custom_obj"), minimize=False))
 
-    def tearDown(self):
-        # gc
-        pass
-
-    #@unittest.skip("ok")
-    def test_ax_experiment_custom_metric(self):
-        print("test ax custom metric")
         # experiment
-        exp = Experiment(name="test_exp",
+        self.exp = Experiment(name="test_exp",
                          search_space=self.search_space,
                          optimization_config=self.optimization_config,
                          runner=dummy_runner())
 
         # BOOTSTRAP EVALUATIONS
         num_bootstrap = 2
-        sobol = Models.SOBOL(exp.search_space)
+        sobol = Models.SOBOL(self.exp.search_space)
         generated_run = sobol.gen(num_bootstrap)
-        print("gen")
-        print(generated_run)
-        trial = exp.new_batch_trial(generator_run=generated_run)
+        trial = self.exp.new_batch_trial(generator_run=generated_run)
         trial.run()
         trial.mark_completed()
 
+        self.epoch = 3
+
+    def tearDown(self):
+        # gc
+        pass
+
+    def test_ax_experiment_custom_metric(self):
         # run ax-BO
-        epochs = 3
-        for i in range(epochs):
+        for i in range(self.epoch):
             # Reinitialize GP+EI model at each step with updated data.
-            gpei = Models.BOTORCH(experiment=exp, data=exp.fetch_data())
+            gpei = Models.BOTORCH(experiment=self.exp, data=self.exp.fetch_data())
             generator_run = gpei.gen(n=1)
             trial = exp.new_trial(generator_run=generator_run)
             trial.run()
@@ -164,27 +142,10 @@ class test_basic_ax_apis(unittest.TestCase):
         # to impl a ax model see: https://ax.dev/versions/0.1.3/api/modelbridge.html#model-bridges
 
     def test_ax_with_custom_bo(self):
-        # experiment
-        exp = Experiment(name="test_exp",
-                         search_space=self.search_space,
-                         optimization_config=self.optimization_config,
-                         runner=dummy_runner())
-
-        # BOOTSTRAP EVALUATIONS
-        num_bootstrap = 2
-        sobol = Models.SOBOL(exp.search_space)
-        generated_run = sobol.gen(num_bootstrap)
-        print("gen")
-        print(generated_run)
-        trial = exp.new_batch_trial(generator_run=generated_run)
-        trial.run()
-        trial.mark_completed()
-
         # run custom-BO
-        epochs = 3
-        for i in range(epochs):
-            model = get_fitted_model(exp, self.param_names)
-            candidates = inner_loop(exp,
+        for i in range(self.epoch):
+            model = get_fitted_model(self.exp, self.param_names)
+            candidates = inner_loop(self.exp,
                                     model,
                                     self.param_names,
                                     acq_name="qUCB",
@@ -201,9 +162,60 @@ class test_basic_ax_apis(unittest.TestCase):
         print("done")
         print(exp.fetch_data().df)
 
+    def test_ax_with_dagbo(self):
+
+        train_input_names = [ "x1", "x2", "x3"]
+        train_target_names = [ "z1", "z2", "y"]
+        num_samples = 1024
+
+        # TODO create data according to the custom metric
+        # create data
+        train_inputs =
+        train_targets =
+
+        #train_inputs = torch.linspace(0, 2, 7)
+        #func = lambda x: torch.sin(x * (8 * math.pi)) + torch.cos(x * (
+        #    3 * math.pi)) + torch.log(x + 0.1) + 3
+        ##func = lambda x: torch.sin(x * math.pi)
+
+        ## reshape
+        #train_targets = func(train_inputs).reshape(-1, 1).expand(
+        #    1, 7, 2)
+        #new_val = func(train_targets[..., -1].flatten()).reshape(1, 7, 1)
+        #train_targets = torch.cat([train_targets, new_val], dim=-1) # shape:[1, 7, 3]
+
+        #train_inputs = train_inputs.reshape(-1, 1).expand(1, 7,
+        #                                                  3)  # shape:[1, 7, 3]
+
+        dag = TREE_DAG(train_input_names, train_target_names,
+                                   train_inputs, train_targets, num_samples)
+
+        for i in range(self.epoch):
+            fit_dag(dag)
+            candidates = inner_loop(exp,
+                                    dag,
+                                    self.param_names,
+                                    acq_name="qUCB",
+                                    acq_func_config=self.acq_func_config)
+            gen_run = candidates_to_generator_run(exp, candidates, self.param_names)
+
+            # run
+            if self.acq_func_config["q"] == 1:
+                trial = exp.new_trial(generator_run=gen_run)
+            else:
+                trial = exp.new_batch_trial(generator_run=gen_run)
+            trial.run()
+            trial.mark_completed()
+
+        print("done")
+        print(exp.fetch_data().df)
 
 
 class test_dag_with_ax_apis(unittest.TestCase):
+    """
+    this just to test if dagbo can run,
+        but its result is NOT comparable with others, because it uses fake data point
+    """
     def setUp(self):
         #
         """--- bo ---"""
@@ -251,6 +263,9 @@ class test_dag_with_ax_apis(unittest.TestCase):
         self.num_samples = num_samples
         self.domain = (0, 2)
 
+        self.dag = TREE_DAG(train_input_names, train_target_names,
+                                   train_inputs, train_targets, num_samples)
+
         #
         """--- set up Ax ---"""
         # parameter space
@@ -268,7 +283,9 @@ class test_dag_with_ax_apis(unittest.TestCase):
             Objective(metric=CustomMetric(name="custom_obj"), minimize=False))
 
     def test_dag_bayes_loop(self):
-        print("test tree dag bayes loop")
+        """
+        the result is not meanful, just to test if it can run
+        """
 
         # experiment
         exp = Experiment(name="test_exp",
@@ -283,11 +300,23 @@ class test_dag_with_ax_apis(unittest.TestCase):
         trial.run()
         trial.mark_completed()
 
-        print("start bo:")
-        epochs = 3
-        for i in range(epochs):
-            # TODO
-            pass
+        for i in range(3):
+            fit_dag(self.dag)
+            candidates = inner_loop(exp,
+                                    self.dag,
+                                    self.param_names,
+                                    acq_name="qUCB",
+                                    acq_func_config=self.acq_func_config)
+            gen_run = candidates_to_generator_run(exp, candidates, self.param_names)
+
+            # run
+            if self.acq_func_config["q"] == 1:
+                trial = exp.new_trial(generator_run=gen_run)
+            else:
+                trial = exp.new_batch_trial(generator_run=gen_run)
+            trial.run()
+            trial.mark_completed()
+
         print("done")
         print(exp.fetch_data().df)
 

@@ -7,6 +7,7 @@ from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikeliho
 from botorch.fit import fit_gpytorch_model
 from botorch.optim.fit import fit_gpytorch_torch
 from botorch.sampling.samplers import SobolQMCNormalSampler
+from ax import Experiment
 
 from dagbo.other_opt.acq_func_factory import make_acq_func
 from .models.node import Node
@@ -159,11 +160,3 @@ def fit_dag(dag_model: Dag,
         # fit
         kwargs["verbose"] = verbose
         node_optimizer(node, **kwargs)
-
-
-def dag_inner_loop(exp: Experiment, model: Dag, params: list[str],
-                   acq_name: str, acq_func_config: dict):
-    """Perform the inner loop, DAG MUST be fitted
-    """
-    bounds = get_bounds(exp, params)
-    return opt_acq_func(model, acq_name, bounds, acq_func_config)
