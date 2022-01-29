@@ -22,8 +22,8 @@ from dagbo.dag_gpytorch_model import DagGPyTorchModel
 from dagbo.fit_dag import fit_dag, fit_node_with_scipy, fit_node_with_adam
 
 from dagbo.other_opt.bo_utils import get_fitted_model, inner_loop
-from dagbo.utils.ax_experiment_utils import candidates_to_generator_run
-from dagbo.utils.perf_model_utils import build_perf_model_from_spec, input_dict_from_ax_experiment
+from dagbo.utils.ax_experiment_utils import candidates_to_generator_run, get_dict_tensor
+from dagbo.utils.perf_model_utils import build_perf_model_from_spec
 
 
 #class TREE_DAG(Dag, DagGPyTorchModel):
@@ -192,10 +192,10 @@ class test_basic_ax_apis(unittest.TestCase):
 
         for i in range(self.epoch):
 
-            # can read from ax experiment
-            train_inputs_dict = input_dict_from_ax_experiment(self.exp, self.param_names)
+            # input params can be read from ax experiment
+            train_inputs_dict = get_dict_tensor(self.exp, self.param_names)
 
-            # for make up metric, must build by hand...
+            # for make-up metric, must build by hand...
             train_targets_dict = {
                     "z1": torch.tensor([i+j for i,j in zip(train_inputs_dict["x1"], train_inputs_dict["x2"])], dtype=torch.float32),
                     "z2": torch.tensor([i for i,j in zip(train_inputs_dict["x3"], train_inputs_dict["x2"])], dtype=torch.float32),
@@ -219,6 +219,9 @@ class test_basic_ax_apis(unittest.TestCase):
                                     acq_func_config=self.acq_func_config)
             gen_run = candidates_to_generator_run(self.exp, candidates, self.param_names)
 
+            # XXX if arm's signature (hash) is identical, then it will be returned directly
+            #   by experiment, how to address?
+
             # run
             if self.acq_func_config["q"] == 1:
                 trial = self.exp.new_trial(generator_run=gen_run)
@@ -228,7 +231,7 @@ class test_basic_ax_apis(unittest.TestCase):
             trial.mark_completed()
 
         print("done")
-        print(exp.fetch_data().df)
+        print(self.exp.fetch_data().df)
 
 
 class test_dag_with_ax_apis(unittest.TestCase):

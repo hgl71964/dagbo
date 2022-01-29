@@ -25,24 +25,63 @@ the order of params in candidates_to_generator_run,
 def candidates_to_generator_run(exp: Experiment, candidate: Tensor,
                                 params: list[str]) -> GeneratorRun:
     """
+    user-defined data type -> arms -> generator_run -> trial.run()
     Args:
         candidate: [q, dim]
     """
-    n = exp.num_trials
     q = candidate.shape[0]
     arms = []
-
-    # FIXME a bug in trial naming
-    print(exp.trials)
-    print(n)
-
     for i in range(q):
         p = {}
         for j, name in enumerate(params):
             # need to convert back to python type, XXX not support int
             p[name] = float(candidate[i, j])
-        arms.append(Arm(parameters=p, name=f"bo_{n}_{i}"))
+
+        # TODO make sure arm has unique signature?
+        arms.append(Arm(parameters=p))
+        #arms.append(Arm(parameters=p, name=f"bo_{n}_{i}"))
     return GeneratorRun(arms=arms)
+
+
+def get_dict_tensor(
+    exp: Experiment,
+    params: list[str],
+) -> dict[str, Tensor]:
+    """retrieve data from experiment to tensor
+    single objective ONLY
+
+    Args:
+        exp (Experiment): Ax.Experiment
+        params (list): param name str list
+
+    Returns:
+        key: param name - val: Tensor
+    """
+
+    exp_df = exp.fetch_data().df
+    train_inputs_dict = {}
+
+    # follow trials order
+    num_trials = exp_df.shape[0]
+    arm_name_list = list(exp_df["arm_name"])  # [num_trials, ]
+
+    # retrieve data from experiment
+    for arm_name in arm_name_list:
+        arm_ = exp.arms_by_name[arm_name]
+        arm_param = arm_.parameters
+        for p in params:
+            val = deepcopy(arm_param[p])
+
+            if p in train_inputs_dict:
+                train_inputs_dict[p].append(arm_param[p])
+            else:
+                train_inputs_dict[p] = [arm_param[p]]
+
+    # convert to tensor
+    for key in train_inputs_dict:
+        train_inputs_dict[key] = torch.tensor(train_inputs_dict[key],
+                                              dtype=torch.float32)
+    return train_inputs_dict
 
 
 def get_tensor(exp: Experiment, params: list[str]) -> tuple[Tensor, Tensor]:

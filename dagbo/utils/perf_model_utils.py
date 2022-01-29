@@ -6,44 +6,6 @@ from copy import deepcopy
 from dagbo.dag import lazy_SO_Dag, Dag
 from dagbo.dag_gpytorch_model import DagGPyTorchModel
 
-#def update_target_dict(train_targets_dict:dict[str, Tensor], train_target_update:dict[str, float]) -> dict:
-#    # XXX float32 only?
-#    for key, val in train_target_update.items():
-#        update = torch.tensor([val], dtype=torch.float32)
-#        train_targets_dict[key] = torch.cat([train_targets_dict[key], update])
-#    return train_targets_dict
-
-
-def input_dict_from_ax_experiment(
-    exp: Experiment,
-    params: list[str],
-) -> dict:
-
-    exp_df = exp.fetch_data().df
-    train_inputs_dict = {}
-
-    # follow trials order
-    num_trials = exp_df.shape[0]
-    arm_name_list = list(exp_df["arm_name"])  # [num_trials, ]
-
-    # retrieve data from experiment
-    for arm_name in arm_name_list:
-        arm_ = exp.arms_by_name[arm_name]
-        arm_param = arm_.parameters
-        for p in params:
-            val = deepcopy(arm_param[p])
-
-            if p in train_inputs_dict:
-                train_inputs_dict[p].append(arm_param[p])
-            else:
-                train_inputs_dict[p] = [arm_param[p]]
-
-    # convert to tensor
-    for key in train_inputs_dict:
-        train_inputs_dict[key] = torch.tensor(train_inputs_dict[key],
-                                              dtype=torch.float32)
-    return train_inputs_dict
-
 
 def build_perf_model_from_spec(train_inputs_dict: dict[str, Tensor],
                                train_targets_dict: dict[str, Tensor],
