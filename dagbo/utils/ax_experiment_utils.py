@@ -13,6 +13,13 @@ from ax.core.generator_run import GeneratorRun
 from ax import SearchSpace, Experiment, OptimizationConfig, Runner, Objective
 from ax.storage.json_store.load import load_experiment
 from ax.storage.json_store.save import save_experiment
+"""
+the order of params in candidates_to_generator_run,
+                        get_tensor_to_dict,
+                        get_tensor,
+                        get_bounds,
+    MUST be equal
+"""
 
 
 def candidates_to_generator_run(exp: Experiment, candidate: Tensor,
@@ -21,9 +28,14 @@ def candidates_to_generator_run(exp: Experiment, candidate: Tensor,
     Args:
         candidate: [q, dim]
     """
-    n = exp.num_trials
+    n = exp.num_trials + 1
     q = candidate.shape[0]
     arms = []
+
+    # FIXME a bug in trial naming
+    print(exp.trials)
+    print(n)
+
     for i in range(q):
         p = {}
         for j, name in enumerate(params):
@@ -33,36 +45,39 @@ def candidates_to_generator_run(exp: Experiment, candidate: Tensor,
     return GeneratorRun(arms=arms)
 
 
-def get_tensor_to_dict(exp: Experiment, train_inputs_dict: dict,
-                       train_targets_dict: dict) -> tuple[dict, dict]:
-    return train_inputs_dict, train_targets_dict
-
-
 def get_tensor(exp: Experiment, params: list[str]) -> tuple[Tensor, Tensor]:
     """retrieve data from experiment to tensor
     single objective ONLY
 
     Args:
         exp (Experiment): Ax.Experiment
-        params (list): MUST be topological sorted order
+        params (list): param name str list
 
     Returns:
-        x: [num_arms, dim_arm]
-        y: [reward, 1]
+        x: [num_trials, dim_arm]
+        y: [num_trials, 1]
     """
     _check_name_consistency(exp.parameters)
+    exp_df = exp.fetch_data().df
+
+    # follow trials order
+    num_trials = exp_df.shape[0]
+    rewards = torch.tensor(exp_df["mean"],
+                           dtype=torch.float32).reshape(-1,
+                                                        1)  # [num_trials, 1]
+    arm_name_list = list(exp_df["arm_name"])  # [num_trials, ]
 
     data = []
-    num_arms = len(exp.arms_by_name)
-    for _, arm in exp.arms_by_name.items():
+    for arm_name in arm_name_list:
+        arm_ = exp.arms_by_name[arm_name]
+        arm_param = arm_.parameters
         for p in params:
-            val = deepcopy(arm.parameters[p])
+            val = deepcopy(arm_param[p])
             data.append(val)
-    #print(data)
 
-    # [num_arms, dim_arm]
-    return torch.tensor(data, dtype=torch.float32).reshape(num_arms, -1), \
-                torch.tensor(exp.fetch_data().df["mean"], dtype=torch.float32).reshape(-1, 1)
+    # [num_trials, dim_arm]
+    t = torch.tensor(data, dtype=torch.float32).reshape(num_trials, -1)
+    return t, rewards
 
 
 def get_bounds(exp: Experiment, params: list[str]) -> Tensor:

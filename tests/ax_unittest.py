@@ -22,8 +22,8 @@ from dagbo.dag_gpytorch_model import DagGPyTorchModel
 from dagbo.fit_dag import fit_dag, fit_node_with_scipy, fit_node_with_adam
 
 from dagbo.other_opt.bo_utils import get_fitted_model, inner_loop
-from dagbo.utils.ax_experiment_utils import candidates_to_generator_run, get_tensor_to_dict
-from dagbo.utils.perf_model_utils import build_perf_model_from_spec
+from dagbo.utils.ax_experiment_utils import candidates_to_generator_run
+from dagbo.utils.perf_model_utils import build_perf_model_from_spec, input_dict_from_ax_experiment
 
 
 #class TREE_DAG(Dag, DagGPyTorchModel):
@@ -87,7 +87,10 @@ class test_basic_ax_apis(unittest.TestCase):
         """--- set up Ax ---"""
         # parameter space
         #self.param_names = ["x1", "x2", "x3", "z1", "z2", "y"]
+
+        # NOTE: this must
         self.param_names = ["x1", "x2", "x3"]
+
         self.search_space = SearchSpace([RangeParameter("x1", ParameterType.FLOAT, lower=-1, upper=1),
             RangeParameter("x2", ParameterType.FLOAT, lower=-1, upper=1),
             RangeParameter("x3", ParameterType.FLOAT, lower=-1, upper=1),
@@ -114,7 +117,6 @@ class test_basic_ax_apis(unittest.TestCase):
         self.epoch = 3
 
     def tearDown(self):
-        # gc
         pass
 
     def test_ax_experiment_custom_metric(self):
@@ -158,6 +160,9 @@ class test_basic_ax_apis(unittest.TestCase):
     #@unittest.skip("not ready")
     def test_ax_with_dagbo(self):
         """
+        compared to standard bo-ax loop,
+            dagbo needs to handle monitoring metric additionally
+
         dag:
         x1      x2        x3
           \     /         |
@@ -186,9 +191,14 @@ class test_basic_ax_apis(unittest.TestCase):
                 }
         num_samples = 1024
 
-        # TODO
-        train_inputs_dict = {}
-        train_targets_dict = {}
+        train_inputs_dict=input_dict_from_ax_experiment(self.exp, self.param_names)
+
+    # make target dict
+    assert (len(obj_space) == 1), "not support multi-obj for now"
+    obj_name = list(obj_space.keys())[0]
+    train_targets_dict[obj_name] = torch.tensor(exp_df["mean"], dtype=torch.float32)
+
+        print(train_inputs_dict, train_targets_dict)
 
         for i in range(self.epoch):
             # get model & get candidates
