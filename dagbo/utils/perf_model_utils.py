@@ -6,9 +6,12 @@ from copy import deepcopy
 from dagbo.dag import lazy_SO_Dag, Dag
 from dagbo.dag_gpytorch_model import DagGPyTorchModel
 
-
-def target_dict(exp: Experiment) -> dict:
-    return
+#def update_target_dict(train_targets_dict:dict[str, Tensor], train_target_update:dict[str, float]) -> dict:
+#    # XXX float32 only?
+#    for key, val in train_target_update.items():
+#        update = torch.tensor([val], dtype=torch.float32)
+#        train_targets_dict[key] = torch.cat([train_targets_dict[key], update])
+#    return train_targets_dict
 
 
 def input_dict_from_ax_experiment(
@@ -27,7 +30,6 @@ def input_dict_from_ax_experiment(
     for arm_name in arm_name_list:
         arm_ = exp.arms_by_name[arm_name]
         arm_param = arm_.parameters
-        print(arm_param)
         for p in params:
             val = deepcopy(arm_param[p])
 

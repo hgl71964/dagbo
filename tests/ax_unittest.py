@@ -181,7 +181,6 @@ class test_basic_ax_apis(unittest.TestCase):
                 "z2": "continuous",
                 }
         obj_space = {"y": "continuous"}
-
         edges = {
                 "x1": ["z1"],
                 "x2": ["z1"],
@@ -191,43 +190,42 @@ class test_basic_ax_apis(unittest.TestCase):
                 }
         num_samples = 1024
 
-        train_inputs_dict=input_dict_from_ax_experiment(self.exp, self.param_names)
-
-    # make target dict
-    assert (len(obj_space) == 1), "not support multi-obj for now"
-    obj_name = list(obj_space.keys())[0]
-    train_targets_dict[obj_name] = torch.tensor(exp_df["mean"], dtype=torch.float32)
-
-        print(train_inputs_dict, train_targets_dict)
-
         for i in range(self.epoch):
+
+            # can read from ax experiment
+            train_inputs_dict = input_dict_from_ax_experiment(self.exp, self.param_names)
+
+            # for make up metric, must build by hand...
+            train_targets_dict = {
+                    "z1": torch.tensor([i+j for i,j in zip(train_inputs_dict["x1"], train_inputs_dict["x2"])], dtype=torch.float32),
+                    "z2": torch.tensor([i for i,j in zip(train_inputs_dict["x3"], train_inputs_dict["x2"])], dtype=torch.float32),
+                    "y": torch.tensor([i+j-k for i,j,k in zip(train_inputs_dict["x1"], train_inputs_dict["x2"], train_inputs_dict["x3"])], dtype=torch.float32),
+                    }
+
             # get model & get candidates
             dag = build_perf_model_from_spec(train_inputs_dict,
                                train_targets_dict,
                                num_samples,
                                param_space,
-                               metric_spacem,
+                               metric_space,
                                obj_space,
                                edges,
                                )
             fit_dag(dag)
-            candidates = inner_loop(exp,
+            candidates = inner_loop(self.exp,
                                     dag,
                                     self.param_names,
                                     acq_name="qUCB",
                                     acq_func_config=self.acq_func_config)
-            gen_run = candidates_to_generator_run(exp, candidates, self.param_names)
+            gen_run = candidates_to_generator_run(self.exp, candidates, self.param_names)
 
             # run
             if self.acq_func_config["q"] == 1:
-                trial = exp.new_trial(generator_run=gen_run)
+                trial = self.exp.new_trial(generator_run=gen_run)
             else:
-                trial = exp.new_batch_trial(generator_run=gen_run)
+                trial = self.exp.new_batch_trial(generator_run=gen_run)
             trial.run()
             trial.mark_completed()
-
-            # append to dataset
-            train_inputs_dict, train_targets_dict = get_tensor_to_dict(exp, train_inputs_dict, train_targets_dict)
 
         print("done")
         print(exp.fetch_data().df)
