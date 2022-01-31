@@ -73,6 +73,9 @@ class perf_model_test(unittest.TestCase):
         self.app_id = "application_1641844906451_0006"
         self.base_url = "http://localhost:18080"
 
+    def test_app_id_extract(self):
+        pass
+
     def test_feat_extract(self):
         metric = request_history_server(self.base_url, self.app_id)
         print(metric)
