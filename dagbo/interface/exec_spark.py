@@ -12,48 +12,47 @@ from typing import Union
 #
 #rc = subprocess.run(["ls", "-l", "/dev/null"], capture_output=True)
 #print(rc)
-
 """
 spawn a child process and execute spark job with given parameters
 """
 
 # this will be written to spark.conf regardless input parameters
 CONST_WRITE = {
-        "hibench.spark.home": "/local/scratch/opt/spark-2.4.5-bin-hadoop2.7",
-        "hibench.spark.master" : "yarn",
-        "spark.eventLog.enabled":  "true",
-        }
+    "hibench.spark.home": "/local/scratch/opt/spark-2.4.5-bin-hadoop2.7",
+    "hibench.spark.master": "yarn",
+    "spark.eventLog.enabled": "true",
+}
 
 # map from param to actual spark config name
 NAME_MAPPING = {
-        "executor.num[*]": "hibench.yarn.executor.num",
-        "executor.cores" : "hibench.yarn.executor.cores",
-        "shuffle.compress": "spark.shuffle.compress",
-
-        "executor.memory": "spark.executor.memory",
-        "memory.fraction": "spark.memory.fraction",
-
-        "spark.serializer": "spark.serializer",
-        "rdd.compress": "spark.rdd.compress",
-        "default.parallelism": "spark.default.parallelism",
-        "shuffle.spill.compress": "spark.shuffle.spill.compress",
-        "spark.speculation": "spark.speculation",
-        }
+    "executor.num[*]": "hibench.yarn.executor.num",
+    "executor.cores": "hibench.yarn.executor.cores",
+    "shuffle.compress": "spark.shuffle.compress",
+    "executor.memory": "spark.executor.memory",
+    "memory.fraction": "spark.memory.fraction",
+    "spark.serializer": "spark.serializer",
+    "rdd.compress": "spark.rdd.compress",
+    "default.parallelism": "spark.default.parallelism",
+    "shuffle.spill.compress": "spark.shuffle.spill.compress",
+    "spark.speculation": "spark.speculation",
+}
 
 # spec that needs unit mapping, e.g. '4' -> '4g'
 UNIT_MAPPING = {
-        "spark.executor.memory": 0,
-        }
+    "spark.executor.memory": 0,
+}
 
 # 0 -> false
 BOOL_MAPPING = {
-        "spark.shuffle.compress": 0,
-        "spark.rdd.compress": 0,
-        "spark.shuffle.spill.compress" : 0,
-        "spark.speculation": 0,
-        }
+    "spark.shuffle.compress": 0,
+    "spark.rdd.compress": 0,
+    "spark.shuffle.spill.compress": 0,
+    "spark.speculation": 0,
+}
 
-def call_spark(param: dict[str, Union[float, int]], file_path: str, exec_path: str) -> None:
+
+def call_spark(param: dict[str, Union[float, int]], file_path: str,
+               exec_path: str) -> None:
     """
     call hibench spark benchmarks with the given parameters
     Args:
@@ -73,6 +72,7 @@ def call_spark(param: dict[str, Union[float, int]], file_path: str, exec_path: s
 
     return
 
+
 def _exec(exec_path: str) -> None:
     rc = subprocess.run([exec_path])
     if rc.returncode != 0:
@@ -81,9 +81,8 @@ def _exec(exec_path: str) -> None:
         raise RuntimeError("exec spark return non-zero")
     return None
 
-def _write_spec_from_param(param: dict[str, str], file_path: str) -> None:
-    print(param)
 
+def _write_spec_from_param(param: dict[str, str], file_path: str) -> None:
     # remove if exists
     if os.path.exists(file_path):
         os.remove(file_path)
@@ -129,7 +128,7 @@ def _pre_process(param: dict[str, Union[float, int]]) -> dict[str, str]:
             elif val == "1":
                 param_[key] = "true"
             else:
-                raise  ValueError("unknown boolean val")
+                raise ValueError("unknown boolean val")
 
     # perform data type conversion? e.g. mapping float to int XXX
     return param_

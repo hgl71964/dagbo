@@ -1,7 +1,8 @@
+import re
 import  unittest
 from dagbo.utils.perf_model_utils import *
 from dagbo.interface.parse_performance_model import parse_model
-from dagbo.interface.metrics_extractor import request_history_server
+from dagbo.interface.metrics_extractor import request_history_server, extract_app_id
 
 class perf_utils_test(unittest.TestCase):
     def setUp(self):
@@ -73,15 +74,34 @@ class perf_model_test(unittest.TestCase):
         self.app_id = "application_1641844906451_0006"
         self.base_url = "http://localhost:18080"
 
-    def test_app_id_extract(self):
-        pass
-
     def test_feat_extract(self):
         metric = request_history_server(self.base_url, self.app_id)
         print(metric)
 
     def test_dag_build(self):
         print(self.dag)
+
+    @unittest.skip("unsuccessful")
+    def test_re(self):
+        s = "22/01/31 19:49:37 INFO yarn.Client: Submitting application application_1643636929547_0004 to"
+        print()
+        print("re:")
+        #print(re.match(pattern=r"application_[\d*]", string=s))
+        print(re.match(pattern=r"application_", string=s))
+
+    def test_app_id_extract(self):
+        log_path = "/home/gh512/workspace/bo/spark-dir/hiBench/report/wordcount/spark/bench.log"
+        app_id = extract_app_id(log_path)
+        print("app id")
+        print(app_id)
+
+    def test_end2end_feat_extraction(self):
+        log_path = "/home/gh512/workspace/bo/spark-dir/hiBench/report/wordcount/spark/bench.log"
+        app_id = extract_app_id(log_path)
+        metric = request_history_server(self.base_url, app_id)
+
+        print("end-to-end feat extraction")
+        print(metric)
 
 
 if __name__ == "__main__":

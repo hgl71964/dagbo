@@ -1,3 +1,5 @@
+import re
+
 import requests
 from absl import app
 from absl import flags
@@ -34,6 +36,22 @@ def main(_):
     app_id = "application_1641844906451_0006"
     base_url = "http://localhost:18080"
     request_history_server(base_url, app_id)
+
+
+def extract_app_id(log_path: str) -> str:
+    app_id = None
+    with open(log_path, "r") as f:
+        lines = f.readlines()
+        for line in lines:
+            l = line.strip().split()
+            if "impl.YarnClientImpl:" not in l:
+                continue
+            app_id = l[-1]
+            break
+
+    if not app_id:
+        raise ValueError("unable to find application id")
+    return app_id
 
 
 def request_history_server(base_url,
