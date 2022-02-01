@@ -70,9 +70,16 @@ def request_history_server(base_url,
 def _post_processing(exec_map):
     """
     unit conversion etc...
+
+    time:
+    taskTime, executorDeserializeTime, executorRunTime, jvmGcTime are milliseconds
+    executorDeserializeCpuTime, executorCpuTime are nanoseconds
     """
-    #print(exec_map)
-    #  TODO
+    for exec_id in exec_map:
+        exec_map[exec_id]["executorDeserializeCpuTime"] = exec_map[exec_id][
+            "executorDeserializeCpuTime"] * 1e-6
+        exec_map[exec_id][
+            "executorCpuTime"] = exec_map[exec_id]["executorCpuTime"] * 1e-6
     return exec_map
 
 
