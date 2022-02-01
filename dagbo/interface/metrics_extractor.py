@@ -82,6 +82,11 @@ def _get_executors_metric(base_url, app_id, stage_ids):
         resp = requests.get(
             f"{base_url}/api/v1/applications/{app_id}/stages/{s_id}")
 
+        if resp.status_code != 200:
+            raise RuntimeError(
+                f"get request not ok: {base_url}/api/v1/applications/{app_id}/stages"
+            )
+
         js = resp.json()
 
         if len(js) > 1:  # more than one attempt, raise
@@ -208,6 +213,12 @@ def _get_stages(base_url, app_id):
     get all stages id. if a stage is not completed, it is skipped
     """
     resp = requests.get(f"{base_url}/api/v1/applications/{app_id}/stages")
+
+    if resp.status_code != 200:
+        raise RuntimeError(
+            f"get request not ok: {base_url}/api/v1/applications/{app_id}/stages"
+        )
+
     js = resp.json()
 
     #for i in range(len(js)):

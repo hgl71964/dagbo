@@ -19,7 +19,7 @@ class perf_utils_test(unittest.TestCase):
         reversed_edge = find_inverse_edges(self.edges)
         print(reversed_edge)
 
-    #@unittest.skip("ok")
+    @unittest.skip("ok")
     def test_topological_sort(self):
         order = get_dag_topological_order(self.obj_space, self.edges)
         print(order)
@@ -74,20 +74,14 @@ class perf_model_test(unittest.TestCase):
         self.app_id = "application_1641844906451_0006"
         self.base_url = "http://localhost:18080"
 
+    @unittest.skip("ok")
     def test_feat_extract(self):
         metric = request_history_server(self.base_url, self.app_id)
         print(metric)
 
+    @unittest.skip("ok")
     def test_dag_build(self):
         print(self.dag)
-
-    @unittest.skip("unsuccessful")
-    def test_re(self):
-        s = "22/01/31 19:49:37 INFO yarn.Client: Submitting application application_1643636929547_0004 to"
-        print()
-        print("re:")
-        #print(re.match(pattern=r"application_[\d*]", string=s))
-        print(re.match(pattern=r"application_", string=s))
 
     def test_app_id_extract(self):
         log_path = "/home/gh512/workspace/bo/spark-dir/hiBench/report/wordcount/spark/bench.log"

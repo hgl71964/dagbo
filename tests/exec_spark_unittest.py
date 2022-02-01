@@ -1,6 +1,7 @@
 import ax
 import unittest
 import time
+from time import sleep
 
 from dagbo.interface.exec_spark import *
 from dagbo.interface.metrics_extractor import request_history_server, extract_app_id
@@ -58,6 +59,7 @@ class test_exec_spark(unittest.TestCase):
         call_spark(spec, conf_path, exec_path)
 
         # extract
+        sleep(5)  # give time to generate json in history server
         app_id = extract_app_id(log_path)
         metric = request_history_server(base_url, app_id)
 
