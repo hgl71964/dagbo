@@ -70,7 +70,7 @@ def call_spark(param: dict[str, Union[float, int]], file_path: str,
     # exec
     _exec(exec_path)
 
-    return
+    return None
 
 
 def _exec(exec_path: str) -> None:
@@ -78,7 +78,7 @@ def _exec(exec_path: str) -> None:
     if rc.returncode != 0:
         print("stderr: ")
         print(rc.stderr)
-        raise RuntimeError("exec spark return non-zero")
+        raise RuntimeError("exec spark return non-zero code")
     return None
 
 

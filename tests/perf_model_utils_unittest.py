@@ -95,7 +95,7 @@ class perf_model_test(unittest.TestCase):
         print("app id")
         print(app_id)
 
-    def test_end2end_feat_extraction(self):
+    def test_app_id_feat_extraction(self):
         log_path = "/home/gh512/workspace/bo/spark-dir/hiBench/report/wordcount/spark/bench.log"
         app_id = extract_app_id(log_path)
         metric = request_history_server(self.base_url, app_id)

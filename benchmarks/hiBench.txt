@@ -54,4 +54,11 @@ solutions:
 
         I simply set executor memory = 6g (2 executors) solve the problem
 
+2. fail to run jobs, as yarn scheduler `hang`
+this means there is insufficient recourses to run any single jobs
+
+solution:
+        check logs at {hadoop home}/logs/yarn*
+        for capacity issues, check: https://stackoverflow.com/questions/33465300/why-does-yarn-job-not-transition-to-running-state
+        i.e. in capacity-scheduler.xml check: yarn.scheduler.capacity.maximum-am-resource-percent
 
