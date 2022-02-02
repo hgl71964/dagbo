@@ -100,7 +100,7 @@ class perf_model_test(unittest.TestCase):
         app_id = extract_app_id(log_path)
         metric = request_history_server(self.base_url, app_id)
 
-        print("end-to-end feat extraction")
+        print("end-to-end feat extraction: ")
         print(metric)
 
 

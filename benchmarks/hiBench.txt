@@ -37,6 +37,8 @@ NOTE:
 1. when run with YARN, don't have to start-master.sh/start-slave.sh by ourselves
         only need to spark-submit with --master yarn
 
+2. history-server log dir (default): /tmp/spark-events
+
 FAILUER:
 
 Spark Bench:
@@ -58,6 +60,9 @@ solutions:
 this means there is insufficient recourses to run any single jobs
 
 solution:
+        OFTEN: just restart yarn & hdfs
+
+        if the above doesn't work:
         check logs at {hadoop home}/logs/yarn*
         for capacity issues, check: https://stackoverflow.com/questions/33465300/why-does-yarn-job-not-transition-to-running-state
         i.e. in capacity-scheduler.xml check: yarn.scheduler.capacity.maximum-am-resource-percent

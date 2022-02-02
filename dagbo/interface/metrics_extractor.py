@@ -91,7 +91,7 @@ def _get_executors_metric(base_url, app_id, stage_ids):
 
         if resp.status_code != 200:
             raise RuntimeError(
-                f"get request not ok: {base_url}/api/v1/applications/{app_id}/stages"
+                f"get request not ok - status code: {resp.status_code} - {base_url}/api/v1/applications/{app_id}/stages"
             )
 
         js = resp.json()
@@ -223,7 +223,7 @@ def _get_stages(base_url, app_id):
 
     if resp.status_code != 200:
         raise RuntimeError(
-            f"get request not ok: {base_url}/api/v1/applications/{app_id}/stages"
+            f"get request not ok - status code: {resp.status_code} - {base_url}/api/v1/applications/{app_id}/stages"
         )
 
     js = resp.json()
