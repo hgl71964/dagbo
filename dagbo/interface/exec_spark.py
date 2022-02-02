@@ -106,7 +106,7 @@ def _write_spec_from_param(param: dict[str, str], file_path: str) -> None:
 
 def _pre_process(param: dict[str, Union[float, int]]) -> dict[str, str]:
     """
-    perform type conversion?
+    name mapping & unit mapping & bool mapping &
     """
     param_ = {}
 
@@ -119,7 +119,7 @@ def _pre_process(param: dict[str, Union[float, int]]) -> dict[str, str]:
         if key in UNIT_MAPPING:
             param_[key] = str(param_[key]) + "g"
 
-    # perform bool mapping
+    # perform bool mapping, e.g. '0' -> false
     for key in list(param_.keys()):
         if key in BOOL_MAPPING:
             val = param_[key]
@@ -130,5 +130,4 @@ def _pre_process(param: dict[str, Union[float, int]]) -> dict[str, str]:
             else:
                 raise ValueError("unknown boolean val")
 
-    # perform data type conversion? e.g. mapping float to int XXX
     return param_

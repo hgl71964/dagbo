@@ -2,7 +2,7 @@ import re
 import unittest
 from dagbo.utils.perf_model_utils import *
 from dagbo.interface.parse_performance_model import parse_model
-from dagbo.interface.metrics_extractor import request_history_server, extract_app_id
+from dagbo.interface.metrics_extractor import *
 
 
 class perf_utils_test(unittest.TestCase):
@@ -88,6 +88,11 @@ class perf_model_test(unittest.TestCase):
     @unittest.skip("ok")
     def test_dag_build(self):
         print(self.dag)
+
+    def test_extract_throughput(self):
+        path = "/home/gh512/workspace/bo/spark-dir/hiBench/report/hibench.report"
+        l = extract_throughput(path)
+        print(l)
 
     def test_app_id_extract(self):
         log_path = "/home/gh512/workspace/bo/spark-dir/hiBench/report/wordcount/spark/bench.log"

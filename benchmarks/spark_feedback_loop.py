@@ -15,22 +15,41 @@ from ax.storage.runner_registry import register_runner
 from ax.runners.synthetic import SyntheticRunner
 
 from dagbo.fit_dag import fit_dag
-from dagbo.interface.parse_performance_model import parse_model
 from dagbo.utils.perf_model_utils import build_perf_model_from_spec
+from dagbo.interface.exec_spark import call_spark
+from dagbo.interface.parse_performance_model import parse_model
+from dagbo.interface.metrics_extractor import extract_throughput, extract_app_id, request_history_server
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string("performance_model_path",
                     "dagbo/interface/spark_performance_model.txt",
                     "graphviz source path")
 flags.DEFINE_string("metric_name", "spark_throughput", "metric name")
+flags.DEFINE_string(
+    "conf_path", "/home/gh512/workspace/bo/spark-dir/hiBench/conf/spark.conf",
+    "conf file path")
+flags.DEFINE_string(
+    "exec_path",
+    "/home/gh512/workspace/bo/spark-dir/hiBench/bin/workloads/micro/wordcount/spark/run.sh",
+    "executable path")
+flags.DEFINE_string(
+    "log_path",
+    "/home/gh512/workspace/bo/spark-dir/hiBench/report/wordcount/spark/bench.log",
+    "log file's path for app id extraction")
+flags.DEFINE_string(
+    "hibench_report_path",
+    "/home/gh512/workspace/bo/spark-dir/hiBench/report/hibench.report",
+    "hibench report file path")
+flags.DEFINE_string("base_url", "http://localhost:18080",
+                    "history server base url")
+
 flags.DEFINE_integer("epochs", 5, "bo loop epoch", lower_bound=0)
-flags.DEFINE_integer("bootstrap", 5, "bootstrap", lower_bound=2)
+flags.DEFINE_integer("bootstrap", 3, "bootstrap", lower_bound=2)
 flags.DEFINE_boolean("minimize", False, "min or max objective")
-flags.DEFINE_enum('job', 'running', ['running', 'stopped'], 'Job status.')
 
 # flags cannot define dict
 acq_func_config = {
-    "q": 2,
+    "q": 1,
     "num_restarts": 48,
     "raw_samples": 128,
     "num_samples": 2048,
@@ -45,15 +64,16 @@ class SparkMetric(Metric):
         for arm_name, arm in trial.arms_by_name.items():
             params = arm.parameters
 
-            # run spark
-            #print(arm_name)
-            #print(params)
+            # exec spark & retrieve throughput
+            call_spark(params, FLAGS.conf_path, FLAGS.exec_path)
+            sleep(15)  # give time to write file to history server
+            val = extract_throughput(FLAGS.hibench_report_path)
 
             # to records
             records.append({
                 "arm_name": arm_name,
                 "metric_name": self.name,
-                "mean": 1,  # TODO
+                "mean": float(val),
                 "sem": 0,  # 0 for noiseless experiment
                 "trial_index": trial.index,
             })
@@ -80,46 +100,48 @@ def main(_):
         "shuffle.spill.compress",
         "spark.speculation",
     ]
+    # TODO convert to their own type in exec_spark
+    # TODO save spec at each configuration to somewhere, otherwise it is overwritten!!
     search_space = SearchSpace([
         ax.RangeParameter("executor.num[*]",
                           ax.ParameterType.FLOAT,
-                          lower=-1,
-                          upper=1),
+                          lower=2,
+                          upper=8),
         ax.RangeParameter("executor.cores",
                           ax.ParameterType.FLOAT,
-                          lower=-1,
-                          upper=1),
+                          lower=1,
+                          upper=4),
         ax.RangeParameter("shuffle.compress",
                           ax.ParameterType.FLOAT,
-                          lower=-1,
+                          lower=0,
                           upper=1),
         ax.RangeParameter("memory.fraction",
                           ax.ParameterType.FLOAT,
-                          lower=-1,
-                          upper=1),
+                          lower=0.1,
+                          upper=0.99),
         ax.RangeParameter("executor.memory",
                           ax.ParameterType.FLOAT,
-                          lower=-1,
-                          upper=1),
+                          lower=2,
+                          upper=4),
         ax.RangeParameter("spark.serializer",
                           ax.ParameterType.FLOAT,
-                          lower=-1,
+                          lower=0,
                           upper=1),
         ax.RangeParameter("rdd.compress",
                           ax.ParameterType.FLOAT,
-                          lower=-1,
+                          lower=0,
                           upper=1),
         ax.RangeParameter("default.parallelism",
                           ax.ParameterType.FLOAT,
-                          lower=-1,
+                          lower=0,
                           upper=1),
         ax.RangeParameter("shuffle.spill.compress",
                           ax.ParameterType.FLOAT,
-                          lower=-1,
+                          lower=0,
                           upper=1),
         ax.RangeParameter("spark.speculation",
                           ax.ParameterType.FLOAT,
-                          lower=-1,
+                          lower=0,
                           upper=1),
     ])
     optimization_config = OptimizationConfig(
@@ -170,6 +192,10 @@ def main(_):
             trial = exp.new_batch_trial(generator_run=gen_run)
         trial.run()
         trial.mark_completed()
+
+        # TODO
+        app_id = extract_app_id(FLAGS.log_path)
+        metric = request_history_server(FLAGS.base_url, app_id)
 
     print("done")
     print(exp.fetch_data().df)

@@ -52,9 +52,10 @@ this is found from log -> {hadoop home}/logs/yarn-gh512-resourcemanager
 
 solutions:
         we have the minimum RAM for a Container (yarn.scheduler.minimum-allocation-mb) = 2 GB
-        this is configurable in {hadoop home}/etc/hadoop/mapred-site.xml
+        this is configurable in {hadoop home}/etc/hadoop/yarn-site.xml
 
         I simply set executor memory = 6g (2 executors) solve the problem
+        also see: https://stackoverflow.com/questions/43826703/difference-between-yarn-scheduler-maximum-allocation-mb-and-yarn-nodemanager
 
 2. fail to run jobs, as yarn scheduler `hang`
 this means there is insufficient recourses to run any single jobs

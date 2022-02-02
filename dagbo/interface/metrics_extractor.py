@@ -38,6 +38,20 @@ def main(_):
     request_history_server(base_url, app_id)
 
 
+def extract_throughput(hibench_report_path: str) -> str:
+    """
+    by default the last line is the latest run results
+    """
+    with open(hibench_report_path, "r") as f:
+        lines = f.readlines()
+        l = lines[-1].strip().split()
+
+        #for line in lines:
+        #    print(line.strip().split())
+
+    return l
+
+
 def extract_app_id(log_path: str) -> str:
     app_id = None
     with open(log_path, "r") as f:
