@@ -1,12 +1,14 @@
 import re
-import  unittest
+import unittest
 from dagbo.utils.perf_model_utils import *
 from dagbo.interface.parse_performance_model import parse_model
 from dagbo.interface.metrics_extractor import request_history_server, extract_app_id
 
+
 class perf_utils_test(unittest.TestCase):
     def setUp(self):
-        param_space, metric_space, obj_space, edges = parse_model("dagbo/interface/spark_performance_model.txt")
+        param_space, metric_space, obj_space, edges = parse_model(
+            "dagbo/interface/spark_performance_model.txt")
         self.param_space = param_space
         self.metric_space = metric_space
         self.obj_space = obj_space
@@ -23,7 +25,6 @@ class perf_utils_test(unittest.TestCase):
     def test_topological_sort(self):
         order = get_dag_topological_order(self.obj_space, self.edges)
         print(order)
-
         """
         A topological sort of a dag G = (V,E) is a linear ordering of all its vertices such that if G contains an edge (u,v),
             then u appears before v in the ordering.
@@ -36,11 +37,12 @@ class perf_utils_test(unittest.TestCase):
                     elif val == node:
                         raise RuntimeError("not topological order")
 
-class perf_model_test(unittest.TestCase):
 
+class perf_model_test(unittest.TestCase):
     def setUp(self):
         # performance model
-        param_space, metric_space, obj_space, edges = parse_model("dagbo/interface/spark_performance_model.txt")
+        param_space, metric_space, obj_space, edges = parse_model(
+            "dagbo/interface/spark_performance_model.txt")
         self.param_space = param_space
         self.metric_space = metric_space
         self.obj_space = obj_space
@@ -59,17 +61,21 @@ class perf_model_test(unittest.TestCase):
         self.acq_func_config = acq_func_config
 
         # make fake input tensor
-        train_inputs_dict = {i: torch.rand(acq_func_config["q"]) for i in list(param_space.keys())}
-        train_targets_dict = {i: torch.rand(acq_func_config["q"]) for i in list(metric_space.keys()) + list(obj_space.keys())}
+        train_inputs_dict = {
+            i: torch.rand(acq_func_config["q"])
+            for i in list(param_space.keys())
+        }
+        train_targets_dict = {
+            i: torch.rand(acq_func_config["q"])
+            for i in list(metric_space.keys()) + list(obj_space.keys())
+        }
 
         # build
         self.dag = build_perf_model_from_spec(train_inputs_dict,
-                                   train_targets_dict,
-                                   acq_func_config["num_samples"],
-                                   param_space,
-                                   metric_space,
-                                   obj_space,
-                                   edges)
+                                              train_targets_dict,
+                                              acq_func_config["num_samples"],
+                                              param_space, metric_space,
+                                              obj_space, edges)
         # feature extractor
         self.app_id = "application_1641844906451_0006"
         self.base_url = "http://localhost:18080"

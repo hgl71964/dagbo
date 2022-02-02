@@ -18,13 +18,13 @@ from botorch.models import SingleTaskGP
 
 from dagbo.other_opt.bo_utils import get_fitted_model, inner_loop
 from dagbo.utils.ax_experiment_utils import (candidates_to_generator_run,
-                                             print_experiment_result,
-                                             load_exp)
+                                             print_experiment_result, load_exp)
 """
 demonstration of resuming from saved experiments
 """
 
 FLAGS = flags.FLAGS
+
 
 def main(_):
     # load
@@ -68,6 +68,7 @@ def main(_):
     print("Done!")
     print(exp.fetch_data().df)
     print(print_experiment_result(exp))
+
 
 class MyRunner(Runner):
     def run(self, trial):

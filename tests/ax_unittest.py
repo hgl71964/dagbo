@@ -47,6 +47,7 @@ class TREE_DAG(SO_Dag, DagGPyTorchModel):
 
         y = self.register_metric("y", [z_1, z_2])
 
+
 class CustomMetric(Metric):
     def fetch_trial_data(self, trial, **kwargs):
         records = []
@@ -60,6 +61,7 @@ class CustomMetric(Metric):
                 "trial_index": trial.index,
             })
         return ax.core.data.Data(df=pd.DataFrame.from_records(records))
+
 
 class dummy_runner(ax.Runner):
     """control how experiment is deployed, i.e. locally or dispatch to external system
@@ -91,10 +93,11 @@ class test_basic_ax_apis(unittest.TestCase):
         # NOTE: this must
         self.param_names = ["x1", "x2", "x3"]
 
-        self.search_space = SearchSpace([RangeParameter("x1", ParameterType.FLOAT, lower=-1, upper=1),
+        self.search_space = SearchSpace([
+            RangeParameter("x1", ParameterType.FLOAT, lower=-1, upper=1),
             RangeParameter("x2", ParameterType.FLOAT, lower=-1, upper=1),
             RangeParameter("x3", ParameterType.FLOAT, lower=-1, upper=1),
-            ])
+        ])
 
         # opt config
         self.optimization_config = OptimizationConfig(
@@ -102,9 +105,9 @@ class test_basic_ax_apis(unittest.TestCase):
 
         # experiment
         self.exp = Experiment(name="test_exp",
-                         search_space=self.search_space,
-                         optimization_config=self.optimization_config,
-                         runner=dummy_runner())
+                              search_space=self.search_space,
+                              optimization_config=self.optimization_config,
+                              runner=dummy_runner())
 
         # BOOTSTRAP EVALUATIONS
         num_bootstrap = 2
@@ -123,7 +126,8 @@ class test_basic_ax_apis(unittest.TestCase):
         # run ax-BO
         for i in range(self.epoch):
             # Reinitialize GP+EI model at each step with updated data.
-            gpei = Models.BOTORCH(experiment=self.exp, data=self.exp.fetch_data())
+            gpei = Models.BOTORCH(experiment=self.exp,
+                                  data=self.exp.fetch_data())
             generator_run = gpei.gen(n=1)
             trial = self.exp.new_trial(generator_run=generator_run)
             trial.run()
@@ -144,7 +148,8 @@ class test_basic_ax_apis(unittest.TestCase):
                                     self.param_names,
                                     acq_name="qUCB",
                                     acq_func_config=self.acq_func_config)
-            gen_run = candidates_to_generator_run(self.exp, candidates, self.param_names)
+            gen_run = candidates_to_generator_run(self.exp, candidates,
+                                                  self.param_names)
 
             # apply to system & append to dataset
             if self.acq_func_config["q"] == 1:
@@ -172,22 +177,22 @@ class test_basic_ax_apis(unittest.TestCase):
         """
 
         param_space = {
-                "x1": "continuous",
-                "x2": "continuous",
-                "x3": "continuous",
-                }
+            "x1": "continuous",
+            "x2": "continuous",
+            "x3": "continuous",
+        }
         metric_space = {
-                "z1": "continuous",
-                "z2": "continuous",
-                }
+            "z1": "continuous",
+            "z2": "continuous",
+        }
         obj_space = {"y": "continuous"}
         edges = {
-                "x1": ["z1"],
-                "x2": ["z1"],
-                "x3": ["z2"],
-                "z1": ["y"],
-                "z2": ["y"],
-                }
+            "x1": ["z1"],
+            "x2": ["z1"],
+            "x3": ["z2"],
+            "z1": ["y"],
+            "z2": ["y"],
+        }
         num_samples = 1024
 
         for i in range(self.epoch):
@@ -197,27 +202,45 @@ class test_basic_ax_apis(unittest.TestCase):
 
             # for make-up metric, must build by hand...
             train_targets_dict = {
-                    "z1": torch.tensor([i+j for i,j in zip(train_inputs_dict["x1"], train_inputs_dict["x2"])], dtype=torch.float32),
-                    "z2": torch.tensor([i for i,j in zip(train_inputs_dict["x3"], train_inputs_dict["x2"])], dtype=torch.float32),
-                    "y": torch.tensor([i+j-k for i,j,k in zip(train_inputs_dict["x1"], train_inputs_dict["x2"], train_inputs_dict["x3"])], dtype=torch.float32),
-                    }
+                "z1":
+                torch.tensor([
+                    i + j for i, j in zip(train_inputs_dict["x1"],
+                                          train_inputs_dict["x2"])
+                ],
+                             dtype=torch.float32),
+                "z2":
+                torch.tensor([
+                    i for i, j in zip(train_inputs_dict["x3"],
+                                      train_inputs_dict["x2"])
+                ],
+                             dtype=torch.float32),
+                "y":
+                torch.tensor([
+                    i + j - k for i, j, k in
+                    zip(train_inputs_dict["x1"], train_inputs_dict["x2"],
+                        train_inputs_dict["x3"])
+                ],
+                             dtype=torch.float32),
+            }
 
             # get model & get candidates
-            dag = build_perf_model_from_spec(train_inputs_dict,
-                               train_targets_dict,
-                               num_samples,
-                               param_space,
-                               metric_space,
-                               obj_space,
-                               edges,
-                               )
+            dag = build_perf_model_from_spec(
+                train_inputs_dict,
+                train_targets_dict,
+                num_samples,
+                param_space,
+                metric_space,
+                obj_space,
+                edges,
+            )
             fit_dag(dag)
             candidates = inner_loop(self.exp,
                                     dag,
                                     self.param_names,
                                     acq_name="qUCB",
                                     acq_func_config=self.acq_func_config)
-            gen_run = candidates_to_generator_run(self.exp, candidates, self.param_names)
+            gen_run = candidates_to_generator_run(self.exp, candidates,
+                                                  self.param_names)
 
             # XXX if arm's signature (hash) is identical, then it will be returned directly
             #   by experiment, how to address?

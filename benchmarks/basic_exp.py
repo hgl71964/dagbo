@@ -32,6 +32,7 @@ so that all algorithms have the same initial conditions by loading this experime
 """
 FLAGS = flags.FLAGS
 
+
 def main(_):
     NUM_SOBOL_TRIALS = 5
     NUM_BOTORCH_TRIALS = 7

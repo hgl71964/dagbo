@@ -18,9 +18,10 @@ from dagbo.fit_dag import fit_dag
 from dagbo.interface.parse_performance_model import parse_model
 from dagbo.utils.perf_model_utils import build_perf_model_from_spec
 
-
 FLAGS = flags.FLAGS
-flags.DEFINE_string("performance_model_path", "dagbo/interface/spark_performance_model.txt", "graphviz source path")
+flags.DEFINE_string("performance_model_path",
+                    "dagbo/interface/spark_performance_model.txt",
+                    "graphviz source path")
 flags.DEFINE_string("metric_name", "spark_throughput", "metric name")
 flags.DEFINE_integer("epochs", 5, "bo loop epoch", lower_bound=0)
 flags.DEFINE_integer("bootstrap", 5, "bootstrap", lower_bound=2)
@@ -37,6 +38,7 @@ acq_func_config = {
     "beta": 1,  # for UCB
 }
 
+
 class SparkMetric(Metric):
     def fetch_trial_data(self, trial, **kwargs):
         records = []
@@ -51,49 +53,78 @@ class SparkMetric(Metric):
             records.append({
                 "arm_name": arm_name,
                 "metric_name": self.name,
-                "mean": 1, # TODO
+                "mean": 1,  # TODO
                 "sem": 0,  # 0 for noiseless experiment
                 "trial_index": trial.index,
             })
         return ax.core.data.Data(df=pd.DataFrame.from_records(records))
 
+
 def main(_):
 
     # build experiment
     ## get dag's spec
-    param_space, metric_space, obj_space, edges = parse_model(FLAGS.performance_model_path)
+    param_space, metric_space, obj_space, edges = parse_model(
+        FLAGS.performance_model_path)
 
     ## for now need to define manually
     param_names = [
         "executor.num[*]",
         "executor.cores",
         "shuffle.compress",
-
         "memory.fraction",
         "executor.memory",
-
         "spark.serializer",
         "rdd.compress",
         "default.parallelism",
         "shuffle.spill.compress",
         "spark.speculation",
-            ]
+    ]
     search_space = SearchSpace([
-        ax.RangeParameter("executor.num[*]", ax.ParameterType.FLOAT, lower=-1, upper=1),
-        ax.RangeParameter("executor.cores", ax.ParameterType.FLOAT, lower=-1, upper=1),
-        ax.RangeParameter("shuffle.compress", ax.ParameterType.FLOAT, lower=-1, upper=1),
-
-        ax.RangeParameter("memory.fraction", ax.ParameterType.FLOAT, lower=-1, upper=1),
-        ax.RangeParameter("executor.memory", ax.ParameterType.FLOAT, lower=-1, upper=1),
-
-        ax.RangeParameter("spark.serializer", ax.ParameterType.FLOAT, lower=-1, upper=1),
-        ax.RangeParameter("rdd.compress", ax.ParameterType.FLOAT, lower=-1, upper=1),
-        ax.RangeParameter("default.parallelism", ax.ParameterType.FLOAT, lower=-1, upper=1),
-        ax.RangeParameter("shuffle.spill.compress", ax.ParameterType.FLOAT, lower=-1, upper=1),
-        ax.RangeParameter("spark.speculation", ax.ParameterType.FLOAT, lower=-1, upper=1),
-        ])
+        ax.RangeParameter("executor.num[*]",
+                          ax.ParameterType.FLOAT,
+                          lower=-1,
+                          upper=1),
+        ax.RangeParameter("executor.cores",
+                          ax.ParameterType.FLOAT,
+                          lower=-1,
+                          upper=1),
+        ax.RangeParameter("shuffle.compress",
+                          ax.ParameterType.FLOAT,
+                          lower=-1,
+                          upper=1),
+        ax.RangeParameter("memory.fraction",
+                          ax.ParameterType.FLOAT,
+                          lower=-1,
+                          upper=1),
+        ax.RangeParameter("executor.memory",
+                          ax.ParameterType.FLOAT,
+                          lower=-1,
+                          upper=1),
+        ax.RangeParameter("spark.serializer",
+                          ax.ParameterType.FLOAT,
+                          lower=-1,
+                          upper=1),
+        ax.RangeParameter("rdd.compress",
+                          ax.ParameterType.FLOAT,
+                          lower=-1,
+                          upper=1),
+        ax.RangeParameter("default.parallelism",
+                          ax.ParameterType.FLOAT,
+                          lower=-1,
+                          upper=1),
+        ax.RangeParameter("shuffle.spill.compress",
+                          ax.ParameterType.FLOAT,
+                          lower=-1,
+                          upper=1),
+        ax.RangeParameter("spark.speculation",
+                          ax.ParameterType.FLOAT,
+                          lower=-1,
+                          upper=1),
+    ])
     optimization_config = OptimizationConfig(
-        Objective(metric=SparkMetric(name=FLAGS.metric_name), minimize=FLAGS.minimize))
+        Objective(metric=SparkMetric(name=FLAGS.metric_name),
+                  minimize=FLAGS.minimize))
     exp = Experiment(name="spark_feed_back_loop",
                      search_space=search_space,
                      optimization_config=optimization_config,
@@ -106,7 +137,6 @@ def main(_):
     trial.run()
     trial.mark_completed()
 
-
     print(exp.fetch_data().df)
     raise RuntimeError()
 
@@ -118,15 +148,11 @@ def main(_):
         # TODO
         train_targets_dict = {}
 
-
         # fit model from dataset
-        dag = build_perf_model_from_spec(train_inputs_dict,
-                                   train_targets_dict,
-                                   acq_func_config["num_samples"],
-                                   param_space,
-                                   metric_space,
-                                   obj_space,
-                                   edges)
+        dag = build_perf_model_from_spec(train_inputs_dict, train_targets_dict,
+                                         acq_func_config["num_samples"],
+                                         param_space, metric_space, obj_space,
+                                         edges)
         fit_dag(dag)
 
         # get candidates (inner loop)
@@ -147,7 +173,6 @@ def main(_):
 
     print("done")
     print(exp.fetch_data().df)
-
 
 
 if __name__ == "__main__":
