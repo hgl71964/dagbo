@@ -68,3 +68,9 @@ solution:
         for capacity issues, check: https://stackoverflow.com/questions/33465300/why-does-yarn-job-not-transition-to-running-state
         i.e. in capacity-scheduler.xml check: yarn.scheduler.capacity.maximum-am-resource-percent
 
+3. fail with `no space left on device`
+By default Spark uses the /tmp directory to store intermediate data
+
+solution:
+        spark.local.dir                     SOME/DIR/WHERE/YOU/HAVE/SPACE
+

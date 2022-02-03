@@ -29,6 +29,8 @@ CONST_WRITE = {
     "hibench.spark.home": "/local/scratch/opt/spark-2.4.5-bin-hadoop2.7",
     "hibench.spark.master": "yarn",
     "spark.eventLog.enabled": "true",
+    "spark.local.dir":
+    "/local/scratch/spark_tmp_dir",  # to store intermediate data
 }
 
 # map from param to actual spark config name
