@@ -66,7 +66,6 @@ class SparkMetric(Metric):
 
             # exec spark & retrieve throughput
             call_spark(params, FLAGS.conf_path, FLAGS.exec_path)
-            sleep(15)  # give time to write file to history server
             val = extract_throughput(FLAGS.hibench_report_path)
 
             # to records

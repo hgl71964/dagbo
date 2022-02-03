@@ -1,5 +1,6 @@
 import os
 import subprocess
+from time import sleep
 from typing import Union
 
 # example:
@@ -13,6 +14,8 @@ from typing import Union
 #rc = subprocess.run(["ls", "-l", "/dev/null"], capture_output=True)
 #print(rc)
 """
+hardcode param conversion rules
+
 spawn a child process and execute spark job with given parameters
 """
 
@@ -42,12 +45,26 @@ UNIT_MAPPING = {
     "spark.executor.memory": 0,
 }
 
-# 0 -> false
+# 0 -> false, 1 -> true
 BOOL_MAPPING = {
     "spark.shuffle.compress": 0,
     "spark.rdd.compress": 0,
     "spark.shuffle.spill.compress": 0,
     "spark.speculation": 0,
+}
+
+# 0.2 -> 0
+ROUND_MAPPING = {
+    "executor.num[*]": "int",
+    "executor.cores": "int",
+    "shuffle.compress": "bool",
+    "executor.memory": "int",
+    "memory.fraction": "float",
+    "spark.serializer": "bool",
+    "rdd.compress": "bool",
+    "default.parallelism": "bool",
+    "shuffle.spill.compress": "bool",
+    "spark.speculation": "bool",
 }
 
 
@@ -74,11 +91,17 @@ def call_spark(param: dict[str, Union[float, int]], file_path: str,
 
 
 def _exec(exec_path: str) -> None:
+    """
+    must given enough time to properly write log & execute
+    """
     rc = subprocess.run([exec_path])
     if rc.returncode != 0:
         print("stderr: ")
         print(rc.stderr)
         raise RuntimeError("exec spark return non-zero code")
+
+    # give time to write file to history server
+    sleep(15)
     return None
 
 
@@ -109,6 +132,20 @@ def _pre_process(param: dict[str, Union[float, int]]) -> dict[str, str]:
     name mapping & unit mapping & bool mapping &
     """
     param_ = {}
+
+    # round mapping
+    for key, val in param.items():
+        if ROUND_MAPPING[key] == "float":
+            continue
+        elif ROUND_MAPPING[key] == "int":
+            param[key] = int(val)
+        elif ROUND_MAPPING[key] == "bool":
+            if 0 <= val <= 1:
+                param[key] = int(val)
+            else:
+                raise ValueError(f"bool param {key} with value {val}")
+        else:
+            raise TypeError(f"unknown param {key} with value {val}")
 
     # map from param to actual spark config name
     for key, val in param.items():
