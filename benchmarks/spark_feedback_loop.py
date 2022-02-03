@@ -99,8 +99,6 @@ def main(_):
         "shuffle.spill.compress",
         "spark.speculation",
     ]
-    # TODO convert to their own type in exec_spark
-    # TODO save spec at each configuration to somewhere, otherwise it is overwritten!!
     search_space = SearchSpace([
         ax.RangeParameter("executor.num[*]",
                           ax.ParameterType.FLOAT,

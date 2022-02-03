@@ -2,6 +2,7 @@ import os
 import subprocess
 from time import sleep
 from typing import Union
+from .metrics_extractor import extract_app_id, extract_throughput
 
 # example:
 #rc = subprocess.call("benchmarks/sleep.sh", shell=True)
@@ -15,9 +16,13 @@ from typing import Union
 #print(rc)
 """
 hardcode param conversion rules
+    using only a subset of those param is allowed
+    but new param must be hardcode
 
 spawn a child process and execute spark job with given parameters
 """
+
+LOG_DIR = "/home/gh512/workspace/bo/dagbo/benchmarks/data"
 
 # this will be written to spark.conf regardless input parameters
 CONST_WRITE = {
@@ -110,7 +115,7 @@ def _write_spec_from_param(param: dict[str, str], file_path: str) -> None:
     if os.path.exists(file_path):
         os.remove(file_path)
 
-    # write
+    # write config
     with open(file_path, "a") as f:
         for key, val in CONST_WRITE.items():
             f.write(key)
