@@ -67,9 +67,17 @@ ROUND_MAPPING = {
     "memory.fraction": "float",
     "spark.serializer": "bool",
     "rdd.compress": "bool",
-    "default.parallelism": "bool",
+    "default.parallelism": "int",
     "shuffle.spill.compress": "bool",
     "spark.speculation": "bool",
+}
+
+#
+CAT_MAPPING = {
+    "spark.serializer": [
+        "org.apache.spark.serializer.KryoSerializer",
+        "org.apache.spark.serializer.JavaSerializer"
+    ]
 }
 
 
@@ -155,6 +163,16 @@ def _pre_process(param: dict[str, Union[float, int]]) -> dict[str, str]:
     # map from param to actual spark config name
     for key, val in param.items():
         param_[NAME_MAPPING[key]] = str(val)
+
+    # cat mapping
+    for key in list(param_.keys()):
+        if key in CAT_MAPPING:
+            if param_[key] == "0":
+                param_[key] = CAT_MAPPING[key][0]
+            elif param_[key] == "1":
+                param_[key] = CAT_MAPPING[key][1]
+            else:
+                raise ValueError(f"unsupported param {key} val {param_[key]}")
 
     # perform unit mapping, e.g. '4' -> '4g'
     for key in list(param_.keys()):

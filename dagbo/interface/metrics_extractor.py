@@ -40,7 +40,8 @@ def main(_):
 
 def extract_throughput(hibench_report_path: str) -> str:
     """
-    by default the last line is the latest run results
+    according to hibench report log text structure
+        by default the last line is the latest run results
     """
     with open(hibench_report_path, "r") as f:
         lines = f.readlines()
@@ -48,8 +49,7 @@ def extract_throughput(hibench_report_path: str) -> str:
 
         #for line in lines:
         #    print(line.strip().split())
-
-    return l
+    return l[-2]
 
 
 def extract_app_id(log_path: str) -> str:

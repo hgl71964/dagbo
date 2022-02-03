@@ -103,7 +103,7 @@ def main(_):
         ax.RangeParameter("executor.num[*]",
                           ax.ParameterType.FLOAT,
                           lower=2,
-                          upper=8),
+                          upper=4),
         ax.RangeParameter("executor.cores",
                           ax.ParameterType.FLOAT,
                           lower=1,
@@ -114,8 +114,8 @@ def main(_):
                           upper=1),
         ax.RangeParameter("memory.fraction",
                           ax.ParameterType.FLOAT,
-                          lower=0.1,
-                          upper=0.99),
+                          lower=0.2,
+                          upper=0.9),
         ax.RangeParameter("executor.memory",
                           ax.ParameterType.FLOAT,
                           lower=2,
@@ -130,12 +130,14 @@ def main(_):
                           upper=1),
         ax.RangeParameter("default.parallelism",
                           ax.ParameterType.FLOAT,
-                          lower=0,
-                          upper=1),
-        ax.RangeParameter("shuffle.spill.compress",
-                          ax.ParameterType.FLOAT,
-                          lower=0,
-                          upper=1),
+                          lower=2,
+                          upper=16),
+        ax.RangeParameter(
+            "shuffle.spill.compress",
+            #ax.ParameterType.FLOAT,
+            ax.ParameterType.INT,
+            lower=0,
+            upper=1),
         ax.RangeParameter("spark.speculation",
                           ax.ParameterType.FLOAT,
                           lower=0,
@@ -157,6 +159,7 @@ def main(_):
     trial.mark_completed()
 
     print(exp.fetch_data().df)
+    print(exp.trials)
     raise RuntimeError()
 
     # bo loop
