@@ -16,12 +16,12 @@ digraph "spark-performance-model" {
 	}
 	subgraph cluster_1 {
 		color=blue
-		duration [label=duration]
+		taskTime [label=taskTime]
 		executorRunTime [label=executorRunTime]
 		executorCpuTime [label=executorCpuTime]
 		executorDeserializeTime [label=executorDeserializeTime]
 		executorDeserializeCpuTime [label=executorDeserializeCpuTime]
-		jvmGCTime [label=jvmGCTime]
+		jvmGcTime [label=jvmGcTime]
 		memoryBytesSpilled [label=memoryBytesSpilled]
 		diskBytesSpilled [label=diskBytesSpilled]
 		label="intermediate metrics"
@@ -33,15 +33,15 @@ digraph "spark-performance-model" {
 	"executor.num[*]" -> executorDeserializeCpuTime
 	"executor.cores" -> executorCpuTime
 	"executor.cores" -> executorDeserializeCpuTime
-	"executor.cores" -> jvmGCTime
-	"executor.memory" -> jvmGCTime
+	"executor.cores" -> jvmGcTime
+	"executor.memory" -> jvmGcTime
 	"executor.memory" -> memoryBytesSpilled
 	"executor.memory" -> diskBytesSpilled
 	"default.parallelism" -> executorDeserializeCpuTime
 	"default.parallelism" -> executorCpuTime
 	"default.parallelism" -> diskBytesSpilled
 	"default.parallelism" -> memoryBytesSpilled
-	"memory.fraction" -> jvmGCTime
+	"memory.fraction" -> jvmGcTime
 	"memory.fraction" -> diskBytesSpilled
 	"memory.fraction" -> memoryBytesSpilled
 	"shuffle.compress" -> executorDeserializeCpuTime
@@ -50,13 +50,13 @@ digraph "spark-performance-model" {
 	"shuffle.spill.compress" -> memoryBytesSpilled
 	"spark.speculation" -> executorRunTime
 	executorCpuTime -> executorRunTime
-	jvmGCTime -> executorCpuTime [color=red]
-	jvmGCTime -> executorRunTime [color=red]
+	jvmGcTime -> executorCpuTime [color=red]
+	jvmGcTime -> executorRunTime [color=red]
 	executorDeserializeCpuTime -> executorDeserializeTime
 	memoryBytesSpilled -> executorRunTime
 	diskBytesSpilled -> executorRunTime
-	executorRunTime -> duration
-	executorDeserializeTime -> duration
+	executorRunTime -> taskTime
+	executorDeserializeTime -> taskTime
 	"spark.serializer" -> executorCpuTime
 	"spark.serializer" -> executorDeserializeCpuTime
 	"spark.serializer" -> memoryBytesSpilled
@@ -65,5 +65,5 @@ digraph "spark-performance-model" {
 	"rdd.compress" -> executorDeserializeCpuTime
 	"rdd.compress" -> memoryBytesSpilled
 	"rdd.compress" -> diskBytesSpilled
-	duration -> throughput
+	taskTime -> throughput
 }
