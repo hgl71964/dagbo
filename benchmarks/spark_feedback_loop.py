@@ -136,8 +136,8 @@ def main(_):
                           upper=16),
         ax.RangeParameter(
             "shuffle.spill.compress",
-            #ax.ParameterType.FLOAT,
-            ax.ParameterType.INT,
+            ax.ParameterType.FLOAT,
+            #ax.ParameterType.INT,
             lower=0,
             upper=1),
         ax.RangeParameter("spark.speculation",
@@ -173,8 +173,7 @@ def main(_):
                                 param_names,
                                 acq_name="qUCB",
                                 acq_func_config=acq_func_config)
-        gen_run = candidates_to_generator_run(exp, candidates,
-                                              param_names)
+        gen_run = candidates_to_generator_run(exp, candidates, param_names)
 
         # run
         if acq_func_config["q"] == 1:

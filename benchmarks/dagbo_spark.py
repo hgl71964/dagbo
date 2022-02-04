@@ -177,7 +177,7 @@ def main(_):
                                          edges)
         fit_dag(dag)
 
-        # get candidates (inner loop)
+        # get candidates (inner loop) TODO some type conversion need to be done here too
         candidates = inner_loop(exp,
                                 dag,
                                 param_names,
