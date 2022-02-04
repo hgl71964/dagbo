@@ -73,4 +73,5 @@ By default Spark uses the /tmp directory to store intermediate data
 
 solution:
         spark.local.dir                     SOME/DIR/WHERE/YOU/HAVE/SPACE
+        in ${hadoop/etc/core-site.xml}      set `hadoop.tmp.dir` as a property
 

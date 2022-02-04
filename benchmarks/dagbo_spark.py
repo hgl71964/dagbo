@@ -16,8 +16,7 @@ from ax.runners.synthetic import SyntheticRunner
 
 from dagbo.fit_dag import fit_dag
 from dagbo.utils.perf_model_utils import build_perf_model_from_spec
-from dagbo.utils.ax_experiment_utils import candidates_to_generator_run
-from dagbo.other_opt.bo_utils import get_fitted_model, inner_loop
+from dagbo.utils.ax_experiment_utils import get_dict_tensor
 from dagbo.interface.exec_spark import call_spark
 from dagbo.interface.parse_performance_model import parse_model
 from dagbo.interface.metrics_extractor import extract_throughput, extract_app_id, request_history_server
@@ -161,31 +160,42 @@ def main(_):
     trial.mark_completed()
 
     print(exp.fetch_data().df)
-    #print(exp.arms_by_name)
+    print(exp.arms_by_name)
 
     # bo loop
     for t in range(FLAGS.epochs):
+        # input params can be read from ax experiment
+        train_inputs_dict = get_dict_tensor(exp, param_names)
 
-        model = get_fitted_model(exp, param_names)
+        # TODO
+        train_targets_dict = {}
 
+        # fit model from dataset
+        dag = build_perf_model_from_spec(train_inputs_dict, train_targets_dict,
+                                         acq_func_config["num_samples"],
+                                         param_space, metric_space, obj_space,
+                                         edges)
+        fit_dag(dag)
+
+        # get candidates (inner loop)
         candidates = inner_loop(exp,
-                                model,
+                                dag,
                                 param_names,
                                 acq_name="qUCB",
                                 acq_func_config=acq_func_config)
-        gen_run = candidates_to_generator_run(exp, candidates,
-                                              param_names)
+        gen_run = candidates_to_generator_run(exp, candidates, param_names)
 
         # run
-        if acq_func_config["q"] == 1:
+        if self.acq_func_config["q"] == 1:
             trial = exp.new_trial(generator_run=gen_run)
         else:
             trial = exp.new_batch_trial(generator_run=gen_run)
         trial.run()
         trial.mark_completed()
 
-        #app_id = extract_app_id(FLAGS.log_path)
-        #metric = request_history_server(FLAGS.base_url, app_id)
+        # TODO
+        app_id = extract_app_id(FLAGS.log_path)
+        metric = request_history_server(FLAGS.base_url, app_id)
 
     print("done")
     print(exp.fetch_data().df)
