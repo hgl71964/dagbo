@@ -7,9 +7,7 @@ Implementation of a Bayesian optimisation tuner using directed-acyclic-graph sur
 ## Install
 Install using pip from a local directory using
 
-```pip3 install -e $LOCAL_DIR```
-
-e.g. LOCAL_DIR="/home/ross/dagbo"
+```pip3 install -e .```
 
 ## Demo
 The DAG used in the Spark case study is available in the tests folder.
