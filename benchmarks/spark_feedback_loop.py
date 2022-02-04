@@ -21,7 +21,6 @@ from dagbo.interface.exec_spark import call_spark
 from dagbo.interface.parse_performance_model import parse_model
 from dagbo.interface.metrics_extractor import extract_throughput, extract_app_id, request_history_server
 
-
 FLAGS = flags.FLAGS
 flags.DEFINE_string("performance_model_path",
                     "dagbo/interface/spark_performance_model.txt",

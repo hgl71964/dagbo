@@ -7,10 +7,10 @@ from ax.storage.metric_registry import register_metric
 from dagbo.utils.ax_experiment_utils import load_exp
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string("name",
-                    "nbo",
-                    "name of experiment")
+flags.DEFINE_string("name", "nbo", "name of experiment")
 
+
+# to load experiment, need to `register metric` again
 class SparkMetric(ax.Metric):
     def fetch_trial_data(self, trial, **kwargs):
         records = []
@@ -37,8 +37,9 @@ def main(_):
     exp = load_exp(FLAGS.name)
 
     # TODO add visualisation?
-    print(exp.fetch_data().df)
-    print(exp.arms_by_name)
+    res = exp.fetch_data().df
+    print(res)
+
 
 if __name__ == "__main__":
     app.run(main)
