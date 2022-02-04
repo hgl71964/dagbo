@@ -11,16 +11,16 @@ import ax
 from ax.modelbridge.registry import Models
 from ax import SearchSpace, Experiment, OptimizationConfig, Objective, Metric
 from ax.storage.metric_registry import register_metric
-from ax.storage.runner_registry import register_runner
 from ax.runners.synthetic import SyntheticRunner
 
 from dagbo.fit_dag import fit_dag
 from dagbo.utils.perf_model_utils import build_perf_model_from_spec
-from dagbo.utils.ax_experiment_utils import candidates_to_generator_run
+from dagbo.utils.ax_experiment_utils import candidates_to_generator_run, save_exp
 from dagbo.other_opt.bo_utils import get_fitted_model, inner_loop
 from dagbo.interface.exec_spark import call_spark
 from dagbo.interface.parse_performance_model import parse_model
 from dagbo.interface.metrics_extractor import extract_throughput, extract_app_id, request_history_server
+
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string("performance_model_path",
@@ -82,6 +82,9 @@ class SparkMetric(Metric):
 
 
 def main(_):
+
+    # for saving
+    register_metric(SparkMetric)
 
     # build experiment
     ## get dag's spec
@@ -188,6 +191,7 @@ def main(_):
 
     print("done")
     print(exp.fetch_data().df)
+    save_exp(exp, "nbo")
 
 
 if __name__ == "__main__":
