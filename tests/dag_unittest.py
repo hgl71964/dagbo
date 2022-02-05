@@ -9,15 +9,11 @@ import pandas as pd
 from torch import Size, Tensor
 from sklearn.metrics import mean_squared_error
 
+import gpytorch
 import botorch
-from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.optim import optimize_acqf
-
-# hacky way to include the src code dir
-#testdir = os.path.dirname(__file__)
-#srcdir = "../src"
-#sys.path.insert(0, os.path.abspath(os.path.join(testdir, srcdir)))
+from botorch.posteriors.gpytorch import GPyTorchPosterior
 
 # import from dagbo
 from dagbo.dag import Dag, SO_Dag
@@ -26,11 +22,66 @@ from dagbo.dag_gpytorch_model import DagGPyTorchModel, full_DagGPyTorchModel
 from dagbo.fit_dag import fit_dag, fit_node_with_scipy, test_fit_node_with_scipy, fit_node_with_adam
 
 
+class normal_gp_test(unittest.TestCase):
+    def setUp(self):
+        class gp(botorch.models.gp_regression.SingleTaskGP):
+            def posterior(self,
+                          X: Tensor,
+                          observation_noise=False,
+                          **kwargs) -> GPyTorchPosterior:
+                self.eval()  # make sure model is in eval mode
+                X = self.transform_inputs(X)
+                with gpt_posterior_settings():
+                    mvn = self(X)
+                posterior = GPyTorchPosterior(mvn=mvn)
+                return posterior
+
+        # prepare input
+        train_input_names = [
+            "x1",
+            "x2",
+            "x3",
+        ]
+        train_target_names = [
+            "z1",
+            "z2",
+            "y",
+        ]
+        batch_size = 1
+        num_samples = 1000
+
+        # create data
+        #train_inputs = torch.linspace(0, 1, 7)
+        train_inputs = torch.linspace(0, 2, 7)
+        func = lambda x: torch.sin(x * (8 * math.pi)) + torch.cos(x * (
+            3 * math.pi)) + torch.log(x + 0.1) + 3
+        #func = lambda x: torch.sin(x * math.pi)
+
+        # reshape
+        train_targets = func(train_inputs).reshape(-1, 1).expand(
+            1, 7, 2)  # shape:[1, 7, 3]
+
+        #print(train_targets[0])
+        new_val = func(train_targets[..., -1].flatten()).reshape(1, 7, 1)
+        train_targets = torch.cat([train_targets, new_val], dim=-1)
+        #print(new_val)
+        #print(train_targets[0])
+        #raise ValueError("ok")
+
+        train_inputs = train_inputs.reshape(-1, 1).expand(1, 7,
+                                                          3)  # shape:[1, 7, 3]
+
+        self.assertEqual(train_inputs.shape, torch.Size([1, 7, 3]))
+        self.assertEqual(train_targets.shape, torch.Size([1, 7, 3]))
+
+        self.model = gp(train_inputs, train_targets)
+
+    def test_normal_gp_sampling_shape(self):
+        print(self.model)
+
+
 class ross_dag_test(unittest.TestCase):
     def setUp(self):
-        """
-        setUp is called before each test
-        """
 
         # define dag
         class TREE_DAG(SO_Dag, DagGPyTorchModel):
@@ -106,10 +157,6 @@ class ross_dag_test(unittest.TestCase):
         self.domain = (0, 2)
         self.simple_dag = TREE_DAG(train_input_names, train_target_names,
                                    train_inputs, train_targets, num_samples)
-
-    def tearDown(self):
-        # gc
-        pass
 
     @unittest.skip(".")
     def test_model_mro(self):
@@ -291,10 +338,6 @@ class full_dag_test(unittest.TestCase):
         self.domain = (0, 2)
         self.simple_dag = TREE_DAG(train_input_names, train_target_names,
                                    train_inputs, train_targets, num_samples)
-
-    def tearDown(self):
-        # gc
-        pass
 
     def test_dag_posterior(self):
         """
