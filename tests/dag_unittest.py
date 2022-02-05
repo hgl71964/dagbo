@@ -14,12 +14,13 @@ import botorch
 from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.optim import optimize_acqf
 from botorch.posteriors.gpytorch import GPyTorchPosterior
+from botorch.models.utils import gpt_posterior_settings
 
-# import from dagbo
 from dagbo.dag import Dag, SO_Dag
 from dagbo.models.sample_average_posterior import SampleAveragePosterior
 from dagbo.dag_gpytorch_model import DagGPyTorchModel, full_DagGPyTorchModel
 from dagbo.fit_dag import fit_dag, fit_node_with_scipy, test_fit_node_with_scipy, fit_node_with_adam
+from dagbo.other_opt.model_factory import fit_gpr
 
 
 class normal_gp_test(unittest.TestCase):
@@ -30,7 +31,6 @@ class normal_gp_test(unittest.TestCase):
                           observation_noise=False,
                           **kwargs) -> GPyTorchPosterior:
                 self.eval()  # make sure model is in eval mode
-                X = self.transform_inputs(X)
                 with gpt_posterior_settings():
                     mvn = self(X)
                 posterior = GPyTorchPosterior(mvn=mvn)
@@ -47,37 +47,63 @@ class normal_gp_test(unittest.TestCase):
             "z2",
             "y",
         ]
-        batch_size = 1
-        num_samples = 1000
+        num_init = 2
 
         # create data
         #train_inputs = torch.linspace(0, 1, 7)
-        train_inputs = torch.linspace(0, 2, 7)
+        train_inputs = torch.linspace(0, 1, num_init)
         func = lambda x: torch.sin(x * (8 * math.pi)) + torch.cos(x * (
             3 * math.pi)) + torch.log(x + 0.1) + 3
         #func = lambda x: torch.sin(x * math.pi)
 
         # reshape
         train_targets = func(train_inputs).reshape(-1, 1).expand(
-            1, 7, 2)  # shape:[1, 7, 3]
+            1, num_init, 2)  # shape:[1, num_init, 3]
 
         #print(train_targets[0])
-        new_val = func(train_targets[..., -1].flatten()).reshape(1, 7, 1)
+        new_val = func(train_targets[...,
+                                     -1].flatten()).reshape(1, num_init, 1)
         train_targets = torch.cat([train_targets, new_val], dim=-1)
         #print(new_val)
         #print(train_targets[0])
         #raise ValueError("ok")
 
-        train_inputs = train_inputs.reshape(-1, 1).expand(1, 7,
-                                                          3)  # shape:[1, 7, 3]
+        train_inputs = train_inputs.reshape(-1, 1).expand(
+            1, num_init, 3)  # shape:[1, num_init, 3]
 
-        self.assertEqual(train_inputs.shape, torch.Size([1, 7, 3]))
-        self.assertEqual(train_targets.shape, torch.Size([1, 7, 3]))
+        self.assertEqual(train_inputs.shape, torch.Size([1, num_init, 3]))
+        self.assertEqual(train_targets.shape, torch.Size([1, num_init, 3]))
+
+        #train_inputs = train_inputs.reshape(num_init,3)
+        #train_targets = train_targets.reshape(num_init,3)
 
         self.model = gp(train_inputs, train_targets)
 
     def test_normal_gp_sampling_shape(self):
-        print(self.model)
+        fit_gpr(self.model)
+
+        train_input_names = ["x1", "x2", "x3"]
+        q = 1
+        #new_input = torch.rand(self.batch_size, q, len(train_input_names))
+        new_input = torch.rand(1, q, len(train_input_names))
+
+        print()
+        print("normal gp sampling:")
+        print("input shape: ", new_input.shape)
+
+        pst = self.model.posterior(new_input, **{"verbose": True})
+
+        print()
+        print("posterior:")
+        print(pst.mean, pst.event_shape)
+        sampler = SobolQMCNormalSampler(num_samples=2, seed=1234)
+        samples = sampler(pst)
+        print()
+        print("sampling from posterior")
+        print(
+            samples.shape
+        )  # [sampler's num_samples, batch_size of input, q, DAG's num_of_output]
+        print(samples)
 
 
 class ross_dag_test(unittest.TestCase):
@@ -197,7 +223,7 @@ class ross_dag_test(unittest.TestCase):
                     after = mean_squared_error(test_y, mean)
         print(f"MSE after fit: {after:.2f}")
 
-    @unittest.skip("both mvn or multi-mvn samples seems ok")
+    @unittest.skip("ok")
     def test_dag_posterior(self):
         """
         test posterior returned by the DAG,
@@ -216,14 +242,15 @@ class ross_dag_test(unittest.TestCase):
 
         print()
         print("posterior:")
-        print(pst.is_multitask, pst.mean, pst.num_samples, pst.event_shape)
-        sampler = SobolQMCNormalSampler(num_samples=2048, seed=1234)
+        print(pst.mean, pst.event_shape)
+        sampler = SobolQMCNormalSampler(num_samples=3, seed=1234)
         samples = sampler(pst)
         print()
         print("sampling from posterior")
         print(
             samples.shape
         )  # [sampler's num_samples, batch_size of input, q, DAG's num_of_output]
+        print(samples)
 
     @unittest.skip("..")
     def test_dag_inner_loop(self):
@@ -306,7 +333,7 @@ class full_dag_test(unittest.TestCase):
             "y",
         ]
         batch_size = 1
-        num_samples = 5
+        num_samples = 2
 
         # create data
         #train_inputs = torch.linspace(0, 1, 7)
