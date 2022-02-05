@@ -69,6 +69,7 @@ class test_exec_spark(unittest.TestCase):
 
         print(metric)
 
+
 class perf_utils_test(unittest.TestCase):
     def setUp(self):
         param_space, metric_space, obj_space, edges = parse_model(
@@ -171,7 +172,6 @@ class perf_model_test(unittest.TestCase):
 
         print("end-to-end feat extraction: ")
         print(metric)
-
 
 
 if __name__ == "__main__":

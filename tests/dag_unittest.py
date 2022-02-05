@@ -22,49 +22,47 @@ from botorch.optim import optimize_acqf
 # import from dagbo
 from dagbo.dag import Dag, SO_Dag
 from dagbo.models.sample_average_posterior import SampleAveragePosterior
-from dagbo.dag_gpytorch_model import DagGPyTorchModel
+from dagbo.dag_gpytorch_model import DagGPyTorchModel, full_DagGPyTorchModel
 from dagbo.fit_dag import fit_dag, fit_node_with_scipy, test_fit_node_with_scipy, fit_node_with_adam
 
 
-#class TREE_DAG(Dag, DagGPyTorchModel):
-class TREE_DAG(SO_Dag, DagGPyTorchModel):
-    """
-    creation a simple tree-like DAG
-
-    x1      x2        x3
-      \     /         |
-        z1           z2
-          \        /
-              y
-    """
-    def __init__(self, train_input_names: list[str],
-                 train_target_names: list[str], train_inputs: Tensor,
-                 train_targets: Tensor, num_samples: int):
-        super().__init__(train_input_names, train_target_names, train_inputs,
-                         train_targets)
-
-        # required for all classes that extend SparkDag
-        self.num_samples = num_samples
-
-    def define_dag(self, batch_shape: Size = Size([])) -> None:
-        x_1 = self.register_input("x1")
-        x_2 = self.register_input("x2")
-        x_3 = self.register_input("x3")
-
-        z_1 = self.register_metric("z1", [x_1, x_2])
-        z_2 = self.register_metric("z2", [x_3])
-
-        y = self.register_metric("y", [z_1, z_2])
-
-
-class dag_test(unittest.TestCase):
+class ross_dag_test(unittest.TestCase):
     def setUp(self):
         """
         setUp is called before each test
         """
-        #warnings.filterwarnings(action="ignore",
-        #                        message="unclosed",
-        #                        category=ResourceWarning)
+
+        # define dag
+        class TREE_DAG(SO_Dag, DagGPyTorchModel):
+            """
+            creation a simple tree-like DAG
+
+            x1      x2        x3
+              \     /         |
+                z1           z2
+                  \        /
+                      y
+            """
+            def __init__(self, train_input_names: list[str],
+                         train_target_names: list[str], train_inputs: Tensor,
+                         train_targets: Tensor, num_samples: int):
+                super().__init__(train_input_names, train_target_names,
+                                 train_inputs, train_targets)
+
+                # required for all classes that extend SparkDag
+                self.num_samples = num_samples
+
+            def define_dag(self, batch_shape: Size = Size([])) -> None:
+                x_1 = self.register_input("x1")
+                x_2 = self.register_input("x2")
+                x_3 = self.register_input("x3")
+
+                z_1 = self.register_metric("z1", [x_1, x_2])
+                z_2 = self.register_metric("z2", [x_3])
+
+                y = self.register_metric("y", [z_1, z_2])
+
+        # prepare input
         train_input_names = [
             "x1",
             "x2",
@@ -180,20 +178,17 @@ class dag_test(unittest.TestCase):
             samples.shape
         )  # [sampler's num_samples, batch_size of input, q, DAG's num_of_output]
 
-    #@unittest.skip("..")
+    @unittest.skip("..")
     def test_dag_inner_loop(self):
         """
         test optimise the acquisition function
         """
         fit_dag(self.simple_dag, fit_node_with_scipy)
-        """ --- desire input shape to posterior ---"""
-        print()
-        logging.info("ordinary input: ")
-        train_input_names = ["x1", "x2", "x3"]
         q = 1
-        new_input = torch.rand(self.batch_size, q, len(train_input_names))
-        self.simple_dag.posterior(new_input, **{"verbose": True})
-        """ --- Botorch's acquisition function input to posterior ---"""
+        num_restarts = 24  # create batch shape for optimise acquisition func
+        raw_samples = 48  # this create initial batch shape for optimise acquisition func
+
+        # --- Botorch's acquisition function input to posterior
         print()
         logging.info("Botorch input shape: ")
         sampler = SobolQMCNormalSampler(num_samples=2048, seed=1234)
@@ -212,14 +207,122 @@ class dag_test(unittest.TestCase):
                 [1, 1, 1],
             ], dtype=torch.float32),
             q=q,
-            num_restarts=24,  # create batch shape for optimise acquisition func
-            raw_samples=
-            48,  # this create initial batch shape for optimise acquisition func
+            num_restarts=num_restarts,
+            raw_samples=raw_samples,
             sequential=False,  # joint optimisation of q
         )
         query = candidates.detach()
-        logging.info("inner loop: ")
+        logging.info("candidates: ")
         print(query, val.detach())
+
+
+class full_dag_test(unittest.TestCase):
+    def setUp(self):
+        # define dag
+        class TREE_DAG(SO_Dag, full_DagGPyTorchModel):
+            """
+            creation a simple tree-like DAG
+
+            x1      x2        x3
+              \     /         |
+                z1           z2
+                  \        /
+                      y
+            """
+            def __init__(self, train_input_names: list[str],
+                         train_target_names: list[str], train_inputs: Tensor,
+                         train_targets: Tensor, num_samples: int):
+                super().__init__(train_input_names, train_target_names,
+                                 train_inputs, train_targets)
+
+                # required for all classes that extend SparkDag
+                self.num_samples = num_samples
+
+            def define_dag(self, batch_shape: Size = Size([])) -> None:
+                x_1 = self.register_input("x1")
+                x_2 = self.register_input("x2")
+                x_3 = self.register_input("x3")
+
+                z_1 = self.register_metric("z1", [x_1, x_2])
+                z_2 = self.register_metric("z2", [x_3])
+
+                y = self.register_metric("y", [z_1, z_2])
+
+        train_input_names = [
+            "x1",
+            "x2",
+            "x3",
+        ]
+        train_target_names = [
+            "z1",
+            "z2",
+            "y",
+        ]
+        batch_size = 1
+        num_samples = 5
+
+        # create data
+        #train_inputs = torch.linspace(0, 1, 7)
+        train_inputs = torch.linspace(0, 2, 7)
+        func = lambda x: torch.sin(x * (8 * math.pi)) + torch.cos(x * (
+            3 * math.pi)) + torch.log(x + 0.1) + 3
+        #func = lambda x: torch.sin(x * math.pi)
+
+        # reshape
+        train_targets = func(train_inputs).reshape(-1, 1).expand(
+            1, 7, 2)  # shape:[1, 7, 3]
+
+        #print(train_targets[0])
+        new_val = func(train_targets[..., -1].flatten()).reshape(1, 7, 1)
+        train_targets = torch.cat([train_targets, new_val], dim=-1)
+        #print(new_val)
+        #print(train_targets[0])
+        #raise ValueError("ok")
+
+        train_inputs = train_inputs.reshape(-1, 1).expand(1, 7,
+                                                          3)  # shape:[1, 7, 3]
+
+        self.assertEqual(train_inputs.shape, torch.Size([1, 7, 3]))
+        self.assertEqual(train_targets.shape, torch.Size([1, 7, 3]))
+
+        self.func = func
+        self.batch_size = batch_size
+        self.num_samples = num_samples
+        self.domain = (0, 2)
+        self.simple_dag = TREE_DAG(train_input_names, train_target_names,
+                                   train_inputs, train_targets, num_samples)
+
+    def tearDown(self):
+        # gc
+        pass
+
+    def test_dag_posterior(self):
+        """
+        test posterior returned by the DAG,
+            as well as samplings from this posterior
+        """
+        fit_dag(self.simple_dag, fit_node_with_scipy)
+
+        train_input_names = ["x1", "x2", "x3"]
+        q = 1
+        #new_input = torch.rand(self.batch_size, q, len(train_input_names))
+        new_input = torch.rand(1, q, len(train_input_names))
+
+        print("input shape: ", new_input.shape)
+
+        pst = self.simple_dag.posterior(new_input, **{"verbose": True})
+
+        print()
+        print("full posterior:")
+        print(pst.mean, pst.variance, pst.event_shape)
+        sampler = SobolQMCNormalSampler(num_samples=3, seed=1234)
+        samples = sampler(pst)
+        print()
+        print("sampling from posterior")
+        print(
+            samples.shape
+        )  # [sampler's num_samples, batch_size of input, q, DAG's num_of_output]
+        print(samples)
 
 
 if __name__ == '__main__':

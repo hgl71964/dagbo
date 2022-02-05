@@ -16,7 +16,6 @@ def opt_acq_func(model: Union[SingleTaskGP, Dag], acq_name: str,
 
     sampler = make_sampler(acq_func_config)
     acq_func = make_acq_func(model, acq_name, sampler, acq_func_config)
-
     """
     by default, acq_func is set to be maximised
         so candidates will try to maximise the model
