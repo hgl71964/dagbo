@@ -341,6 +341,13 @@ class SO_Dag(Dag):
 
             node_dict[node.output_name] = mvn
             prediction = mvn.rsample()
+            #print()
+            #print("rsample size::")
+            #print(node.output_name)
+            #print(node_inputs.shape)
+            #print(prediction.shape)
+            #print(node_inputs)
+            #print(mvn.loc)
             tensor_inputs_dict[node.output_name] = prediction
             sink_node_name = node.output_name
 

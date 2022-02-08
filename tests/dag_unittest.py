@@ -27,6 +27,10 @@ from dagbo.other_opt.model_factory import fit_gpr
 
 
 class normal_gp_test(unittest.TestCase):
+    """
+    test the sampling and inner loop of a standard gp model from gpytorch
+        (as building block for dagbo)
+    """
     def setUp(self):
         class gp(Node):
             def __init__(self, input_names, output_name, train_inputs,
@@ -45,6 +49,8 @@ class normal_gp_test(unittest.TestCase):
                 print("mvn:::")
                 print(X.shape)
                 print(mvn)
+                print(X)
+                print(mvn.loc)
                 #print(mvn.loc)  # can verify identical mvn
                 posterior = GPyTorchPosterior(mvn=mvn)
                 return posterior
@@ -72,43 +78,12 @@ class normal_gp_test(unittest.TestCase):
             3 * math.pi)) + torch.log(x[2] + 0.1) + 3
         train_targets = torch.tensor([func(i) for i in train_inputs])
 
-        # create data
-        #train_inputs = torch.linspace(0, 1, 7)
-        #train_inputs = torch.linspace(0, 1, num_init)
-        #train_inputs = torch.rand(num_init)
-        #func = lambda x: torch.sin(x * (8 * math.pi)) + torch.cos(x * (
-        #    3 * math.pi)) + torch.log(x + 0.1) + 3
-        ##func = lambda x: torch.sin(x * math.pi)
-
-        ## reshape
-        #train_targets = func(train_inputs).reshape(-1, 1).expand(
-        #    1, num_init, 2)  # shape:[1, num_init, 3]
-
-        ##print(train_targets[0])
-        #new_val = func(train_targets[...,
-        #                             -1].flatten()).reshape(1, num_init, 1)
-        #train_targets = torch.cat([train_targets, new_val], dim=-1)
-        ##print(new_val)
-        ##print(train_targets[0])
-        ##raise ValueError("ok")
-
-        #train_inputs = train_inputs.reshape(-1, 1).expand(
-        #    1, num_init, 3)  # shape:[1, num_init, 3]
-
         train_inputs = train_inputs.reshape(1, num_init, 3)
         train_targets = train_targets.reshape(1, num_init)
-        #self.assertEqual(train_inputs.shape, torch.Size([1, num_init, 3]))
-        #self.assertEqual(train_targets.shape, torch.Size([1, num_init, 3]))
-
-        #print("training input:")
-        #print(train_inputs)
-        #print(train_targets)
-
-        #train_inputs = train_inputs.reshape(num_init,3)
-        #train_targets = train_targets.reshape(num_init,3)
 
         self.model = gp(["x1", "x2", "x3"], "t", train_inputs, train_targets)
 
+    @unittest.skip("print sample shape")
     def test_normal_gp_sampling_shape(self):
         fit_gpr(self.model)
 
@@ -145,13 +120,20 @@ class normal_gp_test(unittest.TestCase):
         )  # [sampler's num_samples, batch_size of input, q, DAG's num_of_output]
         print(samples)
 
+    @unittest.skip("print inner loop shape")
     def test_normal_gp_inner_loop_shape(self):
+        """
+        gp posterior only return one `deterministic` `posterior` object
+            representing a gaussian posterior distribution
+            this is ok for normal gp
+            but our dagbo needs `approximate` posterior
+        """
         print()
         print("normal gp inner loop:::")
         fit_gpr(self.model)
         q = 1
-        num_restarts = 24  # create batch shape for optimise acquisition func
-        raw_samples = 48  # this create initial batch shape for optimise acquisition func
+        num_restarts = 2  # create batch shape for optimise acquisition func
+        raw_samples = 3  # this create initial batch shape for optimise acquisition func
 
         sampler = SobolQMCNormalSampler(num_samples=128, seed=1234)
         acq = botorch.acquisition.monte_carlo.qExpectedImprovement(
@@ -179,6 +161,9 @@ class normal_gp_test(unittest.TestCase):
 
 
 class ross_dag_test(unittest.TestCase):
+    """
+    test ross' impl of sample average dagbo
+    """
     def setUp(self):
 
         # define dag
@@ -363,6 +348,9 @@ class ross_dag_test(unittest.TestCase):
 
 
 class full_dag_test(unittest.TestCase):
+    """
+    test my impl of sampling from dagbo's approx. posterior
+    """
     def setUp(self):
         # define dag
         class TREE_DAG(SO_Dag, full_DagGPyTorchModel):
@@ -438,7 +426,7 @@ class full_dag_test(unittest.TestCase):
         self.simple_dag = TREE_DAG(train_input_names, train_target_names,
                                    train_inputs, train_targets, num_samples)
 
-    #@unittest.skip(".")
+    @unittest.skip(".")
     def test_dag_posterior(self):
         """
         test posterior returned by the DAG,
@@ -465,7 +453,58 @@ class full_dag_test(unittest.TestCase):
         print(
             samples.shape
         )  # [sampler's num_samples, batch_size of input, q, DAG's num_of_output]
-        print(samples)
+        #print(samples)
+
+    def test_dag_inner_loop(self):
+        """
+        batch average MC grad!!!
+
+            original input X: [b, q, dim]
+            original output y: [b, q]  # becuase the output dim is 1, it is squeezed
+                (where b dim is used as `raw_sample`  or `num_restarts` in innner loop)
+
+        now I want to repeat original process many times and take the average
+            (sampling from approx. posterior)
+
+        I unsqueeze a new sampling dimension: X [n, b, q, dim]
+            which gives a `batch` output y: [n, b, q]
+
+        and then i take average y -> y' = [b, q]
+            gpytorch's MultivariateNormal is treated specially
+        """
+        print()
+        print("full dagbo inner loop:::")
+        fit_dag(self.simple_dag, fit_node_with_scipy)
+        q = 1
+        num_restarts = 3  # create batch shape for optimise acquisition func
+        raw_samples = 4  # this create initial batch shape for optimise acquisition func
+
+        # --- Botorch's acquisition function input to posterior
+        print()
+        logging.info("Botorch input shape: ")
+        sampler = SobolQMCNormalSampler(num_samples=8, seed=1234)
+        acq = botorch.acquisition.monte_carlo.qExpectedImprovement(
+            model=self.simple_dag,
+            best_f=torch.tensor([1.]),
+            sampler=sampler,
+            objective=None,  # use when model has multiple output
+        )
+
+        # inner loop
+        candidates, val = botorch.optim.optimize_acqf(
+            acq_function=acq,
+            bounds=torch.tensor([
+                [0, 0, 0],
+                [1, 1, 1],
+            ], dtype=torch.float32),
+            q=q,
+            num_restarts=num_restarts,
+            raw_samples=raw_samples,
+            sequential=False,  # joint optimisation of q
+        )
+        query = candidates.detach()
+        logging.info("candidates: ")
+        print(query, val.detach())
 
 
 if __name__ == '__main__':

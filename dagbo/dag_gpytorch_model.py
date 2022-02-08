@@ -141,12 +141,15 @@ class full_DagGPyTorchModel(GPyTorchModel):
                     "Observation noise is not yet supported for DagGPyTorch models."
                 )
         # GPyTorchPosterior support both MultitaskMultivariateNormal and MultivariateNormal
-        # mvn: [num_samples, batch_shape, q, num_nodes]
-        posterior = GPyTorchPosterior(mvn=mvn)
+        # mvn loc: [num_samples, batch_shape, q, num_nodes]
+        gpytorch_mvn = MultivariateNormal(
+            mvn.loc.mean(0),
+            mvn.covariance_matrix.mean(0))  # take ave. along samples dim
+        posterior = GPyTorchPosterior(mvn=gpytorch_mvn)
         if verbose:
             logging.info("DAG's posterior: ")
             print("expanded_X: ", expanded_X.shape)
-            print("mvn: ", mvn, mvn.loc.shape)
+            print("mvn: ", mvn)
             print("posterior: ", posterior.event_shape, posterior.mean.shape)
             print(posterior.mean)
         if hasattr(self, "outcome_transform"):
