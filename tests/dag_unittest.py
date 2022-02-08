@@ -33,6 +33,7 @@ class normal_gp_test(unittest.TestCase):
                          train_targets):
                 super().__init__(input_names, output_name, train_inputs,
                                  train_targets)
+                self.num_outputs = 1
 
             def posterior(self,
                           X: Tensor,
@@ -41,7 +42,9 @@ class normal_gp_test(unittest.TestCase):
                 self.eval()  # make sure model is in eval mode
                 with gpt_posterior_settings():
                     mvn = self(X)
-                #print(mvn)
+                print("mvn:::")
+                print(X.shape)
+                print(mvn)
                 #print(mvn.loc)  # can verify identical mvn
                 posterior = GPyTorchPosterior(mvn=mvn)
                 return posterior
@@ -109,11 +112,11 @@ class normal_gp_test(unittest.TestCase):
     def test_normal_gp_sampling_shape(self):
         fit_gpr(self.model)
 
-        print("print param::::")
-        for i in self.model.covar.parameters():
-            print(i)
-        for i in self.model.mean.parameters():
-            print(i)
+        #print("print param::::")
+        #for i in self.model.covar.parameters():
+        #    print(i)
+        #for i in self.model.mean.parameters():
+        #    print(i)
 
         train_input_names = ["x1", "x2", "x3"]
         q = 1
@@ -143,7 +146,36 @@ class normal_gp_test(unittest.TestCase):
         print(samples)
 
     def test_normal_gp_inner_loop_shape(self):
-        pass
+        print()
+        print("normal gp inner loop:::")
+        fit_gpr(self.model)
+        q = 1
+        num_restarts = 24  # create batch shape for optimise acquisition func
+        raw_samples = 48  # this create initial batch shape for optimise acquisition func
+
+        sampler = SobolQMCNormalSampler(num_samples=128, seed=1234)
+        acq = botorch.acquisition.monte_carlo.qExpectedImprovement(
+            model=self.model,
+            best_f=torch.tensor([1.]),
+            sampler=sampler,
+            objective=None,  # use when model has multiple output
+        )
+
+        # inner loop
+        candidates, val = botorch.optim.optimize_acqf(
+            acq_function=acq,
+            bounds=torch.tensor([
+                [0, 0, 0],
+                [1, 1, 1],
+            ], dtype=torch.float32),
+            q=q,
+            num_restarts=num_restarts,
+            raw_samples=raw_samples,
+            sequential=False,  # joint optimisation of q
+        )
+        query = candidates.detach()
+        logging.info("candidates: ")
+        print(query, val.detach())
 
 
 class ross_dag_test(unittest.TestCase):
