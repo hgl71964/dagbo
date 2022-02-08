@@ -10,6 +10,8 @@ from torch import Size, Tensor
 from sklearn.metrics import mean_squared_error
 
 import gpytorch
+from gpytorch.models.exact_gp import ExactGP
+from gpytorch.likelihoods.gaussian_likelihood import GaussianLikelihood
 import botorch
 from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.optim import optimize_acqf
@@ -17,6 +19,7 @@ from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.models.utils import gpt_posterior_settings
 
 from dagbo.dag import Dag, SO_Dag
+from dagbo.models.node import Node
 from dagbo.models.sample_average_posterior import SampleAveragePosterior
 from dagbo.dag_gpytorch_model import DagGPyTorchModel, full_DagGPyTorchModel
 from dagbo.fit_dag import fit_dag, fit_node_with_scipy, test_fit_node_with_scipy, fit_node_with_adam
@@ -25,7 +28,12 @@ from dagbo.other_opt.model_factory import fit_gpr
 
 class normal_gp_test(unittest.TestCase):
     def setUp(self):
-        class gp(botorch.models.gp_regression.SingleTaskGP):
+        class gp(Node):
+            def __init__(self, input_names, output_name, train_inputs,
+                         train_targets):
+                super().__init__(input_names, output_name, train_inputs,
+                                 train_targets)
+
             def posterior(self,
                           X: Tensor,
                           observation_noise=False,
@@ -33,6 +41,8 @@ class normal_gp_test(unittest.TestCase):
                 self.eval()  # make sure model is in eval mode
                 with gpt_posterior_settings():
                     mvn = self(X)
+                #print(mvn)
+                #print(mvn.loc)  # can verify identical mvn
                 posterior = GPyTorchPosterior(mvn=mvn)
                 return posterior
 
@@ -49,38 +59,61 @@ class normal_gp_test(unittest.TestCase):
         ]
         num_init = 2
 
+        # hand-craft data
+        train_inputs = torch.tensor([
+            [0.1, 0.2, 0.3],
+            [0.4, 0.1, 0.9],
+        ],
+                                    dtype=torch.float32)
+        func = lambda x: torch.sin(x[0] * (8 * math.pi)) + torch.cos(x[1] * (
+            3 * math.pi)) + torch.log(x[2] + 0.1) + 3
+        train_targets = torch.tensor([func(i) for i in train_inputs])
+
         # create data
         #train_inputs = torch.linspace(0, 1, 7)
-        train_inputs = torch.linspace(0, 1, num_init)
-        func = lambda x: torch.sin(x * (8 * math.pi)) + torch.cos(x * (
-            3 * math.pi)) + torch.log(x + 0.1) + 3
-        #func = lambda x: torch.sin(x * math.pi)
+        #train_inputs = torch.linspace(0, 1, num_init)
+        #train_inputs = torch.rand(num_init)
+        #func = lambda x: torch.sin(x * (8 * math.pi)) + torch.cos(x * (
+        #    3 * math.pi)) + torch.log(x + 0.1) + 3
+        ##func = lambda x: torch.sin(x * math.pi)
 
-        # reshape
-        train_targets = func(train_inputs).reshape(-1, 1).expand(
-            1, num_init, 2)  # shape:[1, num_init, 3]
+        ## reshape
+        #train_targets = func(train_inputs).reshape(-1, 1).expand(
+        #    1, num_init, 2)  # shape:[1, num_init, 3]
 
-        #print(train_targets[0])
-        new_val = func(train_targets[...,
-                                     -1].flatten()).reshape(1, num_init, 1)
-        train_targets = torch.cat([train_targets, new_val], dim=-1)
-        #print(new_val)
-        #print(train_targets[0])
-        #raise ValueError("ok")
+        ##print(train_targets[0])
+        #new_val = func(train_targets[...,
+        #                             -1].flatten()).reshape(1, num_init, 1)
+        #train_targets = torch.cat([train_targets, new_val], dim=-1)
+        ##print(new_val)
+        ##print(train_targets[0])
+        ##raise ValueError("ok")
 
-        train_inputs = train_inputs.reshape(-1, 1).expand(
-            1, num_init, 3)  # shape:[1, num_init, 3]
+        #train_inputs = train_inputs.reshape(-1, 1).expand(
+        #    1, num_init, 3)  # shape:[1, num_init, 3]
 
-        self.assertEqual(train_inputs.shape, torch.Size([1, num_init, 3]))
-        self.assertEqual(train_targets.shape, torch.Size([1, num_init, 3]))
+        train_inputs = train_inputs.reshape(1, num_init, 3)
+        train_targets = train_targets.reshape(1, num_init)
+        #self.assertEqual(train_inputs.shape, torch.Size([1, num_init, 3]))
+        #self.assertEqual(train_targets.shape, torch.Size([1, num_init, 3]))
+
+        #print("training input:")
+        #print(train_inputs)
+        #print(train_targets)
 
         #train_inputs = train_inputs.reshape(num_init,3)
         #train_targets = train_targets.reshape(num_init,3)
 
-        self.model = gp(train_inputs, train_targets)
+        self.model = gp(["x1", "x2", "x3"], "t", train_inputs, train_targets)
 
     def test_normal_gp_sampling_shape(self):
         fit_gpr(self.model)
+
+        print("print param::::")
+        for i in self.model.covar.parameters():
+            print(i)
+        for i in self.model.mean.parameters():
+            print(i)
 
         train_input_names = ["x1", "x2", "x3"]
         q = 1
@@ -88,22 +121,29 @@ class normal_gp_test(unittest.TestCase):
         new_input = torch.rand(1, q, len(train_input_names))
 
         print()
-        print("normal gp sampling:")
+        print("normal gp sampling:::")
         print("input shape: ", new_input.shape)
+        print(new_input)
 
         pst = self.model.posterior(new_input, **{"verbose": True})
 
         print()
-        print("posterior:")
-        print(pst.mean, pst.event_shape)
-        sampler = SobolQMCNormalSampler(num_samples=2, seed=1234)
+        print("posterior:::")
+        print(pst.mean)
+        print(pst.variance)
+        print(pst.event_shape)
+        sampler = SobolQMCNormalSampler(
+            num_samples=2, seed=1234)  # sampler just expand 0-dim as samples
         samples = sampler(pst)
         print()
-        print("sampling from posterior")
+        print("sampling from posterior:::")
         print(
             samples.shape
         )  # [sampler's num_samples, batch_size of input, q, DAG's num_of_output]
         print(samples)
+
+    def test_normal_gp_inner_loop_shape(self):
+        pass
 
 
 class ross_dag_test(unittest.TestCase):
@@ -366,6 +406,7 @@ class full_dag_test(unittest.TestCase):
         self.simple_dag = TREE_DAG(train_input_names, train_target_names,
                                    train_inputs, train_targets, num_samples)
 
+    #@unittest.skip(".")
     def test_dag_posterior(self):
         """
         test posterior returned by the DAG,

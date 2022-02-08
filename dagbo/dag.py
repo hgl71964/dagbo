@@ -114,8 +114,12 @@ class Dag(Module):
         self._error_unregistered_inputs(children, name)
 
         # find saved tensor
+        # batch gp inference : see https://docs.gpytorch.ai/en/stable/examples/08_Advanced_Usage/Simple_Batch_Mode_GP_Regression.html
+        # X.shape = [batch-size, q, dim]
+        # y.shape = [batch-size, q]  y's output dim is one
         X, y = self.prepare_node_data(name, children)
         self._check_init_metric_data(name, X, y)
+        #print("dim: ", X.shape, y.shape)
 
         # instantial node
         node = Node(children, name, X, y, mean, covar, likelihood)

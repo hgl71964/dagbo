@@ -20,7 +20,7 @@ class Node(ExactGP):
     """
     An ExactGP with a configurable mean.
     Mean can subclass gpytorch.means.Mean or ParametricMean.
-    Default mean is ZeroMean.
+    Default mean is LinearMean.
     Uses GaussianLikelihood and MaternKernel(nu=5/2).
     Priors for Likelihood and Kernel are borrowed from BoTorch SingleTaskGP
     """
@@ -40,7 +40,7 @@ class Node(ExactGP):
             output_name: the names of the metric this node is modelling
             train_inputs: A batch_shape*q*d-dim Tensor of the training inputs
                 The innermost dim, dim=-1, must follow the same order as
-                input_names as this is how the data is supplied to the 
+                input_names as this is how the data is supplied to the
                 parametric mean the DAG.
             train_targets: A batch_shape*q-dim Tensor of the training targets
         """
@@ -64,6 +64,8 @@ class Node(ExactGP):
                                             noise_prior=noise_prior,
                                             noise_constraint=noise_constraint)
         super().__init__(train_inputs, train_targets, likelihood)
+
+        #print("dim init:", train_inputs.shape, train_targets.shape)
 
         self.input_names = input_names
         self.output_name = output_name
