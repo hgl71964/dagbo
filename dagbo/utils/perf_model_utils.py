@@ -8,12 +8,12 @@ from dagbo.dag_gpytorch_model import DagGPyTorchModel, direct_DagGPyTorchModel
 
 
 def build_perf_model_from_spec_ssa(train_inputs_dict: dict[str, Tensor],
-                               train_targets_dict: dict[str, Tensor],
-                               num_samples: int, param_space: dict[str, str],
-                               metric_space: dict[str,
-                                                  str], obj_space: dict[str,
-                                                                        str],
-                               edges: dict[str, list[str]]) -> Dag:
+                                   train_targets_dict: dict[str, Tensor],
+                                   num_samples: int, param_space: dict[str,
+                                                                       str],
+                                   metric_space: dict[str, str],
+                                   obj_space: dict[str, str],
+                                   edges: dict[str, list[str]]) -> Dag:
     """
     build perf_dag from given spec (use sample average posterior)
 
@@ -55,13 +55,14 @@ def build_perf_model_from_spec_ssa(train_inputs_dict: dict[str, Tensor],
 
     return dag
 
+
 def build_perf_model_from_spec_direct(train_inputs_dict: dict[str, Tensor],
-                               train_targets_dict: dict[str, Tensor],
-                               num_samples: int, param_space: dict[str, str],
-                               metric_space: dict[str,
-                                                  str], obj_space: dict[str,
-                                                                        str],
-                               edges: dict[str, list[str]]) -> Dag:
+                                      train_targets_dict: dict[str, Tensor],
+                                      num_samples: int, param_space: dict[str,
+                                                                          str],
+                                      metric_space: dict[str, str],
+                                      obj_space: dict[str, str],
+                                      edges: dict[str, list[str]]) -> Dag:
     """
     use approx. posterior
     """

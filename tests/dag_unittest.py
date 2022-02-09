@@ -280,7 +280,7 @@ class ross_dag_test(unittest.TestCase):
                     after = mean_squared_error(test_y, mean)
         print(f"MSE after fit: {after:.2f}")
 
-    @unittest.skip("ok")
+    #@unittest.skip("ok")
     def test_dag_posterior(self):
         """
         test posterior returned by the DAG,

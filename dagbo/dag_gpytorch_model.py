@@ -67,7 +67,7 @@ class DagGPyTorchModel(GPyTorchModel):
         if verbose:
             logging.info("DAG's posterior: ")
             print("expanded_X: ", expanded_X.shape)
-            print("mvn: ", mvn, mvn.loc.shape)
+            print("mvn: ", mvn)
             print("posterior: ", posterior.event_shape, posterior.mean.shape)
         if hasattr(self, "outcome_transform"):
             # posterior = self.outcome_transform.untransform_posterior(posterior)

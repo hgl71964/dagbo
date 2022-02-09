@@ -58,7 +58,7 @@ acq_func_config = {
     "q": 1,
     "num_restarts": 48,
     "raw_samples": 128,
-    "num_samples": 2048,
+    "num_samples": int(1024 * 10),
     "y_max": torch.tensor([1.]),  # for EI
     "beta": 1,  # for UCB
 }
@@ -126,10 +126,11 @@ def get_model(exp: Experiment, param_names: list[str], param_space: dict,
         train_inputs_dict = get_dict_tensor(exp, param_names)
 
         ## fit model from dataset
-        dag = build_perf_model_from_spec_direct(train_inputs_dict, train_targets_dict,
-                                         acq_func_config["num_samples"],
-                                         param_space, metric_space, obj_space,
-                                         edges)
+        dag = build_perf_model_from_spec_ssa(train_inputs_dict,
+                                             train_targets_dict,
+                                             acq_func_config["num_samples"],
+                                             param_space, metric_space,
+                                             obj_space, edges)
         fit_dag(dag)
         return dag
     elif FLAGS.tuner == "tpe":

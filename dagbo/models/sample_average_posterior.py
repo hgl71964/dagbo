@@ -238,6 +238,8 @@ class SampleAveragePosterior_v2(GPyTorchPosterior):
         #logging.info("sampler: ")
         #print(sample_shape)
         #print(base_samples.shape)
+        #print(self.mvn)
+        #print(self.mvn.loc[:5])
 
         if sample_shape is None:
             sample_shape = Size([1])
