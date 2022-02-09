@@ -4,10 +4,10 @@ from ax import Experiment
 from copy import deepcopy
 
 from dagbo.dag import lazy_SO_Dag, Dag
-from dagbo.dag_gpytorch_model import DagGPyTorchModel
+from dagbo.dag_gpytorch_model import DagGPyTorchModel, direct_DagGPyTorchModel
 
 
-def build_perf_model_from_spec(train_inputs_dict: dict[str, Tensor],
+def build_perf_model_from_spec_ssa(train_inputs_dict: dict[str, Tensor],
                                train_targets_dict: dict[str, Tensor],
                                num_samples: int, param_space: dict[str, str],
                                metric_space: dict[str,
@@ -15,7 +15,7 @@ def build_perf_model_from_spec(train_inputs_dict: dict[str, Tensor],
                                                                         str],
                                edges: dict[str, list[str]]) -> Dag:
     """
-    build perf_dag from given spec
+    build perf_dag from given spec (use sample average posterior)
 
     Core Args:
         param_space: key: param name - val: `categorical` or `continuous`
@@ -25,6 +25,47 @@ def build_perf_model_from_spec(train_inputs_dict: dict[str, Tensor],
             NOTE: edges are forward directions, i.e. from param_space -> metric_space -> obj_space
     """
     class perf_DAG(lazy_SO_Dag, DagGPyTorchModel):
+        """dynamically define dag
+        """
+        def __init__(self, train_input_names: list[str],
+                     train_target_names: list[str], train_inputs: Tensor,
+                     train_targets: Tensor, num_samples: int):
+            super().__init__(train_input_names, train_target_names,
+                             train_inputs, train_targets)
+            self.num_samples = num_samples
+
+    # build
+    reversed_edge = find_inverse_edges(edges)
+    node_order = get_dag_topological_order(obj_space, edges)
+    train_input_names, train_target_names, train_inputs, train_targets = build_input_by_topological_order(
+        train_inputs_dict, train_targets_dict, param_space, metric_space,
+        obj_space, node_order)
+    dag = perf_DAG(train_input_names, train_target_names, train_inputs,
+                   train_targets, num_samples)
+
+    # register nodes, MUST register in topological order
+    # input space, TODO address for categorical variable in the future
+    for node in node_order:
+        if node in param_space:
+            dag.register_input(node)
+        elif node in metric_space or node in obj_space:
+            dag.register_metric(node, [i for i in reversed_edge[node]])
+        else:
+            raise RuntimeError("unknown node")
+
+    return dag
+
+def build_perf_model_from_spec_direct(train_inputs_dict: dict[str, Tensor],
+                               train_targets_dict: dict[str, Tensor],
+                               num_samples: int, param_space: dict[str, str],
+                               metric_space: dict[str,
+                                                  str], obj_space: dict[str,
+                                                                        str],
+                               edges: dict[str, list[str]]) -> Dag:
+    """
+    use approx. posterior
+    """
+    class perf_DAG(lazy_SO_Dag, direct_DagGPyTorchModel):
         """dynamically define dag
         """
         def __init__(self, train_input_names: list[str],

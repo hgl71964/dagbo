@@ -91,9 +91,8 @@ class DagGPyTorchModel(GPyTorchModel):
         )
 
 
-class full_DagGPyTorchModel(GPyTorchModel):
-    """this impl the posterior methods to generate samples
-        `SampleAveragePosterior` may introduce bias, so it is not a `full` sampling
+class direct_DagGPyTorchModel(GPyTorchModel):
+    """this impl direct average over sample dimenisons
     """
     num_samples: int
 

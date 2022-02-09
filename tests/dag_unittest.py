@@ -21,7 +21,7 @@ from botorch.models.utils import gpt_posterior_settings
 from dagbo.dag import Dag, SO_Dag
 from dagbo.models.node import Node
 from dagbo.models.sample_average_posterior import SampleAveragePosterior
-from dagbo.dag_gpytorch_model import DagGPyTorchModel, full_DagGPyTorchModel
+from dagbo.dag_gpytorch_model import DagGPyTorchModel, direct_DagGPyTorchModel
 from dagbo.fit_dag import fit_dag, fit_node_with_scipy, test_fit_node_with_scipy, fit_node_with_adam
 from dagbo.other_opt.model_factory import fit_gpr
 
@@ -353,7 +353,7 @@ class full_dag_test(unittest.TestCase):
     """
     def setUp(self):
         # define dag
-        class TREE_DAG(SO_Dag, full_DagGPyTorchModel):
+        class TREE_DAG(SO_Dag, direct_DagGPyTorchModel):
             """
             creation a simple tree-like DAG
 
@@ -455,6 +455,7 @@ class full_dag_test(unittest.TestCase):
         )  # [sampler's num_samples, batch_size of input, q, DAG's num_of_output]
         #print(samples)
 
+    @unittest.skip(".")
     def test_dag_inner_loop(self):
         """
         batch average MC grad!!!

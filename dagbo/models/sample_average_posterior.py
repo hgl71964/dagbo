@@ -13,20 +13,20 @@ T_2 = TypeVar('T_2', bound='SampleAveragePosterior_v2')
 
 class SampleAveragePosterior(GPyTorchPosterior):
     """
-    The use case for SampleAveragePosterior is for a model with some non-determinism 
+    The use case for SampleAveragePosterior is for a model with some non-determinism
     in the prediction step, for example, if the model is doing sampling internally.
 
     SampleAveragePosterior computes multiple posteriors for the same input points. This
     creates a Monte-Carlo approximation to model's non-determinism. Each one of these
-    multiple posteriors is a Gaussian distribution, so the Monte-Carlo approximation 
-    is actually a Gaussian mixture distribution. Since GPyTorchPosteriors have to be 
-    normally distributed, SampleAveragePosterior then approximates this Gaussian 
+    multiple posteriors is a Gaussian distribution, so the Monte-Carlo approximation
+    is actually a Gaussian mixture distribution. Since GPyTorchPosteriors have to be
+    normally distributed, SampleAveragePosterior then approximates this Gaussian
     mixture distribution as a Gaussian distribution.
 
     There is no guarantee that this is a good approximation. However, if it is bad
     approximation then it probably means you shouldn't be using Gaussian processes
     for your problem anyway!
-    
+
     SampleAveragePosterior hides all of this complexity. Use it by simply wrapping an
     existing GPyTorchPosterior in a SampleAveragePosterior. The outermost dim is then
     assumed to be the sample batch.
@@ -104,7 +104,7 @@ class SampleAveragePosterior(GPyTorchPosterior):
         Effectively I have two event shapes, an internal event shape which is
         Size([self.num_samples, *self.event_shape]), and an external event shape
         which is self.event_shape.
-        
+
         Args:
             sample_shape: A `torch.Size` object specifying the sample shape. To
                 draw `n` samples, set to `torch.Size([n])`. To draw `b` batches
@@ -223,7 +223,7 @@ class SampleAveragePosterior_v2(GPyTorchPosterior):
         base_samples: Optional[Tensor] = None,
     ) -> Tensor:
         """Sample from the posterior (with gradients).
-        
+
         Args:
             sample_shape: A `torch.Size` object specifying the sample shape. To
                 draw `n` samples, set to `torch.Size([n])`. To draw `b` batches
@@ -275,69 +275,3 @@ class SampleAveragePosterior_v2(GPyTorchPosterior):
     def from_gpytorch_posterior(cls: Type[T_2],
                                 posterior: GPyTorchPosterior) -> T_2:
         return cls(mvn=posterior.mvn)
-
-
-class ApproximatePosterior(GPyTorchPosterior):
-    def __init__(self, mvn: MultivariateNormal) -> None:
-        """
-        TODO
-        a `true` monte carlo posterior
-             may be need to work with custom sampler
-
-        Args:
-            mvn: Batch MultivariateNormal
-                Outermost dimension (dim=0) of mvn is filled with samples.
-                These samples will be combined by taking their mean.
-        """
-        super().__init__(mvn)
-
-    @property
-    def num_samples(self) -> int:
-        """The number of samples that the posterior is averaged over."""
-        return super().event_shape[0]
-
-    @property
-    def event_shape(self) -> Size():
-        """The event shape (i.e. the shape of a single sample) of the posterior."""
-        return super().event_shape[1:]
-
-    @property
-    def mean(self) -> Tensor:
-        """
-        The posterior mean.
-        = mean of each Gaussian
-
-        Reference:
-        https://stats.stackexchange.com/questions/16608/what-is-the-variance-of-the-weighted-mixture-of-two-gaussians
-        We have num_samples Gaussians, and since each Gaussian is drawn using Monte Carlo, then each Gaussian has equal weight
-        """
-        return super().mean.mean(dim=0)
-
-    @property
-    def variance(self) -> Tensor:
-        """
-        The posterior variance.
-        = avg of variance + gvg of squared mean - square of avg mean
-
-        Reference:
-        https://stats.stackexchange.com/questions/16608/what-is-the-variance-of-the-weighted-mixture-of-two-gaussians
-        We have num_samples Gaussians, and since each Gaussian is drawn using Monte Carlo, then each Gaussian has equal weight
-        """
-        return super().variance.mean(dim=0) + super().mean.square().mean(
-            dim=0) - super().mean.mean(dim=0).square()
-
-    @property
-    def is_multitask(self) -> bool:
-        return self._is_mt
-
-    def rsample(
-        self,
-        sample_shape: Optional[Size] = None,
-        base_samples: Optional[Tensor] = None,
-    ) -> Tensor:
-        raise NotImplementedError()
-
-    @classmethod
-    def from_gpytorch_posterior(cls: Type[T_2],
-                                posterior: GPyTorchPosterior) -> T_2:
-        raise NotImplementedError()

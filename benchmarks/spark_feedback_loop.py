@@ -2,10 +2,13 @@ import os
 import sys
 from absl import app
 from absl import flags
+from typing import Union
+import datetime
 
 import pandas as pd
 import torch
 from torch import Tensor
+from botorch.models import SingleTaskGP
 
 import ax
 from ax.modelbridge.registry import Models
@@ -13,15 +16,17 @@ from ax import SearchSpace, Experiment, OptimizationConfig, Objective, Metric
 from ax.storage.metric_registry import register_metric
 from ax.runners.synthetic import SyntheticRunner
 
+from dagbo.dag import Dag
 from dagbo.fit_dag import fit_dag
-from dagbo.utils.perf_model_utils import build_perf_model_from_spec
+from dagbo.utils.perf_model_utils import build_perf_model_from_spec_ssa, build_perf_model_from_spec_direct
 from dagbo.utils.ax_experiment_utils import candidates_to_generator_run, save_exp, get_dict_tensor
-from dagbo.other_opt.bo_utils import inner_loop
+from dagbo.other_opt.bo_utils import get_fitted_model, inner_loop
 from dagbo.interface.exec_spark import call_spark
 from dagbo.interface.parse_performance_model import parse_model
 from dagbo.interface.metrics_extractor import extract_throughput, extract_app_id, request_history_server
 
 FLAGS = flags.FLAGS
+flags.DEFINE_string("tuner", "dagbo", "name of the tuner: {bo, dagbo, tpe}")
 flags.DEFINE_string("performance_model_path",
                     "dagbo/interface/spark_performance_model.txt",
                     "graphviz source path")
@@ -111,7 +116,32 @@ class SparkMetric(Metric):
         return ax.core.data.Data(df=pd.DataFrame.from_records(records))
 
 
+def get_model(exp: Experiment, param_names: list[str], param_space: dict,
+              metric_space: dict, obj_space: dict,
+              edges: dict) -> Union[Dag, SingleTaskGP]:
+    if FLAGS.tuner == "bo":
+        return get_fitted_model(exp, param_names)
+    elif FLAGS.tuner == "dagbo":
+        # input params can be read from ax experiment (`from scratch`)
+        train_inputs_dict = get_dict_tensor(exp, param_names)
+
+        ## fit model from dataset
+        dag = build_perf_model_from_spec_direct(train_inputs_dict, train_targets_dict,
+                                         acq_func_config["num_samples"],
+                                         param_space, metric_space, obj_space,
+                                         edges)
+        fit_dag(dag)
+        return dag
+    elif FLAGS.tuner == "tpe":
+        raise RuntimeError("unsupport")
+    else:
+        raise ValueError("unable to recognize tuner")
+
+
 def main(_):
+
+    # for saving
+    register_metric(SparkMetric)
 
     # build experiment
     ## get dag's spec
@@ -183,6 +213,10 @@ def main(_):
                      optimization_config=optimization_config,
                      runner=SyntheticRunner())
 
+    print()
+    print(f"==== start experiment: {exp.name} with tuner: {FLAGS.tuner} ====")
+    print()
+
     ## BOOTSTRAP
     sobol = Models.SOBOL(exp.search_space)
     generated_run = sobol.gen(FLAGS.bootstrap)
@@ -195,19 +229,12 @@ def main(_):
 
     # bo loop
     for t in range(FLAGS.epochs):
-        # input params can be read from ax experiment (`from scratch`)
-        train_inputs_dict = get_dict_tensor(exp, param_names)
-
-        # fit model from dataset
-        dag = build_perf_model_from_spec(train_inputs_dict, train_targets_dict,
-                                         acq_func_config["num_samples"],
-                                         param_space, metric_space, obj_space,
-                                         edges)
-        fit_dag(dag)
+        model = get_model(exp, param_names, param_space, metric_space,
+                          obj_space, edges)
 
         # get candidates (inner loop)
         candidates = inner_loop(exp,
-                                dag,
+                                model,
                                 param_names,
                                 acq_name="qUCB",
                                 acq_func_config=acq_func_config)
@@ -222,10 +249,12 @@ def main(_):
         trial.run()
         trial.mark_completed()
 
-    print("done")
+    print()
+    print(f"==== done experiment: {exp.name}====")
     print(exp.fetch_data().df)
     register_metric(SparkMetric)
-    save_exp(exp, "ross_dagbo")
+    dt = datetime.datetime.today()
+    save_exp(exp, f"{exp.name}-{FLAGS.tuner}-{dt.year}-{dt.month}-{dt.day}")
 
 
 if __name__ == "__main__":
