@@ -19,14 +19,20 @@ from ax.runners.synthetic import SyntheticRunner
 from dagbo.dag import Dag
 from dagbo.fit_dag import fit_dag
 from dagbo.utils.perf_model_utils import build_perf_model_from_spec_ssa, build_perf_model_from_spec_direct
-from dagbo.utils.ax_experiment_utils import candidates_to_generator_run, load_exp, get_dict_tensor, load_train_targets_dict
+from dagbo.utils.ax_experiment_utils import (candidates_to_generator_run,
+                                             load_exp, get_dict_tensor,
+                                             load_train_targets_dict,
+                                             print_experiment_result, save_exp)
 from dagbo.other_opt.bo_utils import get_fitted_model, inner_loop
 from dagbo.interface.exec_spark import call_spark
 from dagbo.interface.parse_performance_model import parse_model
 from dagbo.interface.metrics_extractor import extract_throughput, extract_app_id, request_history_server
+"""
+load an experiment with initial sobol points & run opt loop
+"""
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string("tuner", "dagbo", "name of the tuner: {bo, dagbo, tpe}")
+flags.DEFINE_enum("tuner", "bo", ["dagbo", "bo", "tpe"], "tuner to use")
 flags.DEFINE_string("performance_model_path",
                     "dagbo/interface/spark_performance_model.txt",
                     "graphviz source path")
@@ -50,7 +56,6 @@ flags.DEFINE_string("base_url", "http://localhost:18080",
                     "history server base url")
 
 flags.DEFINE_integer("epochs", 10, "bo loop epoch", lower_bound=0)
-flags.DEFINE_integer("bootstrap", 2, "bootstrap", lower_bound=1)
 flags.DEFINE_boolean("minimize", False, "min or max objective")
 
 # flags cannot define dict
@@ -62,10 +67,7 @@ acq_func_config = {
     "y_max": torch.tensor([1.]),  # for EI
     "beta": 1,  # for UCB
 }
-
-exp_name = ""
-exp = load_exp(exp_name)
-train_targets_dict = load_train_targets_dict(exp_name)
+exp_name = "SOBOL-spark_feed_back_loop-2022-2-10"
 
 
 class SparkMetric(Metric):
@@ -141,16 +143,17 @@ def get_model(exp: Experiment, param_names: list[str], param_space: dict,
         raise ValueError("unable to recognize tuner")
 
 
+register_metric(SparkMetric)
+exp = load_exp(exp_name)
+train_targets_dict = load_train_targets_dict(exp_name)
+
+
 def main(_):
-
-    register_metric(SparkMetric)
-
-    # build experiment
-    ## get dag's spec
+    # get dag's spec
     param_space, metric_space, obj_space, edges = parse_model(
         FLAGS.performance_model_path)
 
-    ## for now need to define manually
+    # NOTE: ensure its the same as define in spark_sobol
     param_names = [
         "executor.num[*]",
         "executor.cores",
@@ -163,56 +166,10 @@ def main(_):
         "shuffle.spill.compress",
         "spark.speculation",
     ]
-    search_space = SearchSpace([
-        ax.RangeParameter("executor.num[*]",
-                          ax.ParameterType.FLOAT,
-                          lower=2,
-                          upper=4),
-        ax.RangeParameter("executor.cores",
-                          ax.ParameterType.FLOAT,
-                          lower=1,
-                          upper=4),
-        ax.RangeParameter("shuffle.compress",
-                          ax.ParameterType.FLOAT,
-                          lower=0,
-                          upper=1),
-        ax.RangeParameter("memory.fraction",
-                          ax.ParameterType.FLOAT,
-                          lower=0.2,
-                          upper=0.9),
-        ax.RangeParameter("executor.memory",
-                          ax.ParameterType.FLOAT,
-                          lower=2,
-                          upper=4),
-        ax.RangeParameter("spark.serializer",
-                          ax.ParameterType.FLOAT,
-                          lower=0,
-                          upper=1),
-        ax.RangeParameter("rdd.compress",
-                          ax.ParameterType.FLOAT,
-                          lower=0,
-                          upper=1),
-        ax.RangeParameter("default.parallelism",
-                          ax.ParameterType.FLOAT,
-                          lower=2,
-                          upper=16),
-        ax.RangeParameter(
-            "shuffle.spill.compress",
-            ax.ParameterType.FLOAT,
-            #ax.ParameterType.INT,
-            lower=0,
-            upper=1),
-        ax.RangeParameter("spark.speculation",
-                          ax.ParameterType.FLOAT,
-                          lower=0,
-                          upper=1),
-    ])
 
     print()
     print(f"==== start experiment: {exp.name} with tuner: {FLAGS.tuner} ====")
     print()
-
-    # bo loop
     for t in range(FLAGS.epochs):
         model = get_model(exp, param_names, param_space, metric_space,
                           obj_space, edges)
@@ -236,8 +193,7 @@ def main(_):
 
     print()
     print(f"==== done experiment: {exp.name}====")
-    print(exp.fetch_data().df)
-    register_metric(SparkMetric)
+    print(print_experiment_result(exp))
     dt = datetime.datetime.today()
     save_exp(exp, f"{exp.name}-{FLAGS.tuner}-{dt.year}-{dt.month}-{dt.day}")
 

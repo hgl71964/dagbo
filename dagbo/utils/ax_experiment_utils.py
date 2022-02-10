@@ -155,6 +155,7 @@ def save_exp(exp: Experiment, name: str) -> None:
     print(f"save as {name}.json")
     return None
 
+
 def save_train_targets_dict(train_targets_dict: dict, name: str) -> None:
     directory = os.path.dirname(__file__)
     data_dir = join(directory, "../../benchmarks/data")
@@ -164,6 +165,7 @@ def save_train_targets_dict(train_targets_dict: dict, name: str) -> None:
         pickle.dump(train_targets_dict, f)
     return None
 
+
 def load_exp(name: str) -> Experiment:
     directory = os.path.dirname(__file__)
     data_dir = join(directory, "../../benchmarks/data")
@@ -171,13 +173,14 @@ def load_exp(name: str) -> Experiment:
     print(f"load from {name}.json")
     return load_experiment(join(data_dir, file_name))
 
+
 def load_train_targets_dict(name: str) -> dict:
     directory = os.path.dirname(__file__)
     data_dir = join(directory, "../../benchmarks/data")
     file_name = name + ".pkl"
     full_path = join(data_dir, file_name)
     with open(full_path, "rb") as f:
-        loaded_dict = pickle.load(f))
+        loaded_dict = pickle.load(f)
     return loaded_dict
 
 

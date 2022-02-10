@@ -24,12 +24,11 @@ from dagbo.other_opt.bo_utils import get_fitted_model, inner_loop
 from dagbo.interface.exec_spark import call_spark
 from dagbo.interface.parse_performance_model import parse_model
 from dagbo.interface.metrics_extractor import extract_throughput, extract_app_id, request_history_server
+"""
+gen initial sobol points for an experiment
+"""
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string("tuner", "dagbo", "name of the tuner: {bo, dagbo, tpe}")
-flags.DEFINE_string("performance_model_path",
-                    "dagbo/interface/spark_performance_model.txt",
-                    "graphviz source path")
 flags.DEFINE_string("metric_name", "spark_throughput", "metric name")
 flags.DEFINE_string(
     "conf_path", "/home/gh512/workspace/bo/spark-dir/hiBench/conf/spark.conf",
@@ -48,8 +47,6 @@ flags.DEFINE_string(
     "hibench report file path")
 flags.DEFINE_string("base_url", "http://localhost:18080",
                     "history server base url")
-
-flags.DEFINE_integer("epochs", 10, "bo loop epoch", lower_bound=0)
 flags.DEFINE_integer("bootstrap", 2, "bootstrap", lower_bound=1)
 flags.DEFINE_boolean("minimize", False, "min or max objective")
 
@@ -112,10 +109,6 @@ def main(_):
     register_metric(SparkMetric)
 
     # build experiment
-    ## get dag's spec
-    param_space, metric_space, obj_space, edges = parse_model(
-        FLAGS.performance_model_path)
-
     ## for now need to define manually
     param_names = [
         "executor.num[*]",
