@@ -47,6 +47,7 @@ def candidates_to_generator_run(exp: Experiment, candidate: Tensor,
 def get_dict_tensor(
     exp: Experiment,
     params: list[str],
+    dtype,
 ) -> dict[str, Tensor]:
     """retrieve data from experiment to tensor
     single objective ONLY
@@ -81,11 +82,12 @@ def get_dict_tensor(
     # convert to tensor
     for key in train_inputs_dict:
         train_inputs_dict[key] = torch.tensor(train_inputs_dict[key],
-                                              dtype=torch.float32)
+                                              dtype=dtype)
     return train_inputs_dict
 
 
-def get_tensor(exp: Experiment, params: list[str]) -> tuple[Tensor, Tensor]:
+def get_tensor(exp: Experiment, params: list[str],
+               dtype) -> tuple[Tensor, Tensor]:
     """retrieve data from experiment to tensor
     single objective ONLY
 
@@ -103,8 +105,7 @@ def get_tensor(exp: Experiment, params: list[str]) -> tuple[Tensor, Tensor]:
     # follow trials order
     num_trials = exp_df.shape[0]
     rewards = torch.tensor(exp_df["mean"],
-                           dtype=torch.float32).reshape(-1,
-                                                        1)  # [num_trials, 1]
+                           dtype=dtype).reshape(-1, 1)  # [num_trials, 1]
     arm_name_list = list(exp_df["arm_name"])  # [num_trials, ]
 
     data = []
@@ -116,11 +117,11 @@ def get_tensor(exp: Experiment, params: list[str]) -> tuple[Tensor, Tensor]:
             data.append(val)
 
     # [num_trials, dim_arm]
-    t = torch.tensor(data, dtype=torch.float32).reshape(num_trials, -1)
+    t = torch.tensor(data, dtype=dtype).reshape(num_trials, -1)
     return t, rewards
 
 
-def get_bounds(exp: Experiment, params: list[str]) -> Tensor:
+def get_bounds(exp: Experiment, params: list[str], dtype) -> Tensor:
     """get bounds for each parameters"""
     bounds = []
     for p in params:
@@ -129,7 +130,7 @@ def get_bounds(exp: Experiment, params: list[str]) -> Tensor:
         bounds.append(ax_param.upper)
 
     # XXX bounds should be set as float?
-    return torch.tensor(bounds, dtype=torch.float32).reshape(-1, 2).T
+    return torch.tensor(bounds, dtype=dtype).reshape(-1, 2).T
 
 
 def print_experiment_result(exp: Experiment) -> None:

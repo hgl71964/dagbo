@@ -47,11 +47,12 @@ flags.DEFINE_string(
     "hibench report file path")
 flags.DEFINE_string("base_url", "http://localhost:18080",
                     "history server base url")
-flags.DEFINE_integer("bootstrap", 2, "bootstrap", lower_bound=1)
+flags.DEFINE_integer("bootstrap", 5, "bootstrap", lower_bound=1)
 flags.DEFINE_boolean("minimize", False, "min or max objective")
 
 # global var so that SparkMetric can populate
 train_targets_dict = {}
+torch_dtype = torch.float64
 
 
 class SparkMetric(Metric):
@@ -79,10 +80,10 @@ class SparkMetric(Metric):
                         agg_m[monitoring_metic] = [float(v)]
 
             for k, v in agg_m.items():
-                agg_m[k] = torch.tensor(v, dtype=torch.float32).mean().reshape(
+                agg_m[k] = torch.tensor(v, dtype=torch_dtype).mean().reshape(
                     -1)  # convert to tensor & average
             agg_m["throughput"] = torch.tensor(float(val),
-                                               dtype=torch.float32).reshape(-1)
+                                               dtype=torch_dtype).reshape(-1)
 
             ### populate
             for k, v in agg_m.items():

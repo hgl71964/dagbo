@@ -69,6 +69,8 @@ acq_func_config = {
 }
 exp_name = "SOBOL-spark_feed_back_loop-2022-2-10"
 acq_name = "qUCB"
+torch_dtype = torch.float64
+
 
 class SparkMetric(Metric):
     def fetch_trial_data(self, trial, **kwargs):
@@ -95,10 +97,10 @@ class SparkMetric(Metric):
                         agg_m[monitoring_metic] = [float(v)]
 
             for k, v in agg_m.items():
-                agg_m[k] = torch.tensor(v, dtype=torch.float32).mean().reshape(
+                agg_m[k] = torch.tensor(v, dtype=torch_dtype).mean().reshape(
                     -1)  # convert to tensor & average
             agg_m["throughput"] = torch.tensor(float(val),
-                                               dtype=torch.float32).reshape(-1)
+                                               dtype=torch_dtype).reshape(-1)
 
             ### populate
             for k, v in agg_m.items():
@@ -125,13 +127,13 @@ class SparkMetric(Metric):
 
 
 def get_model(exp: Experiment, param_names: list[str], param_space: dict,
-              metric_space: dict, obj_space: dict,
-              edges: dict) -> Union[Dag, SingleTaskGP]:
+              metric_space: dict, obj_space: dict, edges: dict,
+              dtype) -> Union[Dag, SingleTaskGP]:
     if FLAGS.tuner == "bo":
-        return get_fitted_model(exp, param_names)
+        return get_fitted_model(exp, param_names, dtype)
     elif FLAGS.tuner == "dagbo":
         # input params can be read from ax experiment (`from scratch`)
-        train_inputs_dict = get_dict_tensor(exp, param_names)
+        train_inputs_dict = get_dict_tensor(exp, param_names, dtype)
 
         ## fit model from dataset
         #build_perf_model_from_spec_direct, build_perf_model_from_spec_ssa
@@ -177,14 +179,15 @@ def main(_):
     print()
     for t in range(FLAGS.epochs):
         model = get_model(exp, param_names, param_space, metric_space,
-                          obj_space, edges)
+                          obj_space, edges, torch_dtype)
 
         # get candidates (inner loop)
         candidates = inner_loop(exp,
                                 model,
                                 param_names,
                                 acq_name=acq_name,
-                                acq_func_config=acq_func_config)
+                                acq_func_config=acq_func_config,
+                                torch_dtype)
         gen_run = candidates_to_generator_run(exp, candidates, param_names)
 
         # before run, param will be type-checked, so some XXX param needs to be conversed before this line
@@ -200,7 +203,9 @@ def main(_):
     print(f"==== done experiment: {exp.name}====")
     print(print_experiment_result(exp))
     dt = datetime.datetime.today()
-    save_exp(exp, f"{exp.name}-{FLAGS.tuner}-{acq_name}-{dt.year}-{dt.month}-{dt.day}")
+    save_exp(
+        exp,
+        f"{exp.name}-{FLAGS.tuner}-{acq_name}-{dt.year}-{dt.month}-{dt.day}")
 
 
 if __name__ == "__main__":
