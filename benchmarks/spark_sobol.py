@@ -19,15 +19,11 @@ from ax.runners.synthetic import SyntheticRunner
 from dagbo.dag import Dag
 from dagbo.fit_dag import fit_dag
 from dagbo.utils.perf_model_utils import build_perf_model_from_spec_ssa, build_perf_model_from_spec_direct
-from dagbo.utils.ax_experiment_utils import candidates_to_generator_run, save_exp, get_dict_tensor
+from dagbo.utils.ax_experiment_utils import candidates_to_generator_run, save_exp, get_dict_tensor, save_train_targets_dict
 from dagbo.other_opt.bo_utils import get_fitted_model, inner_loop
 from dagbo.interface.exec_spark import call_spark
 from dagbo.interface.parse_performance_model import parse_model
 from dagbo.interface.metrics_extractor import extract_throughput, extract_app_id, request_history_server
-"""
-end-to-end running expriment:
-    sobol + tuner
-"""
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string("tuner", "dagbo", "name of the tuner: {bo, dagbo, tpe}")
@@ -56,16 +52,6 @@ flags.DEFINE_string("base_url", "http://localhost:18080",
 flags.DEFINE_integer("epochs", 10, "bo loop epoch", lower_bound=0)
 flags.DEFINE_integer("bootstrap", 2, "bootstrap", lower_bound=1)
 flags.DEFINE_boolean("minimize", False, "min or max objective")
-
-# flags cannot define dict
-acq_func_config = {
-    "q": 1,
-    "num_restarts": 48,
-    "raw_samples": 128,
-    "num_samples": int(1024 * 2),
-    "y_max": torch.tensor([1.]),  # for EI
-    "beta": 1,  # for UCB
-}
 
 # global var so that SparkMetric can populate
 train_targets_dict = {}
@@ -118,30 +104,6 @@ class SparkMetric(Metric):
                 "trial_index": trial.index,
             })
         return ax.core.data.Data(df=pd.DataFrame.from_records(records))
-
-
-def get_model(exp: Experiment, param_names: list[str], param_space: dict,
-              metric_space: dict, obj_space: dict,
-              edges: dict) -> Union[Dag, SingleTaskGP]:
-    if FLAGS.tuner == "bo":
-        return get_fitted_model(exp, param_names)
-    elif FLAGS.tuner == "dagbo":
-        # input params can be read from ax experiment (`from scratch`)
-        train_inputs_dict = get_dict_tensor(exp, param_names)
-
-        ## fit model from dataset
-        #build_perf_model_from_spec_direct, build_perf_model_from_spec_ssa
-        dag = build_perf_model_from_spec_direct(train_inputs_dict,
-                                                train_targets_dict,
-                                                acq_func_config["num_samples"],
-                                                param_space, metric_space,
-                                                obj_space, edges)
-        fit_dag(dag)
-        return dag
-    elif FLAGS.tuner == "tpe":
-        raise RuntimeError("unsupport")
-    else:
-        raise ValueError("unable to recognize tuner")
 
 
 def main(_):
@@ -220,7 +182,7 @@ def main(_):
                      runner=SyntheticRunner())
 
     print()
-    print(f"==== start experiment: {exp.name} with tuner: {FLAGS.tuner} ====")
+    print(f"==== start SOBOL experiment: {exp.name} ====")
     print()
 
     ## BOOTSTRAP
@@ -230,37 +192,17 @@ def main(_):
     trial.run()
     trial.mark_completed()
 
-    print(exp.fetch_data().df)
-    #print(train_targets_dict)
-
-    # bo loop
-    for t in range(FLAGS.epochs):
-        model = get_model(exp, param_names, param_space, metric_space,
-                          obj_space, edges)
-
-        # get candidates (inner loop)
-        candidates = inner_loop(exp,
-                                model,
-                                param_names,
-                                acq_name="qUCB",
-                                acq_func_config=acq_func_config)
-        gen_run = candidates_to_generator_run(exp, candidates, param_names)
-
-        # before run, param will be type-checked, so some XXX param needs to be conversed before this line
-        # run
-        if acq_func_config["q"] == 1:
-            trial = exp.new_trial(generator_run=gen_run)
-        else:
-            trial = exp.new_batch_trial(generator_run=gen_run)
-        trial.run()
-        trial.mark_completed()
-
     print()
-    print(f"==== done experiment: {exp.name}====")
+    print(f"==== done SOBOL experiment ====")
+    print()
+
     print(exp.fetch_data().df)
-    register_metric(SparkMetric)
+
+    # save
     dt = datetime.datetime.today()
-    save_exp(exp, f"{exp.name}-{FLAGS.tuner}-{dt.year}-{dt.month}-{dt.day}")
+    save_name = f"SOBOL-{exp.name}-{dt.year}-{dt.month}-{dt.day}"
+    save_exp(exp, save_name)
+    save_train_targets_dict(train_targets_dict, save_name)
 
 
 if __name__ == "__main__":

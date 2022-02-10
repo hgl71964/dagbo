@@ -346,8 +346,11 @@ class ross_dag_test(unittest.TestCase):
         logging.info("candidates: ")
         print(query, val.detach())
 
+    def test_mem_stress(self):
+        pass
 
-class full_dag_test(unittest.TestCase):
+
+class direct_dag_test(unittest.TestCase):
     """
     test my impl of sampling from dagbo's approx. posterior
     """

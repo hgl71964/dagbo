@@ -19,15 +19,11 @@ from ax.runners.synthetic import SyntheticRunner
 from dagbo.dag import Dag
 from dagbo.fit_dag import fit_dag
 from dagbo.utils.perf_model_utils import build_perf_model_from_spec_ssa, build_perf_model_from_spec_direct
-from dagbo.utils.ax_experiment_utils import candidates_to_generator_run, save_exp, get_dict_tensor
+from dagbo.utils.ax_experiment_utils import candidates_to_generator_run, load_exp, get_dict_tensor, load_train_targets_dict
 from dagbo.other_opt.bo_utils import get_fitted_model, inner_loop
 from dagbo.interface.exec_spark import call_spark
 from dagbo.interface.parse_performance_model import parse_model
 from dagbo.interface.metrics_extractor import extract_throughput, extract_app_id, request_history_server
-"""
-end-to-end running expriment:
-    sobol + tuner
-"""
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string("tuner", "dagbo", "name of the tuner: {bo, dagbo, tpe}")
@@ -67,8 +63,9 @@ acq_func_config = {
     "beta": 1,  # for UCB
 }
 
-# global var so that SparkMetric can populate
-train_targets_dict = {}
+exp_name = ""
+exp = load_exp(exp_name)
+train_targets_dict = load_train_targets_dict(exp_name)
 
 
 class SparkMetric(Metric):
@@ -146,7 +143,6 @@ def get_model(exp: Experiment, param_names: list[str], param_space: dict,
 
 def main(_):
 
-    # for saving
     register_metric(SparkMetric)
 
     # build experiment
@@ -211,27 +207,10 @@ def main(_):
                           lower=0,
                           upper=1),
     ])
-    optimization_config = OptimizationConfig(
-        Objective(metric=SparkMetric(name=FLAGS.metric_name),
-                  minimize=FLAGS.minimize))
-    exp = Experiment(name="spark_feed_back_loop",
-                     search_space=search_space,
-                     optimization_config=optimization_config,
-                     runner=SyntheticRunner())
 
     print()
     print(f"==== start experiment: {exp.name} with tuner: {FLAGS.tuner} ====")
     print()
-
-    ## BOOTSTRAP
-    sobol = Models.SOBOL(exp.search_space)
-    generated_run = sobol.gen(FLAGS.bootstrap)
-    trial = exp.new_batch_trial(generator_run=generated_run)
-    trial.run()
-    trial.mark_completed()
-
-    print(exp.fetch_data().df)
-    #print(train_targets_dict)
 
     # bo loop
     for t in range(FLAGS.epochs):

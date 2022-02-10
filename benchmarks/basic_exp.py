@@ -73,32 +73,7 @@ def main(_):
         trial = exp.new_trial(generator_run=generator_run)
         trial.run()
         trial.mark_completed()
-
     save_exp(exp, "basic")
-    #for i in range(NUM_BOTORCH_TRIALS):
-    #    print(
-    #        f"Running optimization trial {i + NUM_SOBOL_TRIALS + 1}/{NUM_SOBOL_TRIALS + NUM_BOTORCH_TRIALS}..."
-    #    )
-    #    """custom impl of BO component"""
-    #    model = get_fitted_model(exp, param_names)
-    #    candidates = inner_loop(exp,
-    #                            model,
-    #                            param_names,
-    #                            acq_name="qUCB",
-    #                            acq_func_config=acq_func_config)
-    #    gen_run = candidates_to_generator_run(exp, candidates, param_names)
-    #    """ax APIs"""
-    #    if acq_func_config["q"] == 1:
-    #        trial = exp.new_trial(generator_run=gen_run)
-    #    else:
-    #        trial = exp.new_batch_trial(generator_run=gen_run)
-    #    trial.run()
-    #    trial.mark_completed()
-    #"""analysis"""
-    #print()
-    #print("Done!")
-    #print(exp.fetch_data().df)
-    #print(print_experiment_result(exp))
 
 
 class MyRunner(Runner):
