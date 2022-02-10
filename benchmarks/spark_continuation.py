@@ -32,7 +32,8 @@ load an experiment with initial sobol points & run opt loop
 """
 
 FLAGS = flags.FLAGS
-flags.DEFINE_enum("tuner", "bo", ["dagbo", "bo", "tpe"], "tuner to use")
+flags.DEFINE_enum("tuner", "dagbo", ["dagbo", "bo", "tpe", "rs"],
+                  "tuner to use")
 flags.DEFINE_string("performance_model_path",
                     "dagbo/interface/spark_performance_model.txt",
                     "graphviz source path")
@@ -55,7 +56,7 @@ flags.DEFINE_string(
 flags.DEFINE_string("base_url", "http://localhost:18080",
                     "history server base url")
 
-flags.DEFINE_integer("epochs", 30, "bo loop epoch", lower_bound=0)
+flags.DEFINE_integer("epochs", 20, "bo loop epoch", lower_bound=0)
 flags.DEFINE_boolean("minimize", False, "min or max objective")
 
 # flags cannot define dict
@@ -137,11 +138,11 @@ def get_model(exp: Experiment, param_names: list[str], param_space: dict,
 
         ## fit model from dataset
         #build_perf_model_from_spec_direct, build_perf_model_from_spec_ssa
-        dag = build_perf_model_from_spec_direct(train_inputs_dict,
-                                                train_targets_dict,
-                                                acq_func_config["num_samples"],
-                                                param_space, metric_space,
-                                                obj_space, edges)
+        dag = build_perf_model_from_spec_ssa(train_inputs_dict,
+                                             train_targets_dict,
+                                             acq_func_config["num_samples"],
+                                             param_space, metric_space,
+                                             obj_space, edges)
         fit_dag(dag)
         return dag
     elif FLAGS.tuner == "tpe":
@@ -181,13 +182,12 @@ def main(_):
         model = get_model(exp, param_names, param_space, metric_space,
                           obj_space, edges, torch_dtype)
 
-        # get candidates (inner loop)
         candidates = inner_loop(exp,
                                 model,
                                 param_names,
                                 acq_name=acq_name,
                                 acq_func_config=acq_func_config,
-                                torch_dtype)
+                                dtype=torch_dtype)
         gen_run = candidates_to_generator_run(exp, candidates, param_names)
 
         # before run, param will be type-checked, so some XXX param needs to be conversed before this line
@@ -206,6 +206,7 @@ def main(_):
     save_exp(
         exp,
         f"{exp.name}-{FLAGS.tuner}-{acq_name}-{dt.year}-{dt.month}-{dt.day}")
+    # TODO save other exp param as well?
 
 
 if __name__ == "__main__":
