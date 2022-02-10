@@ -55,7 +55,7 @@ flags.DEFINE_string(
 flags.DEFINE_string("base_url", "http://localhost:18080",
                     "history server base url")
 
-flags.DEFINE_integer("epochs", 10, "bo loop epoch", lower_bound=0)
+flags.DEFINE_integer("epochs", 30, "bo loop epoch", lower_bound=0)
 flags.DEFINE_boolean("minimize", False, "min or max objective")
 
 # flags cannot define dict
@@ -68,7 +68,7 @@ acq_func_config = {
     "beta": 1,  # for UCB
 }
 exp_name = "SOBOL-spark_feed_back_loop-2022-2-10"
-
+acq_name = "qUCB"
 
 class SparkMetric(Metric):
     def fetch_trial_data(self, trial, **kwargs):
@@ -116,6 +116,11 @@ class SparkMetric(Metric):
                 "sem": 0,  # 0 for noiseless experiment
                 "trial_index": trial.index,
             })
+
+            print()
+            print(f"trial: {trial.index} - reward: {val}")
+            print()
+
         return ax.core.data.Data(df=pd.DataFrame.from_records(records))
 
 
@@ -178,7 +183,7 @@ def main(_):
         candidates = inner_loop(exp,
                                 model,
                                 param_names,
-                                acq_name="qUCB",
+                                acq_name=acq_name,
                                 acq_func_config=acq_func_config)
         gen_run = candidates_to_generator_run(exp, candidates, param_names)
 
@@ -195,7 +200,7 @@ def main(_):
     print(f"==== done experiment: {exp.name}====")
     print(print_experiment_result(exp))
     dt = datetime.datetime.today()
-    save_exp(exp, f"{exp.name}-{FLAGS.tuner}-{dt.year}-{dt.month}-{dt.day}")
+    save_exp(exp, f"{exp.name}-{FLAGS.tuner}-{acq_name}-{dt.year}-{dt.month}-{dt.day}")
 
 
 if __name__ == "__main__":
