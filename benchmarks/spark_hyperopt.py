@@ -8,7 +8,8 @@ from hyperopt import fmin, tpe, rand, hp
 from ax import SearchSpace, Experiment, OptimizationConfig, Objective, Metric
 from ax.storage.metric_registry import register_metric
 
-from dagbo.utils.ax_experiment_utils import load_exp, save_exp
+from dagbo.interface.exec_spark import call_spark
+from dagbo.utils.ax_experiment_utils import load_exp, save_train_targets_dict
 from dagbo.utils.hyperopt_utils import search_space_from_ax_experiment, build_trials_from_sobol
 
 FLAGS = flags.FLAGS
@@ -104,9 +105,17 @@ def get_model():
         raise ValueError("unable to recognize tuner")
 
 
-# TODO
-def obj(params: dict[str, float]) -> np.ndarray:
-    return
+def obj(params: dict[str, float]) -> float:
+    # exec spark & retrieve throughput
+    call_spark(params, FLAGS.conf_path, FLAGS.exec_path)
+    val = extract_throughput(FLAGS.hibench_report_path)
+
+    print()
+    print(f"reward: {val}")
+    print()
+
+    # NOTE: convert to negative as hyperopt mins obj
+    return -float(val)
 
 
 #def obj(params):
@@ -115,17 +124,12 @@ def obj(params: dict[str, float]) -> np.ndarray:
 
 
 def main(_):
+    # load experiment
     register_metric(SparkMetric)
     exp = load_exp(exp_name)
 
-    #search_space = {
-    #    'x': hp.uniform('x', -6, 6),
-    #    'y': hp.uniform('y', -6, 6),
-    #}
-    #print(search_space_from_ax_experiment(exp))
-    print(build_init_points_from_sobol(exp))
+    # build trials
     t = build_trials_from_sobol(exp)
-    raise ValueError(".")
 
     print()
     print(f"==== start experiment: {exp.name} with tuner: {FLAGS.tuner} ====")
@@ -137,12 +141,15 @@ def main(_):
         algo=get_model(),
         max_evals=FLAGS.epochs,
         trials=
-        t,  # NOTE: sobols are passed as trials, t is affected by fmin side-effect
+        t,  # NOTE: sobols are passed as trials, t is updated by fmin side-effect
     )
 
     print()
     print(f"==== done experiment: {exp.name}====")
     print(best)
+    dt = datetime.datetime.today()
+    save_name = f"{exp.name}-{FLAGS.tuner}-{dt.year}-{dt.month}-{dt.day}"
+    save_train_targets_dict(t.trials, save_name)
 
 
 if __name__ == "__main__":
