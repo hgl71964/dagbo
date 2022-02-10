@@ -1,9 +1,7 @@
-import os
-import sys
+import datetime
 from absl import app
 from absl import flags
 from typing import Union
-import datetime
 
 import pandas as pd
 import torch
@@ -32,8 +30,7 @@ load an experiment with initial sobol points & run opt loop
 """
 
 FLAGS = flags.FLAGS
-flags.DEFINE_enum("tuner", "dagbo", ["dagbo", "bo", "tpe", "rs"],
-                  "tuner to use")
+flags.DEFINE_enum("tuner", "dagbo", ["dagbo", "bo"], "tuner to use")
 flags.DEFINE_string("performance_model_path",
                     "dagbo/interface/spark_performance_model.txt",
                     "graphviz source path")
@@ -145,8 +142,6 @@ def get_model(exp: Experiment, param_names: list[str], param_space: dict,
                                              obj_space, edges)
         fit_dag(dag)
         return dag
-    elif FLAGS.tuner == "tpe":
-        raise RuntimeError("unsupport")
     else:
         raise ValueError("unable to recognize tuner")
 

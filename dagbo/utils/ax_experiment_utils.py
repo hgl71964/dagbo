@@ -129,7 +129,6 @@ def get_bounds(exp: Experiment, params: list[str], dtype) -> Tensor:
         bounds.append(ax_param.lower)
         bounds.append(ax_param.upper)
 
-    # XXX bounds should be set as float?
     return torch.tensor(bounds, dtype=dtype).reshape(-1, 2).T
 
 
