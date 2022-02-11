@@ -32,8 +32,8 @@ def search_space_from_ax_experiment(exp: Experiment) -> dict:
 
 def build_trials_from_sobol(exp: Experiment) -> Trials:
     """
-    NOTE: the reward needs to flip sign, as hyperopt by default perform minimization
-     example format:
+
+    Example format (docs):
     results = [
         {'loss': 10., 'status': 'ok'}, ...
     ]
@@ -70,6 +70,8 @@ def build_trials_from_sobol(exp: Experiment) -> Trials:
     # build docs
     tids = [i for i in range(n)]
     specs = [None for i in range(n)]
+
+    # NOTE: the reward needs to flip sign, as hyperopt by default perform minimization
     results = [{"loss": -i, "status": "ok"} for i in join_df["mean"].to_list()]
     miscs = [{
         "tid": i,
@@ -98,3 +100,8 @@ def build_trials_from_sobol(exp: Experiment) -> Trials:
 
     return trials_from_docs(
         docs)  # built-in func to gen Trials for hyperopt from docs
+
+
+# TODO
+def print_hyperopt_results():
+    return

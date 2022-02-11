@@ -3,7 +3,7 @@ from absl import app
 from absl import flags
 
 import numpy as np
-from hyperopt import fmin, tpe, rand, hp
+from hyperopt import fmin, tpe, rand
 
 from ax import SearchSpace, Experiment, OptimizationConfig, Objective, Metric
 from ax.storage.metric_registry import register_metric
@@ -11,9 +11,10 @@ from ax.storage.metric_registry import register_metric
 from dagbo.interface.exec_spark import call_spark
 from dagbo.utils.ax_experiment_utils import load_exp, save_train_targets_dict
 from dagbo.utils.hyperopt_utils import search_space_from_ax_experiment, build_trials_from_sobol
+from dagbo.interface.metrics_extractor import extract_throughput
 
 FLAGS = flags.FLAGS
-flags.DEFINE_enum("tuner", "tpe", ["rand", "tpe"], "tuner to use")
+flags.DEFINE_enum("tuner", "rand", ["rand", "tpe"], "tuner to use")
 flags.DEFINE_string("performance_model_path",
                     "dagbo/interface/spark_performance_model.txt",
                     "graphviz source path")
@@ -40,6 +41,7 @@ flags.DEFINE_integer("epochs", 20, "bo loop epoch", lower_bound=0)
 flags.DEFINE_boolean("minimize", False, "min or max objective")
 
 exp_name = "SOBOL-spark_feed_back_loop-2022-2-10"
+train_targets_dict = {}
 
 
 class SparkMetric(Metric):
@@ -72,7 +74,7 @@ class SparkMetric(Metric):
             agg_m["throughput"] = torch.tensor(float(val),
                                                dtype=torch_dtype).reshape(-1)
 
-            ### populate
+            ### populate train_targets_dict
             for k, v in agg_m.items():
                 if k in train_targets_dict:
                     train_targets_dict[k] = torch.cat(
@@ -139,7 +141,7 @@ def main(_):
         fn=obj,
         space=search_space_from_ax_experiment(exp),
         algo=get_model(),
-        max_evals=FLAGS.epochs,
+        max_evals=FLAGS.epochs + len(t),  # total evals num
         trials=
         t,  # NOTE: sobols are passed as trials, t is updated by fmin side-effect
     )
