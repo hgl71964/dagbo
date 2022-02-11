@@ -45,6 +45,9 @@ Spark Bench:
 
 GENERALLY, rebuild Hibench & restart all services
 
+0. unbound variable
+install python2, make conf file in {hibench home}/conf
+
 1. fail to launch because container run beyond virtual memory limit,
 
 it could be a problem for java 8
