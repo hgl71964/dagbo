@@ -130,7 +130,12 @@ def main(_):
     register_metric(SparkMetric)
     exp = load_exp(exp_name)
 
-    # build trials
+    print()
+    print(f"==== resume from experiment sobol ====")
+    print(exp.fetch_data().df)
+    print()
+
+    # build trials (hyperopt's opt history container)
     t = build_trials_from_sobol(exp)
 
     print()

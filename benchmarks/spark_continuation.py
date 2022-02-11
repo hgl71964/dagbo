@@ -56,17 +56,17 @@ flags.DEFINE_string("base_url", "http://localhost:18080",
 flags.DEFINE_integer("epochs", 20, "bo loop epoch", lower_bound=0)
 flags.DEFINE_boolean("minimize", False, "min or max objective")
 
-# flags cannot define dict
+# flags cannot define dict, acq_func_config will be affected by side-effect
 acq_func_config = {
     "q": 1,
     "num_restarts": 48,
     "raw_samples": 128,
     "num_samples": int(1024 * 2),
-    "y_max": torch.tensor([1.]),  # for EI
+    "y_max": torch.tensor([1.]),  # only a placeholder for {EI, qEI}, will be overwritten per iter
     "beta": 1,  # for UCB
 }
 exp_name = "SOBOL-spark_feed_back_loop-2022-2-10"
-acq_name = "qUCB"
+acq_name = "qEI"
 torch_dtype = torch.float64
 
 
@@ -127,6 +127,10 @@ class SparkMetric(Metric):
 def get_model(exp: Experiment, param_names: list[str], param_space: dict,
               metric_space: dict, obj_space: dict, edges: dict,
               dtype) -> Union[Dag, SingleTaskGP]:
+
+    # update acq_func_config, e.g. update the best obs for expected improvement
+    acq_func_config["y_max"] = train_targets_dict["throughput"].max()
+
     if FLAGS.tuner == "bo":
         return get_fitted_model(exp, param_names, dtype)
     elif FLAGS.tuner == "dagbo":
@@ -152,11 +156,16 @@ train_targets_dict = load_train_targets_dict(exp_name)
 
 
 def main(_):
+    print()
+    print(f"==== resume from experiment sobol ====")
+    print(exp.fetch_data().df)
+    print()
+
     # get dag's spec
     param_space, metric_space, obj_space, edges = parse_model(
         FLAGS.performance_model_path)
 
-    # NOTE: ensure its the same as define in spark_sobol
+    # NOTE: ensure its EXACTLY the same as define in spark_sobol
     param_names = [
         "executor.num[*]",
         "executor.cores",
@@ -201,7 +210,7 @@ def main(_):
     save_exp(
         exp,
         f"{exp.name}-{FLAGS.tuner}-{acq_name}-{dt.year}-{dt.month}-{dt.day}")
-    # TODO save other exp param as well?
+    # TODO save other exp param as well? e.g. acq_func_config
 
 
 if __name__ == "__main__":
