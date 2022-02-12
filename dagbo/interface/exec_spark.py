@@ -52,7 +52,7 @@ NAME_MAPPING = {
 SCALE_MAPPING = {
     "executor.num[*]": 8,
     "executor.cores": 4,
-    "executor.memory": 8,
+    "executor.memory": 6,
     "default.parallelism": 32,
 }
 
@@ -60,11 +60,11 @@ SCALE_MAPPING = {
 MIN_MAPPING = {
     "executor.num[*]": 2,
     "executor.cores": 1,
-    "executor.memory": 0.5,
+    "executor.memory": 1,
     "default.parallelism": 2,
 }
 
-# 0.2 -> 0
+# 0.5 -> 0, 0.51 -> 1
 ROUND_MAPPING = {
     "executor.num[*]": "int",
     "executor.cores": "int",
@@ -179,13 +179,13 @@ def _pre_process(param: dict[str, float]) -> dict[str, str]:
     for key, val in param.items():
         if ROUND_MAPPING[key] == "float":
             continue
-        elif ROUND_MAPPING[key] == "int":
-            param[key] = int(val)
+        elif ROUND_MAPPING[key] == "int":  # don't use int(float val)
+            param[key] = round(val)
         elif ROUND_MAPPING[key] == "bool":
             if 0 <= val <= 1:
-                param[key] = int(val)
+                param[key] = round(val)
             else:
-                raise ValueError(f"bool param {key} with value {val}")
+                raise ValueError(f"try to ROUND bool param {key} with value {val}")
         else:
             raise TypeError(f"unknown param {key} with value {val}")
 

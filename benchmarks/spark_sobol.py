@@ -19,7 +19,7 @@ from ax.runners.synthetic import SyntheticRunner
 from dagbo.dag import Dag
 from dagbo.fit_dag import fit_dag
 from dagbo.utils.perf_model_utils import build_perf_model_from_spec_ssa, build_perf_model_from_spec_direct
-from dagbo.utils.ax_experiment_utils import candidates_to_generator_run, save_exp, get_dict_tensor, save_dict
+from dagbo.utils.ax_experiment_utils import candidates_to_generator_run, save_exp, get_dict_tensor, save_dict, print_experiment_result
 from dagbo.other_opt.bo_utils import get_fitted_model, inner_loop
 from dagbo.interface.exec_spark import call_spark
 from dagbo.interface.parse_performance_model import parse_model
@@ -191,7 +191,7 @@ def main(_):
     print(f"==== done SOBOL experiment ====")
     print()
 
-    print(exp.fetch_data().df)
+    print(print_experiment_result(exp))
 
     # save
     dt = datetime.datetime.today()
