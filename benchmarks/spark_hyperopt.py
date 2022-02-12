@@ -9,7 +9,7 @@ from ax import SearchSpace, Experiment, OptimizationConfig, Objective, Metric
 from ax.storage.metric_registry import register_metric
 
 from dagbo.interface.exec_spark import call_spark
-from dagbo.utils.ax_experiment_utils import load_exp, save_train_targets_dict
+from dagbo.utils.ax_experiment_utils import load_exp, save_dict
 from dagbo.utils.hyperopt_utils import search_space_from_ax_experiment, build_trials_from_sobol
 from dagbo.interface.metrics_extractor import extract_throughput
 
@@ -156,7 +156,7 @@ def main(_):
     print(best)
     dt = datetime.datetime.today()
     save_name = f"{exp.name}-{FLAGS.tuner}-{dt.year}-{dt.month}-{dt.day}"
-    save_train_targets_dict(t.trials, save_name)
+    save_dict(t.trials, save_name)
 
 
 if __name__ == "__main__":

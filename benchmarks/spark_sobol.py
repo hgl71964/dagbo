@@ -19,7 +19,7 @@ from ax.runners.synthetic import SyntheticRunner
 from dagbo.dag import Dag
 from dagbo.fit_dag import fit_dag
 from dagbo.utils.perf_model_utils import build_perf_model_from_spec_ssa, build_perf_model_from_spec_direct
-from dagbo.utils.ax_experiment_utils import candidates_to_generator_run, save_exp, get_dict_tensor, save_train_targets_dict
+from dagbo.utils.ax_experiment_utils import candidates_to_generator_run, save_exp, get_dict_tensor, save_dict
 from dagbo.other_opt.bo_utils import get_fitted_model, inner_loop
 from dagbo.interface.exec_spark import call_spark
 from dagbo.interface.parse_performance_model import parse_model
@@ -30,6 +30,7 @@ gen initial sobol points for an experiment
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string("metric_name", "spark_throughput", "metric name")
+flags.DEFINE_string("exp_name", "spark-wordcount", "Experiment name")
 flags.DEFINE_string(
     "conf_path", "/home/gh512/workspace/bo/spark-dir/hiBench/conf/spark.conf",
     "conf file path")
@@ -126,12 +127,12 @@ def main(_):
     search_space = SearchSpace([
         ax.RangeParameter("executor.num[*]",
                           ax.ParameterType.FLOAT,
-                          lower=2,
-                          upper=4),
+                          lower=0,
+                          upper=1),
         ax.RangeParameter("executor.cores",
                           ax.ParameterType.FLOAT,
-                          lower=1,
-                          upper=4),
+                          lower=0,
+                          upper=1),
         ax.RangeParameter("shuffle.compress",
                           ax.ParameterType.FLOAT,
                           lower=0,
@@ -142,8 +143,8 @@ def main(_):
                           upper=0.9),
         ax.RangeParameter("executor.memory",
                           ax.ParameterType.FLOAT,
-                          lower=2,
-                          upper=4),
+                          lower=0,
+                          upper=1),
         ax.RangeParameter("spark.serializer",
                           ax.ParameterType.FLOAT,
                           lower=0,
@@ -154,8 +155,8 @@ def main(_):
                           upper=1),
         ax.RangeParameter("default.parallelism",
                           ax.ParameterType.FLOAT,
-                          lower=2,
-                          upper=16),
+                          lower=0,
+                          upper=1),
         ax.RangeParameter(
             "shuffle.spill.compress",
             ax.ParameterType.FLOAT,
@@ -170,7 +171,7 @@ def main(_):
     optimization_config = OptimizationConfig(
         Objective(metric=SparkMetric(name=FLAGS.metric_name),
                   minimize=FLAGS.minimize))
-    exp = Experiment(name="spark_feed_back_loop",
+    exp = Experiment(name=FLAGS.exp_name,
                      search_space=search_space,
                      optimization_config=optimization_config,
                      runner=SyntheticRunner())
@@ -196,7 +197,7 @@ def main(_):
     dt = datetime.datetime.today()
     save_name = f"SOBOL-{exp.name}-{dt.year}-{dt.month}-{dt.day}"
     save_exp(exp, save_name)
-    save_train_targets_dict(train_targets_dict, save_name)
+    save_dict(train_targets_dict, save_name)
 
 
 if __name__ == "__main__":

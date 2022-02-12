@@ -1,6 +1,7 @@
 import os
 import subprocess
 from time import sleep
+from copy import deepcopy
 from typing import Union
 from .metrics_extractor import extract_app_id, extract_throughput
 
@@ -47,17 +48,20 @@ NAME_MAPPING = {
     "spark.speculation": "spark.speculation",
 }
 
-# spec that needs unit mapping, e.g. '4' -> '4g'
-UNIT_MAPPING = {
-    "spark.executor.memory": 0,
+# NOTE: possibly the most important mapping, scale param range [0, 1] back to their original values
+SCALE_MAPPING = {
+    "executor.num[*]": 8,
+    "executor.cores": 4,
+    "executor.memory": 8,
+    "default.parallelism": 32,
 }
 
-# 0 -> false, 1 -> true
-BOOL_MAPPING = {
-    "spark.shuffle.compress": 0,
-    "spark.rdd.compress": 0,
-    "spark.shuffle.spill.compress": 0,
-    "spark.speculation": 0,
+# max(possible lowest value, actual val)
+MIN_MAPPING = {
+    "executor.num[*]": 2,
+    "executor.cores": 1,
+    "executor.memory": 0.5,
+    "default.parallelism": 2,
 }
 
 # 0.2 -> 0
@@ -72,6 +76,19 @@ ROUND_MAPPING = {
     "default.parallelism": "int",
     "shuffle.spill.compress": "bool",
     "spark.speculation": "bool",
+}
+
+# spec that needs unit mapping, e.g. '4' -> '4g'
+UNIT_MAPPING = {
+    "spark.executor.memory": 0,
+}
+
+# 0 -> false, 1 -> true
+BOOL_MAPPING = {
+    "spark.shuffle.compress": 0,
+    "spark.rdd.compress": 0,
+    "spark.shuffle.spill.compress": 0,
+    "spark.speculation": 0,
 }
 
 #
@@ -94,7 +111,7 @@ def call_spark(param: dict[str, Union[float, int]], file_path: str,
     """
 
     # pre-processing param
-    param_ = _pre_process(param)
+    param_ = _pre_process(deepcopy(param))
 
     # write spec according to param
     _write_spec_from_param(param_, file_path)
@@ -142,11 +159,21 @@ def _write_spec_from_param(param: dict[str, str], file_path: str) -> None:
     return None
 
 
-def _pre_process(param: dict[str, Union[float, int]]) -> dict[str, str]:
+def _pre_process(param: dict[str, float]) -> dict[str, str]:
     """
     name mapping & unit mapping & bool mapping &
     """
     param_ = {}
+
+    # scale mapping
+    for key, val in param.items():
+        if key in SCALE_MAPPING:
+            param[key] = val * SCALE_MAPPING[key]
+
+    # min mapping
+    for key, val in param.items():
+        if key in MIN_MAPPING:
+            param[key] = max(val, MIN_MAPPING[key])
 
     # round mapping
     for key, val in param.items():

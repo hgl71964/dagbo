@@ -156,7 +156,7 @@ def save_exp(exp: Experiment, name: str) -> None:
     return None
 
 
-def save_train_targets_dict(train_targets_dict: dict, name: str) -> None:
+def save_dict(train_targets_dict: dict, name: str) -> None:
     directory = os.path.dirname(__file__)
     data_dir = join(directory, "../../benchmarks/data")
     file_name = name + ".pkl"
@@ -174,7 +174,7 @@ def load_exp(name: str) -> Experiment:
     return load_experiment(join(data_dir, file_name))
 
 
-def load_train_targets_dict(name: str) -> dict:
+def load_dict(name: str) -> dict:
     directory = os.path.dirname(__file__)
     data_dir = join(directory, "../../benchmarks/data")
     file_name = name + ".pkl"

@@ -19,8 +19,9 @@ from dagbo.fit_dag import fit_dag
 from dagbo.utils.perf_model_utils import build_perf_model_from_spec_ssa, build_perf_model_from_spec_direct
 from dagbo.utils.ax_experiment_utils import (candidates_to_generator_run,
                                              load_exp, get_dict_tensor,
-                                             load_train_targets_dict,
-                                             print_experiment_result, save_exp)
+                                             load_dict,
+                                             print_experiment_result,
+                                             save_dict, save_exp)
 from dagbo.other_opt.bo_utils import get_fitted_model, inner_loop
 from dagbo.interface.exec_spark import call_spark
 from dagbo.interface.parse_performance_model import parse_model
@@ -62,7 +63,9 @@ acq_func_config = {
     "num_restarts": 48,
     "raw_samples": 128,
     "num_samples": int(1024 * 2),
-    "y_max": torch.tensor([1.]),  # only a placeholder for {EI, qEI}, will be overwritten per iter
+    "y_max": torch.tensor([
+        1.
+    ]),  # only a placeholder for {EI, qEI}, will be overwritten per iter
     "beta": 1,  # for UCB
 }
 exp_name = "SOBOL-spark_feed_back_loop-2022-2-10"
@@ -152,7 +155,7 @@ def get_model(exp: Experiment, param_names: list[str], param_space: dict,
 
 register_metric(SparkMetric)
 exp = load_exp(exp_name)
-train_targets_dict = load_train_targets_dict(exp_name)
+train_targets_dict = load_dict(exp_name)
 
 
 def main(_):
@@ -207,10 +210,9 @@ def main(_):
     print(f"==== done experiment: {exp.name}====")
     print(print_experiment_result(exp))
     dt = datetime.datetime.today()
-    save_exp(
-        exp,
-        f"{exp.name}-{FLAGS.tuner}-{acq_name}-{dt.year}-{dt.month}-{dt.day}")
-    # TODO save other exp param as well? e.g. acq_func_config
+    save_name = f"{exp.name}-{FLAGS.tuner}-{acq_name}-{dt.year}-{dt.month}-{dt.day}"
+    save_exp(exp, save_name)
+    save_dict(acq_func_config, save_name)
 
 
 if __name__ == "__main__":

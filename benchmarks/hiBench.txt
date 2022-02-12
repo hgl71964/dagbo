@@ -79,7 +79,9 @@ solution:
         in ${hadoop/etc/core-site.xml}      set `hadoop.tmp.dir` as a property
 
 4. fail with connection refused
-datanode may not be started properly!
+either namenode OR datanode may not be started properly!
 
 solution:
-        stop-dfs.sh, then delete rm -rf .../datanode/*, then start-dfs.sh
+        stop-dfs.sh
+        for datanote: delete rm -rf .../datanode/*, then start-dfs.sh
+        for namenode: hadoop namenode -format
