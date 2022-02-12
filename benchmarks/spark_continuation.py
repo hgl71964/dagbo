@@ -31,7 +31,7 @@ load an experiment with initial sobol points & run opt loop
 """
 
 FLAGS = flags.FLAGS
-flags.DEFINE_enum("tuner", "dagbo", ["dagbo", "bo"], "tuner to use")
+flags.DEFINE_enum("tuner", "bo", ["dagbo", "bo"], "tuner to use")
 flags.DEFINE_string("performance_model_path",
                     "dagbo/interface/spark_performance_model.txt",
                     "graphviz source path")
@@ -68,8 +68,8 @@ acq_func_config = {
     ]),  # only a placeholder for {EI, qEI}, will be overwritten per iter
     "beta": 1,  # for UCB
 }
-exp_name = "SOBOL-spark_feed_back_loop-2022-2-10"
-acq_name = "qEI"
+exp_name = "SOBOL-spark-wordcount-2022-2-12"
+acq_name = "qUCB"
 torch_dtype = torch.float64
 
 

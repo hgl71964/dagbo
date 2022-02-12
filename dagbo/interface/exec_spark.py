@@ -52,8 +52,8 @@ NAME_MAPPING = {
 SCALE_MAPPING = {
     "executor.num[*]": 8,
     "executor.cores": 4,
-    "executor.memory": 6,
-    "default.parallelism": 32,
+    "executor.memory": 4,
+    "default.parallelism": 16,
 }
 
 # max(possible lowest value, actual val)
@@ -62,6 +62,7 @@ MIN_MAPPING = {
     "executor.cores": 1,
     "executor.memory": 1,
     "default.parallelism": 2,
+    "memory.fraction": 0.1,
 }
 
 # 0.5 -> 0, 0.51 -> 1
