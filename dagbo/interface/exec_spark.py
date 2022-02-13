@@ -50,7 +50,7 @@ NAME_MAPPING = {
 
 # NOTE: possibly the most important mapping, scale param range [0, 1] back to their original values
 SCALE_MAPPING = {
-    "executor.num[*]": 8,
+    "executor.num[*]": 4,
     "executor.cores": 4,
     "executor.memory": 4,
     "default.parallelism": 16,
@@ -186,7 +186,8 @@ def _pre_process(param: dict[str, float]) -> dict[str, str]:
             if 0 <= val <= 1:
                 param[key] = round(val)
             else:
-                raise ValueError(f"try to ROUND bool param {key} with value {val}")
+                raise ValueError(
+                    f"try to ROUND bool param {key} with value {val}")
         else:
             raise TypeError(f"unknown param {key} with value {val}")
 

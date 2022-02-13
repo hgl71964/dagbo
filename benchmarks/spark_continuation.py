@@ -69,7 +69,7 @@ acq_func_config = {
     "beta": 1,  # for UCB
 }
 exp_name = "SOBOL-spark-wordcount-2022-2-12"
-acq_name = "qUCB"
+acq_name = "qEI"
 torch_dtype = torch.float64
 
 
