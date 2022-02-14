@@ -29,7 +29,7 @@ export PYSPARK_PYTHON=/usr/bin/python3.7
 CONFIG DIR:
 
 1. {hadoop home}/etc/hadoop
-        - core-site.xml, yarn-site.xml, hdfs-site.xml
+        - core-site.xml, yarn-site.xml, hdfs-site.xml, yarn-site.xml
 2. {hibench home}/conf
 
 NOTE:
@@ -38,6 +38,23 @@ NOTE:
         only need to spark-submit with --master yarn
 
 2. history-server log dir (default): /tmp/spark-events
+
+DISTRIBUTED ENV SET-UPS:
+
+In /etc/hostname, we can find our machine's hostname
+
+In /etc/hosts, we can add host -> ip (this means we let master to find workers machine)
+
+In ~/.ssh/authorized_keys, we give access to other machine, i.e. others can ssh into our machine
+
+In yarn-site.xml, we must tell yarn who is the resourcemanager
+
+'''
+<property>
+        <name>yarn.resourcemanager.hostname</name>
+        <value>master-1</value>
+</property>
+'''
 
 FAILUER:
 
