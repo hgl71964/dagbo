@@ -56,6 +56,8 @@ In yarn-site.xml, we must tell yarn who is the resourcemanager
 </property>
 '''
 
+If successfully set-up the YARN cluster, we can do `yarn node -list` to see all nodes in our cluster
+
 FAILUER:
 
 Spark Bench:
