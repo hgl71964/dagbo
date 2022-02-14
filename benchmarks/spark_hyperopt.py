@@ -40,7 +40,7 @@ flags.DEFINE_string("base_url", "http://localhost:18080",
 flags.DEFINE_integer("epochs", 20, "bo loop epoch", lower_bound=0)
 flags.DEFINE_boolean("minimize", False, "min or max objective")
 
-exp_name = "SOBOL-spark_feed_back_loop-2022-2-10"
+exp_name = "SOBOL-spark-wordcount-2022-2-12"
 train_targets_dict = {}
 
 

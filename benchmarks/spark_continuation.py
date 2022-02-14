@@ -212,7 +212,7 @@ def main(_):
     dt = datetime.datetime.today()
     save_name = f"{exp.name}-{FLAGS.tuner}-{acq_name}-{dt.year}-{dt.month}-{dt.day}"
     save_exp(exp, save_name)
-    save_dict(acq_func_config, save_name)
+    save_dict([train_targets_dict, acq_func_config], save_name)
 
 
 if __name__ == "__main__":
