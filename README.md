@@ -7,6 +7,9 @@ Implementation of a Bayesian optimisation tuner using directed-acyclic-graph sur
 ## Install
 Install using pip from a local directory using
 
+## NOTE
+for system (spark) specific arguments, config in exec\_spark.oy
+
 ```pip3 install -e .```
 
 ## Demo

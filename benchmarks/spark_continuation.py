@@ -31,7 +31,7 @@ load an experiment with initial sobol points & run opt loop
 """
 
 FLAGS = flags.FLAGS
-flags.DEFINE_enum("tuner", "bo", ["dagbo", "bo"], "tuner to use")
+flags.DEFINE_enum("tuner", "dagbo", ["dagbo", "bo"], "tuner to use")
 flags.DEFINE_string("exp_name", "spark-wordcount", "Experiment name")
 flags.DEFINE_string("acq_name", "qEI", "acquisition function name")
 flags.DEFINE_string("performance_model_path",
@@ -182,7 +182,9 @@ def main(_):
     ]
 
     print()
-    print(f"==== start experiment: {exp.name} with tuner: {FLAGS.tuner} ====")
+    print(
+        f"==== start experiment: {exp.name} with tuner: {FLAGS.tuner} & {FLAGS.acq_name} ===="
+    )
     print()
     for t in range(FLAGS.epochs):
         model = get_model(exp, param_names, param_space, metric_space,

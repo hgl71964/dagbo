@@ -15,6 +15,7 @@ from dagbo.interface.metrics_extractor import extract_throughput
 
 FLAGS = flags.FLAGS
 flags.DEFINE_enum("tuner", "rand", ["rand", "tpe"], "tuner to use")
+flags.DEFINE_string("exp_name", "spark-wordcount", "Experiment name")
 flags.DEFINE_string("performance_model_path",
                     "dagbo/interface/spark_performance_model.txt",
                     "graphviz source path")
@@ -40,7 +41,6 @@ flags.DEFINE_string("base_url", "http://localhost:18080",
 flags.DEFINE_integer("epochs", 20, "bo loop epoch", lower_bound=0)
 flags.DEFINE_boolean("minimize", False, "min or max objective")
 
-exp_name = "SOBOL-spark-wordcount-2022-2-12"
 train_targets_dict = {}
 
 
@@ -128,7 +128,7 @@ def obj(params: dict[str, float]) -> float:
 def main(_):
     # load experiment
     register_metric(SparkMetric)
-    exp = load_exp(exp_name)
+    exp = load_exp(FLAGS.exp_name)
 
     print()
     print(f"==== resume from experiment sobol ====")
@@ -154,8 +154,7 @@ def main(_):
     print()
     print(f"==== done experiment: {exp.name}====")
     print(best)
-    dt = datetime.datetime.today()
-    save_name = f"{exp.name}-{FLAGS.tuner}-{dt.year}-{dt.month}-{dt.day}"
+    save_name = f"{FLAGS.exp_name}-{FLAGS.tuner}"
     save_dict(t.trials, save_name)
 
 
