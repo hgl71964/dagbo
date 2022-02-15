@@ -157,6 +157,7 @@ def get_model(exp: Experiment, param_names: list[str], param_space: dict,
 def main(_):
     register_metric(SparkMetric)
     exp = load_exp(FLAGS.exp_name)
+    global train_targets_dict  # to change global var inside func
     train_targets_dict = load_dict(FLAGS.exp_name)
     print()
     print(f"==== resume from experiment sobol ====")
@@ -210,7 +211,6 @@ def main(_):
     print()
     print(f"==== done experiment: {exp.name}====")
     print(print_experiment_result(exp))
-    print(train_targets_dict)
     save_name = f"{FLAGS.exp_name}-{FLAGS.tuner}-{FLAGS.acq_name}"
     save_exp(exp, save_name)
     save_dict([train_targets_dict, acq_func_config], save_name)

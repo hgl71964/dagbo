@@ -69,7 +69,6 @@ class test_exec_spark(unittest.TestCase):
 
         print(metric)
 
-
 class perf_utils_test(unittest.TestCase):
     def setUp(self):
         param_space, metric_space, obj_space, edges = parse_model(
@@ -154,17 +153,20 @@ class perf_model_test(unittest.TestCase):
     def test_dag_build(self):
         print(self.dag)
 
+    @unittest.skip("ok")
     def test_extract_throughput(self):
         path = "/home/gh512/workspace/bo/spark-dir/hiBench/report/hibench.report"
         l = extract_throughput(path)
         print(l)
 
+    @unittest.skip("ok")
     def test_app_id_extract(self):
         log_path = "/home/gh512/workspace/bo/spark-dir/hiBench/report/wordcount/spark/bench.log"
         app_id = extract_app_id(log_path)
         print("app id")
         print(app_id)
 
+    @unittest.skip("ok")
     def test_app_id_feat_extraction(self):
         log_path = "/home/gh512/workspace/bo/spark-dir/hiBench/report/wordcount/spark/bench.log"
         app_id = extract_app_id(log_path)
