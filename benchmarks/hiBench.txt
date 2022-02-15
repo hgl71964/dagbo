@@ -25,6 +25,68 @@ export SPARK_HOME=/local/scratch/opt/spark-2.4.5-bin-hadoop2.7
 export PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin
 export PYSPARK_PYTHON=/usr/bin/python3.7
 
+DISTRIBUTED ENV SET-UPS:
+
+1. In /etc/hosts, list all machines hostname & ip for all machines
+
+2. exchange ssh key with password between all machines, ensure any one can ssh into any other (by hostname & self)
+        put pub key in ~/.ssh/authorized_keys
+
+3. config hadoop file in {hadoop home}/etc/hadoop
+
+        In core-site.xml
+        '''
+        <property>
+                <name>fs.defaultFS</name>
+                <value>hdfs://{master-hostname}:9000</value>
+        </property>
+        '''
+
+        In yarn-site.xml
+        '''
+        <property>
+                <name>yarn.resourcemanager.hostname</name>
+                <value>{master-hostname}</value>
+        </property>
+        <property>
+                <name>yarn.nodemanager.aux-services</name>
+                <value>mapreduce_shuffle</value>
+        </property>
+
+        & other config related container
+        '''
+
+        In mapred-site.xml
+        '''
+        <property>
+                <name>mapreduce.framework.name</name>
+                <value>yarn</value>
+        </property>
+        '''
+
+        In mapred-site.xml
+        '''
+        <property>
+                <name>dfs.namenode.name.dir</name>
+                <value>{path to local fs dir}</value>
+        </property>
+        <property>
+                <name>dfs.datanode.data.dir</name>
+                <value>{path to local fs dir}</value>
+        </property>
+        '''
+
+        In masters
+                list master hostname
+        In slaves
+                list slaves hostname
+
+4. config Hibench conf
+        In conf/hadoop.conf, ensure hostname correct etc..
+        In conf/hibench.conf, ensure hostname correct etc..
+
+If successfully set-up the hdfs cluster, we can do `hadoop dfsadmin -report` to see all nodes in our cluster
+If successfully set-up the YARN cluster, we can do `yarn node -list` to see all nodes in our cluster
 
 CONFIG DIR:
 
@@ -39,24 +101,6 @@ NOTE:
 
 2. history-server log dir (default): /tmp/spark-events
 
-DISTRIBUTED ENV SET-UPS:
-
-In /etc/hostname, we can find our machine's hostname
-
-In /etc/hosts, we can add host -> ip (this means we let master to find workers machine)
-
-In ~/.ssh/authorized_keys, we give access to other machine, i.e. others can ssh into our machine
-
-In yarn-site.xml, we must tell yarn who is the resourcemanager
-
-'''
-<property>
-        <name>yarn.resourcemanager.hostname</name>
-        <value>master-1</value>
-</property>
-'''
-
-If successfully set-up the YARN cluster, we can do `yarn node -list` to see all nodes in our cluster
 
 FAILUER:
 
