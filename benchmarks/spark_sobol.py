@@ -195,7 +195,7 @@ def main(_):
 
     # save
     dt = datetime.datetime.today()
-    save_name = f"SOBOL-{exp.name}-{dt.year}-{dt.month}-{dt.day}"
+    save_name = f"SOBOL-{FLAGS.exp_name}"
     save_exp(exp, save_name)
     save_dict(train_targets_dict, save_name)
 

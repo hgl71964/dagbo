@@ -32,6 +32,8 @@ load an experiment with initial sobol points & run opt loop
 
 FLAGS = flags.FLAGS
 flags.DEFINE_enum("tuner", "bo", ["dagbo", "bo"], "tuner to use")
+flags.DEFINE_string("exp_name", "spark-wordcount", "Experiment name")
+flags.DEFINE_string("acq_name", "qEI", "acquisition function name")
 flags.DEFINE_string("performance_model_path",
                     "dagbo/interface/spark_performance_model.txt",
                     "graphviz source path")
@@ -68,9 +70,8 @@ acq_func_config = {
     ]),  # only a placeholder for {EI, qEI}, will be overwritten per iter
     "beta": 1,  # for UCB
 }
-exp_name = "SOBOL-spark-wordcount-2022-2-12"
-acq_name = "qEI"
 torch_dtype = torch.float64
+train_targets_dict = {}
 
 
 class SparkMetric(Metric):
@@ -153,12 +154,10 @@ def get_model(exp: Experiment, param_names: list[str], param_space: dict,
         raise ValueError("unable to recognize tuner")
 
 
-register_metric(SparkMetric)
-exp = load_exp(exp_name)
-train_targets_dict = load_dict(exp_name)
-
-
 def main(_):
+    register_metric(SparkMetric)
+    exp = load_exp(FLAGS.exp_name)
+    train_targets_dict = load_dict(FLAGS.exp_name)
     print()
     print(f"==== resume from experiment sobol ====")
     print(exp.fetch_data().df)
@@ -192,7 +191,7 @@ def main(_):
         candidates = inner_loop(exp,
                                 model,
                                 param_names,
-                                acq_name=acq_name,
+                                acq_name=FLAGS.acq_name,
                                 acq_func_config=acq_func_config,
                                 dtype=torch_dtype)
         gen_run = candidates_to_generator_run(exp, candidates, param_names)
@@ -209,8 +208,8 @@ def main(_):
     print()
     print(f"==== done experiment: {exp.name}====")
     print(print_experiment_result(exp))
-    dt = datetime.datetime.today()
-    save_name = f"{exp.name}-{FLAGS.tuner}-{acq_name}-{dt.year}-{dt.month}-{dt.day}"
+    print(train_targets_dict)
+    save_name = f"{FLAGS.exp_name}-{FLAGS.tuner}-{FLAGS.acq_name}"
     save_exp(exp, save_name)
     save_dict([train_targets_dict, acq_func_config], save_name)
 
