@@ -64,7 +64,7 @@ DISTRIBUTED ENV SET-UPS:
         </property>
         '''
 
-        In mapred-site.xml
+        In hdfs-site.xml
         '''
         <property>
                 <name>dfs.namenode.name.dir</name>
@@ -85,8 +85,14 @@ DISTRIBUTED ENV SET-UPS:
         In conf/hadoop.conf, ensure hostname correct etc..
         In conf/hibench.conf, ensure hostname correct etc..
 
-If successfully set-up the hdfs cluster, we can do `hadoop dfsadmin -report` to see all nodes in our cluster
+If successfully set-up the hdfs cluster, we can do `hdfs dfsadmin -report` to see all nodes in our cluster
 If successfully set-up the YARN cluster, we can do `yarn node -list` to see all nodes in our cluster
+
+EXPERIMENT ON NEW CLUTERS:
+
+1. ensure the above config is ok
+2. in auto-experiment.sh, set up the corresponding params
+3. in exec_spark.py, set up the corresponding scale mapping
 
 CONFIG DIR:
 
