@@ -4,14 +4,14 @@
 workload="wordcount" # workload name need to match EXACTLY, it is lower case
 hibench_home="/home/gh512/workspace/bo/spark-dir/hiBench"
 hdfs_path="/local/scratch/opt/hdfs_storage_dir/HiBench"
-repeat=2
+repeat=1
 
 ## can add other python script positional args here
 
 echo
 echo "workload is: ${workload}"
 
-# clean hdfs
+# clean hdfs, will erase all hibench data
 # NOTE: path like: /local/scratch/opt/hdfs_storage_dir/HiBench
 hdfs dfs -rm -R ${hdfs_path}
 
