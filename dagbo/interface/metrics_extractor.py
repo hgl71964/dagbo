@@ -1,4 +1,5 @@
 import re
+from warnings import warn
 
 import requests
 from absl import app
@@ -188,7 +189,7 @@ def _parse_per_stage_json(js) -> dict:
             #raise RuntimeWarning(
             #    f"task {task['taskId']} has status {task['status']} and speculative {task['speculative']}"
             #)
-            print(
+            warn(
                 f"task {task['taskId']} has status {task['status']} and speculative {task['speculative']}"
             )
 
@@ -206,7 +207,7 @@ def _add_metric(exec_map, task):
         task_host = task["host"]
         task_status = task["status"]
         task_speculative = task["speculative"]
-        print(
+        warn(
             f"dead task - id: {task_id} - host: {task_host} - status: {task_status} - speculative: {task_speculative}"
         )
         return exec_map
@@ -269,7 +270,7 @@ def _get_stages(base_url, app_id):
         status = record["status"]
         stageid = record['stageId']
         if status != "COMPLETE":
-            print(f"skipped stage {stageid} with status {status}")
+            warn(f"skipped stage {stageid} with status {status}")
             continue
         else:
             stage_ids.append(stageid)
