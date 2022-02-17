@@ -31,7 +31,6 @@ do
         exp_name=SOBOL-${sobol_name}
         echo
         echo "start experiment ${sobol_name}: "
-        echo "start experiment ${exp_name}: "
         echo
 
         # sequential experiment

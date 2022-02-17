@@ -10,15 +10,16 @@ from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikeliho
 def make_gps(x: Tensor, y: Tensor, gp_name: str) -> SingleTaskGP:
 
     # noiseless modelling
-    likelihood = gpytorch.likelihoods.GaussianLikelihood()
-    likelihood.noise = 1e-4
-    likelihood.noise_covar.raw_noise.requires_grad_(False)
+    #likelihood = gpytorch.likelihoods.GaussianLikelihood()
+    #likelihood.noise = 1e-4
+    #likelihood.noise_covar.raw_noise.requires_grad_(False)
 
     # get model
-    model = SingleTaskGP(x, y, likelihood)
+    #model = SingleTaskGP(x, y, likelihood)
+    model = SingleTaskGP(x, y)
 
     # equip
-    model.likelihood = likelihood
+    #model.likelihood = likelihood
     model.covar_module = make_kernels(gp_name)
     return model
 

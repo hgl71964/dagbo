@@ -72,6 +72,7 @@ def build_trials_from_sobol(exp: Experiment) -> Trials:
     specs = [None for i in range(n)]
 
     # NOTE: the reward needs to flip sign, as hyperopt by default perform minimization
+    # NOTE: experiment's mean is normalised value
     results = [{"loss": -i, "status": "ok"} for i in join_df["mean"].to_list()]
     miscs = [{
         "tid": i,

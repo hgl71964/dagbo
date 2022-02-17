@@ -32,7 +32,7 @@ load an experiment with initial sobol points & run opt loop
 
 FLAGS = flags.FLAGS
 flags.DEFINE_enum("tuner", "dagbo", ["dagbo", "bo"], "tuner to use")
-flags.DEFINE_string("exp_name", "spark-wordcount", "Experiment name")
+flags.DEFINE_string("exp_name", "SOBOL-spark-wordcount", "Experiment name")
 flags.DEFINE_string("acq_name", "qEI", "acquisition function name")
 flags.DEFINE_string("performance_model_path",
                     "dagbo/interface/spark_performance_model.txt",
@@ -72,6 +72,7 @@ acq_func_config = {
 }
 torch_dtype = torch.float64
 train_targets_dict = {}
+normal_dict = {}
 
 
 class SparkMetric(Metric):
@@ -88,7 +89,7 @@ class SparkMetric(Metric):
             app_id = extract_app_id(FLAGS.log_path)
             metric = request_history_server(FLAGS.base_url, app_id)
 
-            ## average agg
+            ## get metrics across executors
             agg_m = {}
             for _, perf in metric.items():
                 for monitoring_metic, v in perf.items():
@@ -97,34 +98,46 @@ class SparkMetric(Metric):
                             float(v))  # XXX all monitoring v are float?
                     else:
                         agg_m[monitoring_metic] = [float(v)]
+            ### add final obj
+            agg_m["throughput"] = float(val)
 
+            ## aggregate & normalised metrics
             for k, v in agg_m.items():
-                agg_m[k] = torch.tensor(v, dtype=torch_dtype).mean().reshape(
-                    -1)  # convert to tensor & average
-            agg_m["throughput"] = torch.tensor(float(val),
-                                               dtype=torch_dtype).reshape(-1)
+                # convert to tensor & average
+                agg_v = torch.tensor(v, dtype=torch_dtype).mean().reshape(-1)
 
-            ### populate
+                # use the first occurrence val as the normalizer
+                if k not in normal_dict:
+                    if agg_v == 0:  # XXX 0 as the normalizer
+                        normal_dict[k] = torch.tensor([1.], dtype=torch_dtype)
+                        agg_m[k] = agg_v
+                    else:
+                        normal_dict[k] = agg_v
+                        agg_m[k] = torch.tensor([1.], dtype=torch_dtype)
+
+                else:
+                    agg_m[k] = agg_v / normal_dict[k]
+
+            ## populate
             for k, v in agg_m.items():
                 if k in train_targets_dict:
                     train_targets_dict[k] = torch.cat(
-                        [train_targets_dict[k], v])  # float32
+                        [train_targets_dict[k], v])
                 else:
                     train_targets_dict[k] = v
 
             # to records
+            normalised_reward = float(agg_m["throughput"])
             records.append({
                 "arm_name": arm_name,
                 "metric_name": self.name,
-                "mean": float(val),
+                "mean": normalised_reward,
                 "sem": 0,  # 0 for noiseless experiment
                 "trial_index": trial.index,
             })
-
             print()
-            print(f"trial: {trial.index} - reward: {val}")
+            print(f"trial: {trial.index} - reward: {normalised_reward:.2f}x")
             print()
-
         return ax.core.data.Data(df=pd.DataFrame.from_records(records))
 
 
@@ -153,15 +166,16 @@ def get_model(exp: Experiment, param_names: list[str], param_space: dict,
     else:
         raise ValueError("unable to recognize tuner")
 
-
 def main(_):
     register_metric(SparkMetric)
     exp = load_exp(FLAGS.exp_name)
-    global train_targets_dict  # to change global var inside func
-    train_targets_dict = load_dict(FLAGS.exp_name)
+    global train_targets_dict, normal_dict  # to change global var inside func
+    train_targets_dict, normal_dict = load_dict(FLAGS.exp_name)
     print()
     print(f"==== resume from experiment sobol ====")
     print(exp.fetch_data().df)
+    print("normalizer: ")
+    print(normal_dict)
     print()
 
     # get dag's spec
