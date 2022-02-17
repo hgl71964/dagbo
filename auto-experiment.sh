@@ -6,6 +6,9 @@ hibench_home="/home/gh512/workspace/bo/spark-dir/hiBench"
 hdfs_path="/local/scratch/opt/hdfs_storage_dir/HiBench"
 repeat=1
 
+# create if not exist
+mkdir -p benchmarks/data
+
 ## can add other python script positional args here
 
 echo

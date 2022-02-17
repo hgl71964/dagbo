@@ -112,7 +112,9 @@ def _get_executors_metric(base_url, app_id, stage_ids):
         js = resp.json()
 
         if len(js) > 1:  # more than one attempt, raise
-            raise RuntimeError(f"stage {s_id} has more than one attempt")
+            raise RuntimeError(
+                f"stage {s_id} has more than one attempt, could be a worker lost connection"
+            )
 
         js = js[0]
         stage_exec_map = _parse_per_stage_json(js)
@@ -187,7 +189,9 @@ def _parse_per_stage_json(js) -> dict:
             #raise RuntimeWarning(
             #    f"task {task['taskId']} has status {task['status']} and speculative {task['speculative']}"
             #)
-            warnings.warn("task {task['taskId']} has status {task['status']} and speculative {task['speculative']}")
+            warnings.warn(
+                "task {task['taskId']} has status {task['status']} and speculative {task['speculative']}"
+            )
 
         exec_map = _add_metric(exec_map, task)
 
@@ -196,8 +200,19 @@ def _parse_per_stage_json(js) -> dict:
 
 def _add_metric(exec_map, task):
     idx = task["executorId"]
-    task_metric = task["taskMetrics"]
 
+    # XXX cases where the task's metrics cannot be extracted, just ignore for now
+    if "taskMetrics" not in task:
+        task_id = task["taskId"]
+        task_host = task["host"]
+        task_status = task["status"]
+        task_speculative = task["speculative"]
+        warnings.warn(
+            f"dead task - id: {task_id} - host: {task_host} - status: {task_status} - speculative: {task_speculative}"
+        )
+        return exec_map
+
+    task_metric = task["taskMetrics"]
     if "executorDeserializeTime" not in exec_map[idx]:
         exec_map[idx]["executorDeserializeTime"] = [
             task_metric["executorDeserializeTime"]
