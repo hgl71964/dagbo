@@ -186,12 +186,10 @@ def _parse_per_stage_json(js) -> dict:
     for task_id in tasks_list:
         task = all_tasks[task_id]
         if task["attempt"] > 0 or task["status"] != "SUCCESS":
-            #raise RuntimeWarning(
-            #    f"task {task['taskId']} has status {task['status']} and speculative {task['speculative']}"
-            #)
-            warn(
-                f"task {task['taskId']} has status {task['status']} and speculative {task['speculative']}"
-            )
+            tid = task['taskId']
+            ts = task['status']
+            tsp = task['speculative']
+            warn(f"task {tid} has status {ts} and speculative {tsp}")
 
         exec_map = _add_metric(exec_map, task)
 

@@ -162,6 +162,11 @@ def save_dict(train_targets_dict: Union[dict, list[dict]], name: str) -> None:
     data_dir = join(directory, "../../benchmarks/data")
     file_name = name + ".pkl"
     full_path = join(data_dir, file_name)
+
+    if exists(full_path):
+        print(f"dict {file_name} exists!")
+        return None
+
     with open(full_path, "wb") as f:
         pickle.dump(train_targets_dict, f)
     return None
