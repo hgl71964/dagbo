@@ -3,6 +3,7 @@ from absl import app
 from absl import flags
 from typing import Union
 
+import numpy as np
 import pandas as pd
 import torch
 from torch import Tensor
@@ -73,6 +74,8 @@ acq_func_config = {
 torch_dtype = torch.float64
 train_targets_dict = {}
 normal_dict = {}
+np.random.seed(0)
+torch.manual_seed(0)
 
 
 class SparkMetric(Metric):

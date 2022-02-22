@@ -43,6 +43,7 @@ flags.DEFINE_boolean("minimize", False, "min or max objective")
 
 train_targets_dict = {}
 normal_dict = {}
+np.random.seed(0)
 
 
 class SparkMetric(Metric):
