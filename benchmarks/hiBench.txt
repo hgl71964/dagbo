@@ -25,12 +25,20 @@ export SPARK_HOME=/local/scratch/opt/spark-2.4.5-bin-hadoop2.7
 export PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin
 export PYSPARK_PYTHON=/usr/bin/python3.7
 
+CONFIG DIR:
+
+1. {hadoop home}/etc/hadoop
+        - core-site.xml, yarn-site.xml, hdfs-site.xml, yarn-site.xml
+2. {hibench home}/conf
+
+
 DISTRIBUTED ENV SET-UPS:
 
 1. In /etc/hosts, list all machines hostname & ip for all machines
 
 2. exchange ssh key with password between all machines, ensure any one can ssh into any other (by hostname & self)
         put pub key in ~/.ssh/authorized_keys
+        (for google cloud compute, add key to vm's meta-data)
 
 3. config hadoop file in {hadoop home}/etc/hadoop
 
@@ -93,12 +101,6 @@ EXPERIMENT ON NEW CLUTERS:
 1. ensure the above config is ok
 2. in auto-experiment.sh, set up the corresponding params
 3. in exec_spark.py, set up the corresponding scale mapping
-
-CONFIG DIR:
-
-1. {hadoop home}/etc/hadoop
-        - core-site.xml, yarn-site.xml, hdfs-site.xml, yarn-site.xml
-2. {hibench home}/conf
 
 NOTE:
 
