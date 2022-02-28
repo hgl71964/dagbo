@@ -94,7 +94,10 @@ DISTRIBUTED ENV SET-UPS:
         In conf/hibench.conf, ensure hostname correct etc..
 
 If successfully set-up the hdfs cluster, we can do `hdfs dfsadmin -report` to see all nodes in our cluster
+        NOTE: ensure each node shows their hostname, not `localhost`, can use dfs's config to enforce this?
 If successfully set-up the YARN cluster, we can do `yarn node -list` to see all nodes in our cluster
+        NOTE: ensure each node shows their hostname, not `localhost`, can specify in yarn-site's yarn.nodemanager.address
+
 
 EXPERIMENT ON NEW CLUTERS:
 
