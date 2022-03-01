@@ -34,6 +34,7 @@ load an experiment with initial sobol points & run opt loop
 FLAGS = flags.FLAGS
 flags.DEFINE_enum("tuner", "dagbo", ["dagbo", "bo"], "tuner to use")
 flags.DEFINE_string("exp_name", "SOBOL-spark-wordcount", "Experiment name")
+flags.DEFINE_string("load_name", "SOBOL-spark-wordcount", "Experiment name")
 flags.DEFINE_string("acq_name", "qEI", "acquisition function name")
 flags.DEFINE_string("performance_model_path",
                     "dagbo/interface/rosenbrock_3d.txt",
@@ -132,9 +133,9 @@ def get_model(exp: Experiment, param_names: list[str], param_space: dict,
 
 def main(_):
     register_metric(Rosenbrock_3D)
-    exp = load_exp(FLAGS.exp_name)
+    exp = load_exp(FLAGS.load_name)
     global train_targets_dict, normal_dict  # to change global var inside func
-    train_targets_dict, normal_dict = load_dict(FLAGS.exp_name)
+    train_targets_dict, normal_dict = load_dict(FLAGS.load_name)
     print()
     print(f"==== resume from experiment sobol ====")
     print(exp.fetch_data().df)

@@ -29,18 +29,36 @@ do
         # sequential experiment
         python3.9 ./benchmarks/synthetic/rosenbrock_sobol.py \
                 --exp_name ${sobol_name}
+
         python3.9 ./benchmarks/synthetic/rosenbrock_continuation.py \
+                --load_name ${exp_name} \
                 --exp_name ${exp_name} \
                 --tuner bo \
                 --acq_name qUCB
+
         python3.9 ./benchmarks/synthetic/rosenbrock_continuation.py \
+                --load_name ${exp_name} \
                 --exp_name ${exp_name} \
                 --tuner dagbo \
                 --acq_name qUCB
+
         python3.9 ./benchmarks/synthetic/rosenbrock_continuation_direct.py \
-                --exp_name ${exp_name} \
+                --load_name ${exp_name} \
+                --exp_name ${exp_name}-direct \
                 --tuner dagbo \
                 --acq_name qUCB
+
+        python3.9 ./benchmarks/synthetic/rosenbrock_continuation.py \
+                --load_name ${exp_name} \
+                --exp_name ${exp_name} \
+                --tuner dagbo \
+                --acq_name qEI
+
+        python3.9 ./benchmarks/synthetic/rosenbrock_continuation_direct.py \
+                --load_name ${exp_name} \
+                --exp_name ${exp_name}-direct \
+                --tuner dagbo \
+                --acq_name qEI
 done
 
 
