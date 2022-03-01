@@ -58,6 +58,7 @@ torch_dtype = torch.float64
 np.random.seed(0)
 torch.manual_seed(0)
 
+
 class SparkMetric(Metric):
     def fetch_trial_data(self, trial, **kwargs):
         records = []

@@ -3,7 +3,8 @@
 # config
 workload="kmeans" # workload name need to match EXACTLY, it is lower case
 hibench_home="/home/gh512/workspace/bo/spark-dir/hiBench"
-hdfs_path="/local/scratch/opt/hdfs_storage_dir/HiBench"
+hdfs_path="/HiBench"
+#hdfs_path="/local/scratch/opt/hdfs_storage_dir/HiBench"
 repeat=2
 
 # create if not exist

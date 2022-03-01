@@ -35,10 +35,11 @@ FLAGS = flags.FLAGS
 flags.DEFINE_enum("tuner", "dagbo", ["dagbo", "bo"], "tuner to use")
 flags.DEFINE_string("exp_name", "SOBOL-spark-wordcount", "Experiment name")
 flags.DEFINE_string("acq_name", "qEI", "acquisition function name")
-flags.DEFINE_string("performance_model_path",
-                    #"dagbo/interface/spark_performance_model.txt",
-                    "dagbo/interface/continuous_spark_performance_model.txt",
-                    "graphviz source path")
+flags.DEFINE_string(
+    "performance_model_path",
+    #"dagbo/interface/spark_performance_model.txt",
+    "dagbo/interface/continuous_spark_performance_model.txt",
+    "graphviz source path")
 flags.DEFINE_string("metric_name", "spark_throughput", "metric name")
 flags.DEFINE_string(
     "conf_path", "/home/gh512/workspace/bo/spark-dir/hiBench/conf/spark.conf",
@@ -169,6 +170,7 @@ def get_model(exp: Experiment, param_names: list[str], param_space: dict,
         return dag
     else:
         raise ValueError("unable to recognize tuner")
+
 
 def main(_):
     register_metric(SparkMetric)

@@ -87,7 +87,7 @@ class perf_utils_test(unittest.TestCase):
         reversed_edge = find_inverse_edges(self.edges)
         print(reversed_edge)
 
-    @unittest.skip("ok")
+    #@unittest.skip("ok")
     def test_topological_sort(self):
         order = get_dag_topological_order(self.obj_space, self.edges)
         print(order)

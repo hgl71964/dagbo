@@ -33,7 +33,7 @@ CONST_WRITE = {
 
     # for continuous perf model
     "spark.speculation": "true",
-    "spark.shuffle.compress":  "false",
+    "spark.shuffle.compress": "false",
     "spark.serializer": "org.apache.spark.serializer.KryoSerializer",
     "spark.rdd.compress": "true",
 }
