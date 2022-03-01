@@ -90,15 +90,16 @@ class Rosenbrock_3D(Metric):
                 else:
                     train_targets_dict[k] = val
 
+            mean = -float(train_targets_dict["final"][-1])
             records.append({
                 "arm_name": arm_name,
                 "metric_name": self.name,
-                "mean": -float(train_targets_dict["final"][-1]),  # flip sign
+                "mean": mean,  # flip sign
                 "sem": 0,  # 0 for noiseless experiment
                 "trial_index": trial.index,
             })
             print()
-            print(f"trial: {trial.index} - reward: {normalised_reward:.2f}x")
+            print(f"trial: {trial.index} - reward: {mean:.2f}x")
             print()
         return ax.core.data.Data(df=pd.DataFrame.from_records(records))
 
