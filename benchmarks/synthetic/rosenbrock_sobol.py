@@ -52,7 +52,7 @@ class Rosenbrock_3D(Metric):
             i2 = 100 * (x3 - x2**2)**2
             f1 = i1 + (1 - x1)**2
             f2 = i2 + (1 - x2)**2
-            final = -(f1 + f2)  # flip sign
+            final = f1 + f2
             obj = {
                 "i1": torch.tensor(i1, dtype=torch_dtype).reshape(-1),
                 "i2": torch.tensor(i2, dtype=torch_dtype).reshape(-1),
@@ -63,7 +63,10 @@ class Rosenbrock_3D(Metric):
 
             for k, v in obj.items():
                 if k not in normal_dict:
-                    normal_dict[k] = v
+                    if k == "final":        # NOTE: flip sign
+                        normal_dict[k] = -v
+                    else:
+                        normal_dict[k] = v
 
                 val = v / normal_dict[k]  # XXX what if divide by 0?
 
@@ -73,11 +76,12 @@ class Rosenbrock_3D(Metric):
                 else:
                     train_targets_dict[k] = val
 
+            # the latest reward
             mean = float(train_targets_dict["final"][-1])
             records.append({
                 "arm_name": arm_name,
                 "metric_name": self.name,
-                "mean": mean,  # flip sign
+                "mean": mean,
                 "sem": 0,  # 0 for noiseless experiment
                 "trial_index": trial.index,
             })
