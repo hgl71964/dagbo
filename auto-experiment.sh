@@ -4,7 +4,7 @@
 workload="wordcount" # workload name need to match EXACTLY, it is lower case
 hibench_home="/home/gh512/workspace/bo/spark-dir/hiBench"
 hdfs_path="/local/scratch/opt/hdfs_storage_dir/HiBench"
-repeat=1
+repeat=2
 
 # create if not exist
 mkdir -p benchmarks/data

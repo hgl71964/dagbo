@@ -37,22 +37,22 @@ do
         echo
 
         # sequential experiment
-        python3.9 ./benchmarks/spark_sobol.py \
+        python3.9 ./benchmarks/spark_continuous_modelling/spark_sobol.py \
                 --exp_name ${sobol_name} \
                 --exec_path /home/gh512/workspace/bo/spark-dir/hiBench/bin/workloads/ml/${workload}/spark/run.sh \
                 --log_path /home/gh512/workspace/bo/spark-dir/hiBench/report/${workload}/spark/bench.log
 
-        python3.9 ./benchmarks/spark_continuation.py \
+        python3.9 ./benchmarks/spark_continuous_modelling/spark_continuation.py \
                 --exp_name ${exp_name} \
                 --tuner bo \
-                --acq_name qUCB \
+                --acq_name qEI \
                 --exec_path /home/gh512/workspace/bo/spark-dir/hiBench/bin/workloads/ml/${workload}/spark/run.sh \
                 --log_path /home/gh512/workspace/bo/spark-dir/hiBench/report/${workload}/spark/bench.log
 
-        python3.9 ./benchmarks/spark_continuation.py \
+        python3.9 ./benchmarks/spark_continuous_modelling/spark_continuation.py \
                 --exp_name ${exp_name} \
                 --tuner dagbo \
-                --acq_name qUCB \
+                --acq_name qEI \
                 --exec_path /home/gh512/workspace/bo/spark-dir/hiBench/bin/workloads/ml/${workload}/spark/run.sh \
                 --log_path /home/gh512/workspace/bo/spark-dir/hiBench/report/${workload}/spark/bench.log
 

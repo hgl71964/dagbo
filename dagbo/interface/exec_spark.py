@@ -23,8 +23,6 @@ hardcode param conversion rules
 spawn a child process and execute spark job with given parameters
 """
 
-LOG_DIR = "/home/gh512/workspace/bo/dagbo/benchmarks/data"
-
 # this will be written to spark.conf regardless input parameters
 CONST_WRITE = {
     "hibench.spark.home": "/local/scratch/opt/spark-2.4.5-bin-hadoop2.7",
@@ -32,6 +30,12 @@ CONST_WRITE = {
     "spark.eventLog.enabled": "true",
     "spark.local.dir":
     "/local/scratch/spark_tmp_dir",  # to store intermediate data
+
+    # for continuous perf model
+    "spark.speculation": "true",
+    "spark.shuffle.compress":  "false",
+    "spark.serializer": "org.apache.spark.serializer.KryoSerializer",
+    "spark.rdd.compress": "true",
 }
 
 # map from param to actual spark config name
