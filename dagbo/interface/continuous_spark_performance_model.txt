@@ -1,0 +1,40 @@
+digraph "continuous-spark-performance-model" {
+	graph [rankdir=LR]
+	subgraph cluster_0 {
+		color=lightgrey style=filled
+		label=param
+		"executor.num[*]" [label="executor.num[*]" shape=circle]
+		"executor.memory" [label="executor.memory" shape=circle]
+		"executor.cores" [label="executor.cores" shape=circle]
+		"default.parallelism" [label="default.parallelism" shape=circle]
+		"memory.fraction" [label="memory.fraction" shape=circle]
+	}
+	subgraph cluster_1 {
+		color=blue
+		taskTime [label=taskTime]
+		executorRunTime [label=executorRunTime]
+		executorCpuTime [label=executorCpuTime]
+		executorDeserializeTime [label=executorDeserializeTime]
+		executorDeserializeCpuTime [label=executorDeserializeCpuTime]
+		jvmGcTime [label=jvmGcTime]
+		label="intermediate metrics"
+	}
+	subgraph cluster_2 {
+		throughput [label=throughput]
+	}
+	"executor.num[*]" -> executorCpuTime
+	"executor.num[*]" -> executorDeserializeCpuTime
+	"executor.cores" -> executorCpuTime
+	"executor.cores" -> executorDeserializeCpuTime
+	"executor.memory" -> jvmGcTime
+	"default.parallelism" -> executorDeserializeCpuTime
+	"default.parallelism" -> executorCpuTime
+	"memory.fraction" -> jvmGcTime
+	executorCpuTime -> executorRunTime
+	jvmGcTime -> executorRunTime [color=red]
+	jvmGcTime -> executorDeserializeTime [color=red]
+	executorDeserializeCpuTime -> executorDeserializeTime
+	executorRunTime -> taskTime
+	executorDeserializeTime -> taskTime
+	taskTime -> throughput
+}

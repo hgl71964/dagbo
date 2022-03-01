@@ -72,7 +72,9 @@ class test_exec_spark(unittest.TestCase):
 class perf_utils_test(unittest.TestCase):
     def setUp(self):
         param_space, metric_space, obj_space, edges = parse_model(
-            "dagbo/interface/spark_performance_model.txt")
+            "dagbo/interface/continuous_spark_performance_model.txt")
+            #"dagbo/interface/spark_performance_model.txt")
+
         self.param_space = param_space
         self.metric_space = metric_space
         self.obj_space = obj_space
@@ -85,7 +87,7 @@ class perf_utils_test(unittest.TestCase):
         reversed_edge = find_inverse_edges(self.edges)
         print(reversed_edge)
 
-    @unittest.skip("ok")
+    #@unittest.skip("ok")
     def test_topological_sort(self):
         order = get_dag_topological_order(self.obj_space, self.edges)
         print(order)
@@ -106,7 +108,9 @@ class perf_model_test(unittest.TestCase):
     def setUp(self):
         # performance model
         param_space, metric_space, obj_space, edges = parse_model(
-            "dagbo/interface/spark_performance_model.txt")
+            "dagbo/interface/continuous_spark_performance_model.txt")
+            #"dagbo/interface/spark_performance_model.txt")
+
         self.param_space = param_space
         self.metric_space = metric_space
         self.obj_space = obj_space
@@ -149,7 +153,7 @@ class perf_model_test(unittest.TestCase):
         metric = request_history_server(self.base_url, self.app_id)
         print(metric)
 
-    @unittest.skip("ok")
+    #@unittest.skip("ok")
     def test_dag_build(self):
         print(self.dag)
 

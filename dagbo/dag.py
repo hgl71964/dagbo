@@ -326,7 +326,6 @@ class SO_Dag(Dag):
         sink_node_name = None
 
         # ensure traverse in topological order
-        # FIXME ensure input does not draw r sample twice inside a forward pass
         for node in self.nodes_dag_order():
 
             # prepare input to each node
@@ -338,6 +337,7 @@ class SO_Dag(Dag):
 
             # make prediction via GP
             mvn = node(node_inputs)
+            # TODO add likelihood?
 
             node_dict[node.output_name] = mvn
             prediction = mvn.rsample()
@@ -385,7 +385,6 @@ class lazy_SO_Dag(Dag):
         sink_node_name = None
 
         # ensure traverse in topological order
-        # FIXME ensure input does not draw r sample twice inside a forward pass
         for node in self.nodes_dag_order():
 
             # prepare input to each node
@@ -397,6 +396,8 @@ class lazy_SO_Dag(Dag):
 
             # make prediction via GP
             mvn = node(node_inputs)
+
+            # TODO add likelihood?
 
             node_dict[node.output_name] = mvn
             prediction = mvn.rsample()
