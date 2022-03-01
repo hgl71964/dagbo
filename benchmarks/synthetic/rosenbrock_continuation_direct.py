@@ -72,7 +72,7 @@ class Rosenbrock_3D(Metric):
             i2 = 100 * (x3 - x2**2)**2
             f1 = i1 + (1 - x1)**2
             f2 = i2 + (1 - x2)**2
-            final = f1 + f2
+            final = -(f1 + f2)  # flip sign
             obj = {
                 "i1": torch.tensor(i1, dtype=torch_dtype).reshape(-1),
                 "i2": torch.tensor(i2, dtype=torch_dtype).reshape(-1),
@@ -91,7 +91,7 @@ class Rosenbrock_3D(Metric):
                 else:
                     train_targets_dict[k] = val
 
-            mean = -float(train_targets_dict["final"][-1])
+            mean = float(train_targets_dict["final"][-1])
             records.append({
                 "arm_name": arm_name,
                 "metric_name": self.name,
