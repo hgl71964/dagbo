@@ -54,11 +54,11 @@ class Rosenbrock_3D(Metric):
             f2 = i2 + (1 - x2)**2
             final = f1 + f2
             obj = {
-                "i1": torch.tensor(i1, torch_dtype),
-                "i2": torch.tensor(i2, torch_dtype),
-                "f1": torch.tensor(f1, torch_dtype),
-                "f2": torch.tensor(f2, torch_dtype),
-                "final": torch.tensor(final, torch_dtype),
+                "i1": torch.tensor(i1, dtype=torch_dtype).reshape(-1),
+                "i2": torch.tensor(i2, dtype=torch_dtype).reshape(-1),
+                "f1": torch.tensor(f1, dtype=torch_dtype).reshape(-1),
+                "f2": torch.tensor(f2, dtype=torch_dtype).reshape(-1),
+                "final": torch.tensor(final, dtype=torch_dtype).reshape(-1),
             }
 
             for k, v in obj.items():
