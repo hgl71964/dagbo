@@ -4,7 +4,6 @@ botorch==0.6.0
 certifi==2021.10.8
 charset-normalizer==2.0.10
 cloudpickle==2.0.0
--e git+ssh://git@github.com/hgl71964/dagbo.git@ec6a51e751e27efa14c753a29d91ba2e87ae8270#egg=dagbo
 future==0.18.2
 gpytorch==1.6.0
 hyperopt==0.2.7

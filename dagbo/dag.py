@@ -396,11 +396,13 @@ class lazy_SO_Dag(Dag):
 
             # make prediction via GP
             mvn = node(node_inputs)
+            # likelihood
+            like_mvn = node.likelihood(mvn)
 
-            # TODO add likelihood?
-
-            node_dict[node.output_name] = mvn
-            prediction = mvn.rsample()
+            #node_dict[node.output_name] = mvn
+            #prediction = mvn.rsample()
+            node_dict[node.output_name] = like_mvn
+            prediction = like_mvn.rsample()
             tensor_inputs_dict[node.output_name] = prediction
             sink_node_name = node.output_name
 

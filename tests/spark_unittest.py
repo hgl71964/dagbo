@@ -87,7 +87,7 @@ class perf_utils_test(unittest.TestCase):
         reversed_edge = find_inverse_edges(self.edges)
         print(reversed_edge)
 
-    #@unittest.skip("ok")
+    @unittest.skip("ok")
     def test_topological_sort(self):
         order = get_dag_topological_order(self.obj_space, self.edges)
         print(order)
@@ -138,8 +138,8 @@ class perf_model_test(unittest.TestCase):
             for i in list(metric_space.keys()) + list(obj_space.keys())
         }
 
-        # build
-        self.dag = build_perf_model_from_spec(train_inputs_dict,
+        # build, build_perf_model_from_spec
+        self.dag = build_perf_model_from_spec_ssa(train_inputs_dict,
                                               train_targets_dict,
                                               acq_func_config["num_samples"],
                                               param_space, metric_space,
