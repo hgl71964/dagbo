@@ -51,7 +51,7 @@ do
                 --load_name SOBOL-${exp_name} \
                 --exp_name ${exp_name} \
                 --n_dim $n \
-                --dagbo_mode direct \
+                --dagbo_mode ssa \
                 --performance_model_path dagbo/interface/rosenbrock_20d.txt \
                 --tuner dagbo \
                 --acq_name qUCB
@@ -60,7 +60,7 @@ do
                 --load_name SOBOL-${exp_name} \
                 --exp_name ${exp_name} \
                 --n_dim $n \
-                --dagbo_mode direct \
+                --dagbo_mode ssa \
                 --performance_model_path dagbo/interface/rosenbrock_20d.txt \
                 --tuner dagbo \
                 --acq_name qEI

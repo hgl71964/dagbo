@@ -3,7 +3,6 @@ import sys
 from absl import app
 from absl import flags
 from typing import Union
-import datetime
 
 import numpy as np
 import pandas as pd
@@ -136,7 +135,6 @@ def main(_):
     print(print_experiment_result(exp))
 
     # save
-    dt = datetime.datetime.today()
     save_name = f"SOBOL-{FLAGS.exp_name}"
     save_exp(exp, save_name)
     save_dict([train_targets_dict, normal_dict], save_name)

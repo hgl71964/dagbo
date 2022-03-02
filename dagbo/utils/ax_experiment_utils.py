@@ -5,6 +5,7 @@ import torch
 import pandas as pd
 from torch import Tensor
 from copy import deepcopy
+from time import sleep
 from typing import Union
 
 import ax
@@ -152,8 +153,15 @@ def save_exp(exp: Experiment, name: str) -> None:
         print(f"Experiment {file_name} exists!")
         return None
 
-    save_experiment(exp, full_path)
-    print(f"save as {name}.json")
+    # linger until save, because of CL's policy
+    i = False
+    while i is False:
+        try:
+            save_experiment(exp, full_path)
+            print(f"save as {name}.json")
+            i = True
+        except:
+            sleep(600)
     return None
 
 
@@ -167,8 +175,15 @@ def save_dict(train_targets_dict: Union[dict, list[dict]], name: str) -> None:
         print(f"dict {file_name} exists!")
         return None
 
-    with open(full_path, "wb") as f:
-        pickle.dump(train_targets_dict, f)
+    # linger until save, because of CL's policy
+    i = False
+    while i is False:
+        try:
+            with open(full_path, "wb") as f:
+                pickle.dump(train_targets_dict, f)
+            i = True
+        except:
+            sleep(600)
     return None
 
 
