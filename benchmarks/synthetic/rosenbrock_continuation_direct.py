@@ -183,10 +183,9 @@ def main(_):
         trial.run()
         trial.mark_completed()
 
-
         print()
         print("iteration time:")
-        end = time.perf_counter()-start
+        end = time.perf_counter() - start
         print(f"{end:.2f}")
         print()
 

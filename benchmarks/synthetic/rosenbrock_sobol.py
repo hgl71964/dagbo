@@ -63,7 +63,7 @@ class Rosenbrock_3D(Metric):
 
             for k, v in obj.items():
                 if k not in normal_dict:
-                    if k == "final":        # NOTE: flip sign
+                    if k == "final":  # NOTE: flip sign
                         normal_dict[k] = -v
                     else:
                         normal_dict[k] = v

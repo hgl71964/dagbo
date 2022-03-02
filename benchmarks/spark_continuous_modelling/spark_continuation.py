@@ -34,6 +34,8 @@ load an experiment with initial sobol points & run opt loop
 FLAGS = flags.FLAGS
 flags.DEFINE_enum("tuner", "dagbo", ["dagbo", "bo"], "tuner to use")
 flags.DEFINE_string("exp_name", "SOBOL-spark-wordcount", "Experiment name")
+flags.DEFINE_string("load_name", "SOBOL-spark-wordcount", "Experiment name")
+flags.DEFINE_string("dagbo_mode", "ssa", "ssa or direct")
 flags.DEFINE_string("acq_name", "qEI", "acquisition function name")
 flags.DEFINE_string(
     "performance_model_path",
@@ -76,8 +78,8 @@ acq_func_config = {
 torch_dtype = torch.float64
 train_targets_dict = {}
 normal_dict = {}
-np.random.seed(0)
-torch.manual_seed(0)
+#np.random.seed(0)
+#torch.manual_seed(0)
 
 
 class SparkMetric(Metric):
@@ -161,11 +163,19 @@ def get_model(exp: Experiment, param_names: list[str], param_space: dict,
 
         ## fit model from dataset
         #build_perf_model_from_spec_direct, build_perf_model_from_spec_ssa
-        dag = build_perf_model_from_spec_ssa(train_inputs_dict,
-                                             train_targets_dict,
-                                             acq_func_config["num_samples"],
-                                             param_space, metric_space,
-                                             obj_space, edges)
+        if FLAGS.dagbo_mode == "ssa":
+            dag = build_perf_model_from_spec_ssa(
+                train_inputs_dict, train_targets_dict,
+                acq_func_config["num_samples"], param_space, metric_space,
+                obj_space, edges)
+        elif FLAGS.dagbo_mode == "direct":
+            dag = build_perf_model_from_spec_direct(
+                train_inputs_dict, train_targets_dict,
+                acq_func_config["num_samples"], param_space, metric_space,
+                obj_space, edges)
+        else:
+            raise ValueError("unable to recognize dagbo mode")
+
         fit_dag(dag)
         return dag
     else:
@@ -174,9 +184,9 @@ def get_model(exp: Experiment, param_names: list[str], param_space: dict,
 
 def main(_):
     register_metric(SparkMetric)
-    exp = load_exp(FLAGS.exp_name)
+    exp = load_exp(FLAGS.load_name)
     global train_targets_dict, normal_dict  # to change global var inside func
-    train_targets_dict, normal_dict = load_dict(FLAGS.exp_name)
+    train_targets_dict, normal_dict = load_dict(FLAGS.load_name)
     print()
     print(f"==== resume from experiment sobol ====")
     print(exp.fetch_data().df)

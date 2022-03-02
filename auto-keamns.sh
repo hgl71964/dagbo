@@ -31,29 +31,43 @@ echo
 
 for num in $( seq 0 $repeat )
 do
-        sobol_name=${workload}${num}
-        exp_name=SOBOL-${sobol_name}
+        exp_name=${sobol_name}
         echo
-        echo "start experiment ${sobol_name}: "
+        echo "start experiment ${exp_name}: "
         echo
 
         # sequential experiment
         python3.9 ./benchmarks/spark_continuous_modelling/spark_sobol.py \
-                --exp_name ${sobol_name} \
+                --exp_name ${exp_name} \
                 --exec_path /home/gh512/workspace/bo/spark-dir/hiBench/bin/workloads/ml/${workload}/spark/run.sh \
                 --log_path /home/gh512/workspace/bo/spark-dir/hiBench/report/${workload}/spark/bench.log
 
         python3.9 ./benchmarks/spark_continuous_modelling/spark_continuation.py \
                 --exp_name ${exp_name} \
+                --load_name SOBOL-${exp_name} \
                 --tuner bo \
                 --acq_name qEI \
+                --performance_model_path XXX \
                 --exec_path /home/gh512/workspace/bo/spark-dir/hiBench/bin/workloads/ml/${workload}/spark/run.sh \
                 --log_path /home/gh512/workspace/bo/spark-dir/hiBench/report/${workload}/spark/bench.log
 
         python3.9 ./benchmarks/spark_continuous_modelling/spark_continuation.py \
                 --exp_name ${exp_name} \
+                --load_name SOBOL-${exp_name} \
                 --tuner dagbo \
+                --dagbo_mode ssa \
                 --acq_name qEI \
+                --performance_model_path XXX \
+                --exec_path /home/gh512/workspace/bo/spark-dir/hiBench/bin/workloads/ml/${workload}/spark/run.sh \
+                --log_path /home/gh512/workspace/bo/spark-dir/hiBench/report/${workload}/spark/bench.log
+
+        python3.9 ./benchmarks/spark_continuous_modelling/spark_continuation.py \
+                --exp_name ${exp_name} \
+                --load_name SOBOL-${exp_name} \
+                --tuner dagbo \
+                --dagbo_mode direct \
+                --acq_name qEI \
+                --performance_model_path XXX \
                 --exec_path /home/gh512/workspace/bo/spark-dir/hiBench/bin/workloads/ml/${workload}/spark/run.sh \
                 --log_path /home/gh512/workspace/bo/spark-dir/hiBench/report/${workload}/spark/bench.log
 

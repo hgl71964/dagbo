@@ -16,6 +16,7 @@ from dagbo.interface.metrics_extractor import extract_throughput
 FLAGS = flags.FLAGS
 flags.DEFINE_enum("tuner", "rand", ["rand", "tpe"], "tuner to use")
 flags.DEFINE_string("exp_name", "SOBOL-spark-wordcount", "Experiment name")
+flags.DEFINE_string("load_name", "SOBOL-spark-wordcount", "Experiment name")
 flags.DEFINE_string("metric_name", "spark_throughput", "metric name")
 flags.DEFINE_string(
     "conf_path", "/home/gh512/workspace/bo/spark-dir/hiBench/conf/spark.conf",
@@ -40,7 +41,7 @@ flags.DEFINE_boolean("minimize", False, "min or max objective")
 
 train_targets_dict = {}
 normal_dict = {}
-np.random.seed(0)
+#np.random.seed(0)
 
 
 class SparkMetric(Metric):
@@ -142,9 +143,9 @@ def obj(params: dict[str, float]) -> float:
 def main(_):
     # load experiment
     register_metric(SparkMetric)
-    exp = load_exp(FLAGS.exp_name)
+    exp = load_exp(FLAGS.load_name)
     global train_targets_dict, normal_dict  # to change global var inside func
-    train_targets_dict, normal_dict = load_dict(FLAGS.exp_name)
+    train_targets_dict, normal_dict = load_dict(FLAGS.load_name)
 
     print()
     print(f"==== resume from experiment sobol ====")
