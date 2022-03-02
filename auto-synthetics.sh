@@ -39,24 +39,34 @@ do
         python3.9 ./benchmarks/synthetic/rosenbrock_continuation.py \
                 --load_name ${exp_name} \
                 --exp_name ${exp_name} \
+                --tuner bo \
+                --acq_name qEI
+
+        python3.9 ./benchmarks/synthetic/rosenbrock_continuation.py \
+                --load_name ${exp_name} \
+                --exp_name ${exp_name} \
+                --performance_model_path dagbo/interface/rosenbrock_3d_correct_model.txt \
                 --tuner dagbo \
                 --acq_name qUCB
 
         python3.9 ./benchmarks/synthetic/rosenbrock_continuation_direct.py \
                 --load_name ${exp_name} \
                 --exp_name ${exp_name}-direct \
+                --performance_model_path dagbo/interface/rosenbrock_3d_correct_model.txt \
                 --tuner dagbo \
                 --acq_name qUCB
 
         python3.9 ./benchmarks/synthetic/rosenbrock_continuation.py \
                 --load_name ${exp_name} \
                 --exp_name ${exp_name} \
+                --performance_model_path dagbo/interface/rosenbrock_3d_correct_model.txt \
                 --tuner dagbo \
                 --acq_name qEI
 
         python3.9 ./benchmarks/synthetic/rosenbrock_continuation_direct.py \
                 --load_name ${exp_name} \
                 --exp_name ${exp_name}-direct \
+                --performance_model_path dagbo/interface/rosenbrock_3d_correct_model.txt \
                 --tuner dagbo \
                 --acq_name qEI
 done

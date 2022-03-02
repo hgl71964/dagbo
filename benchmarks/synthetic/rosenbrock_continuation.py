@@ -1,3 +1,4 @@
+import time
 import datetime
 from absl import app
 from absl import flags
@@ -160,6 +161,9 @@ def main(_):
     )
     print()
     for t in range(FLAGS.epochs):
+
+        start = time.perf_counter()
+
         model = get_model(exp, param_names, param_space, metric_space,
                           obj_space, edges, torch_dtype)
 
@@ -178,6 +182,12 @@ def main(_):
             trial = exp.new_batch_trial(generator_run=gen_run)
         trial.run()
         trial.mark_completed()
+
+
+        print()
+        print("iteration time:")
+        print(time.perf_counter()-start)
+        print()
 
     print()
     print(f"==== done experiment: {exp.name}====")
