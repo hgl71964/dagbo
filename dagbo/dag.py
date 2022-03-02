@@ -397,7 +397,7 @@ class lazy_SO_Dag(Dag):
             # make prediction via GP
             mvn = node(node_inputs)
             # likelihood
-            like_mvn = node.likelihood(mvn)
+            like_mvn = node.likelihood(mvn, node_inputs)
 
             #node_dict[node.output_name] = mvn
             #prediction = mvn.rsample()

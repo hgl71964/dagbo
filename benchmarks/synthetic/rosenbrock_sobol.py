@@ -37,8 +37,8 @@ flags.DEFINE_boolean("minimize", False, "min or max objective")
 train_targets_dict = {}
 normal_dict = {}  # hold original value for metric, used for normalised metric
 torch_dtype = torch.float64
-np.random.seed(0)
-torch.manual_seed(0)
+#np.random.seed(0)
+#torch.manual_seed(0)
 
 
 class Rosenbrock_3D(Metric):

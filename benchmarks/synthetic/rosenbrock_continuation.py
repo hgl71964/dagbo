@@ -58,8 +58,8 @@ acq_func_config = {
 torch_dtype = torch.float64
 train_targets_dict = {}
 normal_dict = {}
-np.random.seed(0)
-torch.manual_seed(0)
+#np.random.seed(0)
+#torch.manual_seed(0)
 
 
 class Rosenbrock_3D(Metric):
