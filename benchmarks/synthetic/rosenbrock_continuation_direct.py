@@ -186,7 +186,8 @@ def main(_):
 
         print()
         print("iteration time:")
-        print(time.perf_counter()-start)
+        end = time.perf_counter()-start
+        print(f"{end:.2f}")
         print()
 
     print()

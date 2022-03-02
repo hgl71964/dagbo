@@ -33,12 +33,14 @@ do
         python3.9 ./benchmarks/synthetic/rosenbrock_continuation.py \
                 --load_name ${exp_name} \
                 --exp_name ${exp_name} \
+                --performance_model_path dagbo/interface/rosenbrock_3d_correct_model.txt \
                 --tuner bo \
                 --acq_name qUCB
 
         python3.9 ./benchmarks/synthetic/rosenbrock_continuation.py \
                 --load_name ${exp_name} \
                 --exp_name ${exp_name} \
+                --performance_model_path dagbo/interface/rosenbrock_3d_correct_model.txt \
                 --tuner bo \
                 --acq_name qEI
 
