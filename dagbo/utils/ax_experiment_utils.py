@@ -59,9 +59,8 @@ def get_dict_tensor(
         params (list): param name str list
 
     Returns:
-        key: param name - val: Tensor
+        key: param name - val: Tensor [num_trials, ]
     """
-
     exp_df = exp.fetch_data().df
     train_inputs_dict = {}
 
@@ -82,45 +81,9 @@ def get_dict_tensor(
                 train_inputs_dict[p] = [arm_param[p]]
 
     # convert to tensor
-    for key in train_inputs_dict:
-        train_inputs_dict[key] = torch.tensor(train_inputs_dict[key],
-                                              dtype=dtype)
+    for k, v in train_inputs_dict.items():
+        train_inputs_dict[k] = torch.tensor(v, dtype=dtype)
     return train_inputs_dict
-
-
-def get_tensor(exp: Experiment, params: list[str],
-               dtype) -> tuple[Tensor, Tensor]:
-    """retrieve data from experiment to tensor
-    single objective ONLY
-
-    Args:
-        exp (Experiment): Ax.Experiment
-        params (list): param name str list
-
-    Returns:
-        x: [num_trials, dim_arm]
-        y: [num_trials, 1]
-    """
-    _check_name_consistency(exp.parameters)
-    exp_df = exp.fetch_data().df
-
-    # follow trials order
-    num_trials = exp_df.shape[0]
-    rewards = torch.tensor(exp_df["mean"],
-                           dtype=dtype).reshape(-1, 1)  # [num_trials, 1]
-    arm_name_list = list(exp_df["arm_name"])  # [num_trials, ]
-
-    data = []
-    for arm_name in arm_name_list:
-        arm_ = exp.arms_by_name[arm_name]
-        arm_param = arm_.parameters
-        for p in params:
-            val = deepcopy(arm_param[p])
-            data.append(val)
-
-    # [num_trials, dim_arm]
-    t = torch.tensor(data, dtype=dtype).reshape(num_trials, -1)
-    return t, rewards
 
 
 def get_bounds(exp: Experiment, params: list[str], dtype) -> Tensor:
@@ -207,8 +170,42 @@ def load_dict(name: str) -> Union[dict, list[dict]]:
     return loaded_dict
 
 
-def _check_name_consistency(all_params):
-    for k, v in all_params.items():
-        if k != v.name:
-            raise NameError(
-                f"parameter {k} and name {v.name} is not consistent")
+#def _check_name_consistency(all_params):
+#    for k, v in all_params.items():
+#        if k != v.name:
+#            raise NameError(
+#                f"parameter {k} and name {v.name} is not consistent")
+
+#def get_tensor(exp: Experiment, params: list[str],
+#               dtype) -> tuple[Tensor, Tensor]:
+#    """retrieve data from experiment to tensor
+#    single objective ONLY
+#
+#    Args:
+#        exp (Experiment): Ax.Experiment
+#        params (list): param name str list
+#
+#    Returns:
+#        x: [num_trials, dim_arm]
+#        y: [num_trials, 1]
+#    """
+#    _check_name_consistency(exp.parameters)
+#    exp_df = exp.fetch_data().df
+#
+#    # follow trials order
+#    num_trials = exp_df.shape[0]
+#    rewards = torch.tensor(exp_df["mean"],
+#                           dtype=dtype).reshape(-1, 1)  # [num_trials, 1]
+#    arm_name_list = list(exp_df["arm_name"])  # [num_trials, ]
+#
+#    data = []
+#    for arm_name in arm_name_list:
+#        arm_ = exp.arms_by_name[arm_name]
+#        arm_param = arm_.parameters
+#        for p in params:
+#            val = deepcopy(arm_param[p])
+#            data.append(val)
+#
+#    # [num_trials, dim_arm]
+#    t = torch.tensor(data, dtype=dtype).reshape(num_trials, -1)
+#    return t, rewards

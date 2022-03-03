@@ -72,7 +72,7 @@ class test_exec_spark(unittest.TestCase):
 class perf_utils_test(unittest.TestCase):
     def setUp(self):
         param_space, metric_space, obj_space, edges = parse_model(
-            "dagbo/interface/continuous_spark_performance_model.txt")
+            "dagbo/interface/rosenbrock_3d_correct_model.txt")
             #"dagbo/interface/spark_performance_model.txt")
 
         self.param_space = param_space
@@ -108,7 +108,7 @@ class perf_model_test(unittest.TestCase):
     def setUp(self):
         # performance model
         param_space, metric_space, obj_space, edges = parse_model(
-            "dagbo/interface/continuous_spark_performance_model.txt")
+            "dagbo/interface/rosenbrock_3d_correct_model.txt")
             #"dagbo/interface/spark_performance_model.txt")
 
         self.param_space = param_space

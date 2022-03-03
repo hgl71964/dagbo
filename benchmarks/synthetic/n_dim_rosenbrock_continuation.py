@@ -23,26 +23,27 @@ from dagbo.utils.ax_experiment_utils import (candidates_to_generator_run,
                                              load_dict,
                                              print_experiment_result,
                                              save_dict, save_exp)
-from dagbo.other_opt.bo_utils import get_fitted_model, inner_loop
-from dagbo.interface.exec_spark import call_spark
+from dagbo.other_opt.model_factory import fit_gpr
+from dagbo.other_opt.bo_utils import inner_loop
+from dagbo.interface.exec_n_dim_rosenbrock import call_rosenbrock
 from dagbo.interface.parse_performance_model import parse_model
-from dagbo.interface.metrics_extractor import extract_throughput, extract_app_id, request_history_server
 """
 load an experiment with initial sobol points & run opt loop
 """
 
 FLAGS = flags.FLAGS
-flags.DEFINE_enum("tuner", "dagbo", ["dagbo", "bo"], "tuner to use")
+flags.DEFINE_enum("tuner", "bo", ["dagbo-direct", "dagbo-ssa"
+                                  "bo"], "tuner to use")
 flags.DEFINE_string("exp_name", "SOBOL-spark-wordcount", "Experiment name")
-flags.DEFINE_string("load_name", "SOBOL-spark-wordcount", "Experiment name")
+flags.DEFINE_string("load_name", "SOBOL-spark-wordcount", "load from experiment name")
 flags.DEFINE_string("acq_name", "qEI", "acquisition function name")
-flags.DEFINE_string("dagbo_mode", "direct", "ssa or direct")
 flags.DEFINE_string("performance_model_path",
                     "dagbo/interface/rosenbrock_3d.txt",
                     "graphviz source path")
 
 flags.DEFINE_integer("n_dim", 10, "n-dim rosenbrock func")
 flags.DEFINE_integer("epochs", 20, "bo loop epoch", lower_bound=0)
+flags.DEFINE_boolean("norm", True, "whether or not normalise gp's output")
 flags.DEFINE_boolean("minimize", False, "min or max objective")
 
 # flags cannot define dict, acq_func_config will be affected by side-effect
@@ -51,14 +52,13 @@ acq_func_config = {
     "num_restarts": 48,
     "raw_samples": 128,
     "num_samples": int(1024 * 2),
-    "y_max": torch.tensor([
-        1.
-    ]),  # only a placeholder for {EI, qEI}, will be overwritten per iter
+    # only a placeholder for {EI, qEI}, will be overwritten per iter
+    "y_max": torch.tensor([ 1. ]),
     "beta": 1,  # for UCB
 }
-torch_dtype = torch.float64
+train_inputs_dict = {}
 train_targets_dict = {}
-normal_dict = {}
+torch_dtype = torch.float64
 #np.random.seed(0)
 #torch.manual_seed(0)
 
@@ -69,52 +69,18 @@ class n_dim_Rosenbrock(Metric):
         for arm_name, arm in trial.arms_by_name.items():
             params = arm.parameters
 
-            n = len(params.keys())
-            i_s = []
-            f_s = []
-            for i in range(n - 1):
-                x_cur = params[f"x{i}"]
-                x_next = params[f"x{i+1}"]
-
-                tmp = 100 * (x_next - x_cur**2)**2
-                tmp_2 = tmp + (1 - x_cur)**2
-
-                i_s.append(tmp)
-                f_s.append(tmp_2)
-
-            obj = {}
-            for c, (i, j) in enumerate(zip(i_s, f_s)):
-                obj[f"i{c}"] = torch.tensor(i, dtype=torch_dtype).reshape(-1)
-                obj[f"f{c}"] = torch.tensor(j, dtype=torch_dtype).reshape(-1)
-            obj["final"] = torch.tensor(sum(f_s),
-                                        dtype=torch_dtype).reshape(-1)
-
-            for k, v in obj.items():
-                if k not in normal_dict:
-                    if k == "final":  # NOTE: flip sign
-                        normal_dict[k] = -v
-                    else:
-                        normal_dict[k] = v
-
-                val = v / normal_dict[k]  # XXX what if divide by 0?
-
-                if k in train_targets_dict:
-                    train_targets_dict[k] = torch.cat(
-                        [train_targets_dict[k], val])
-                else:
-                    train_targets_dict[k] = val
-
-            # the latest reward
-            mean = float(train_targets_dict["final"][-1])
+            # exec
+            obj = call_rosenbrock(params, train_inputs_dict, train_targets_dict)
+            mean = float(obj["final"])
             records.append({
                 "arm_name": arm_name,
                 "metric_name": self.name,
                 "mean": mean,
-                "sem": 0,  # 0 for noiseless experiment
+                "sem": 0,
                 "trial_index": trial.index,
             })
             print()
-            print(f"trial: {trial.index} - reward: {mean:.2f}x")
+            print(f"trial: {trial.index} - reward: {mean:.2f}")
             print()
         return ax.core.data.Data(df=pd.DataFrame.from_records(records))
 
@@ -123,44 +89,44 @@ def get_model(exp: Experiment, param_names: list[str], param_space: dict,
               metric_space: dict, obj_space: dict, edges: dict,
               dtype) -> Union[Dag, SingleTaskGP]:
 
-    # update acq_func_config, e.g. update the best obs for expected improvement
+    # TODO update acq_func_config, e.g. update the best obs for expected improvement
     acq_func_config["y_max"] = train_targets_dict["final"].max()
 
+    model = None
     if FLAGS.tuner == "bo":
-        return get_fitted_model(exp, param_names, dtype)
-    elif FLAGS.tuner == "dagbo":
-        # input params can be read from ax experiment (`from scratch`)
-        train_inputs_dict = get_dict_tensor(exp, param_names, dtype)
-
-        ## fit model from dataset
-        if FLAGS.dagbo_mode == "ssa":
-            dag = build_perf_model_from_spec_ssa(
-                train_inputs_dict, train_targets_dict,
-                acq_func_config["num_samples"], param_space, metric_space,
-                obj_space, edges)
-        elif FLAGS.dagbo_mode == "direct":
-            dag = build_perf_model_from_spec_direct(
-                train_inputs_dict, train_targets_dict,
-                acq_func_config["num_samples"], param_space, metric_space,
-                obj_space, edges)
-        else:
-            raise ValueError("unable to recognize dagbo mode")
-        fit_dag(dag)
-        return dag
+        model = build_gp_from_spec(train_inputs_dict,
+                                   train_targets_dict,
+                                   param_space, metric_space,
+                                   obj_space, edges, FLAGS.norm)
+        fit_gpr(model)
+    elif FLAGS.tuner == "dagbo-ssa":
+        model = build_perf_model_from_spec_ssa(train_inputs_dict,
+                                               train_targets_dict,
+                                               acq_func_config["num_samples"],
+                                               param_space, metric_space,
+                                               obj_space, edges, FLAGS.norm)
+        fit_dag(model)
+    elif FLAGS.tuner == "dagbo-direct":
+        model = build_perf_model_from_spec_direct(
+            train_inputs_dict, train_targets_dict,
+            acq_func_config["num_samples"], param_space, metric_space,
+            obj_space, edges, FLAGS.norm)
+        fit_dag(model)
     else:
         raise ValueError("unable to recognize tuner")
+
+    assert model is not None, "get model error"
+    return model
 
 
 def main(_):
     register_metric(n_dim_Rosenbrock)
     exp = load_exp(FLAGS.load_name)
-    global train_targets_dict, normal_dict  # to change global var inside func
-    train_targets_dict, normal_dict = load_dict(FLAGS.load_name)
+    global train_inputs_dict, train_targets_dict
+    train_inputs_dict, train_targets_dict = load_dict(FLAGS.load_name)
     print()
     print(f"==== resume from experiment sobol ====")
     print(exp.fetch_data().df)
-    print("normalizer: ")
-    print(normal_dict)
     print()
 
     # get dag's spec

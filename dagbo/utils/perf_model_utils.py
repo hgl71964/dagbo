@@ -13,7 +13,8 @@ def build_perf_model_from_spec_ssa(train_inputs_dict: dict[str, Tensor],
                                                                        str],
                                    metric_space: dict[str, str],
                                    obj_space: dict[str, str],
-                                   edges: dict[str, list[str]]) -> Dag:
+                                   edges: dict[str, list[str]],
+                                   normalisation: Union[bool, dict]) -> Dag:
     """
     build perf_dag from given spec (use sample average posterior)
 
@@ -62,7 +63,8 @@ def build_perf_model_from_spec_direct(train_inputs_dict: dict[str, Tensor],
                                                                           str],
                                       metric_space: dict[str, str],
                                       obj_space: dict[str, str],
-                                      edges: dict[str, list[str]]) -> Dag:
+                                      edges: dict[str, list[str]],
+                                      normalisation: Union[bool, dict]) -> Dag:
     """
     use approx. posterior
     """
