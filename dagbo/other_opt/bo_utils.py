@@ -19,6 +19,14 @@ def get_fitted_model(exp: Experiment, params: list[str],
     fit_gpr(gpr)
     return gpr
 
+def build_gp_from_spec(train_inputs_dict: dict[str, Tensor],
+                      train_targets_dict: dict[str, Tensor],
+                       param_space: dict[str, str],
+                      metric_space: dict[str, str],
+                      obj_space: dict[str, str],
+                      edges: dict[str, list[str]]):
+    return
+
 
 def inner_loop(exp: Experiment, model: Union[Dag,
                                              SingleTaskGP], params: list[str],

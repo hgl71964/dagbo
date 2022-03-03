@@ -30,7 +30,7 @@ gen initial sobol points for an experiment
 FLAGS = flags.FLAGS
 flags.DEFINE_string("metric_name", "rosenbrock", "metric name")
 flags.DEFINE_string("exp_name", "rosenbrock-3D", "Experiment name")
-flags.DEFINE_integer("bootstrap", 4, "bootstrap", lower_bound=1)
+flags.DEFINE_integer("bootstrap", 5, "bootstrap", lower_bound=1)
 flags.DEFINE_integer("n_dim", 10, "n-dim rosenbrock func")
 flags.DEFINE_boolean("minimize", False, "min or max objective")
 

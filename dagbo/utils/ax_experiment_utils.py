@@ -161,6 +161,7 @@ def save_exp(exp: Experiment, name: str) -> None:
             print(f"save as {name}.json")
             i = True
         except:
+            print(f"fail to save {file_name}, try again")
             sleep(600)
     return None
 
@@ -183,6 +184,7 @@ def save_dict(train_targets_dict: Union[dict, list[dict]], name: str) -> None:
                 pickle.dump(train_targets_dict, f)
             i = True
         except:
+            print(f"fail to save {file_name}, try again")
             sleep(600)
     return None
 

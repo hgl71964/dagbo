@@ -2,6 +2,7 @@
 
 # config
 n=20
+epochs=30
 workload="rosenbrock-${n}D" # workload name need to match EXACTLY, it is lower case
 repeat=4
 
@@ -34,6 +35,7 @@ do
         python3.9 ./benchmarks/synthetic/n_dim_rosenbrock_continuation.py \
                 --load_name SOBOL-${exp_name} \
                 --exp_name ${exp_name} \
+                --epochs $epochs \
                 --n_dim $n \
                 --performance_model_path dagbo/interface/rosenbrock_20d.txt \
                 --tuner bo \
@@ -42,6 +44,7 @@ do
         python3.9 ./benchmarks/synthetic/n_dim_rosenbrock_continuation.py \
                 --load_name SOBOL-${exp_name} \
                 --exp_name ${exp_name} \
+                --epochs $epochs \
                 --n_dim $n \
                 --performance_model_path dagbo/interface/rosenbrock_20d.txt \
                 --tuner bo \
@@ -49,7 +52,8 @@ do
 
         python3.9 ./benchmarks/synthetic/n_dim_rosenbrock_continuation.py \
                 --load_name SOBOL-${exp_name} \
-                --exp_name ${exp_name} \
+                --exp_name ssa-${exp_name} \
+                --epochs $epochs \
                 --n_dim $n \
                 --dagbo_mode ssa \
                 --performance_model_path dagbo/interface/rosenbrock_20d.txt \
@@ -58,7 +62,8 @@ do
 
         python3.9 ./benchmarks/synthetic/n_dim_rosenbrock_continuation.py \
                 --load_name SOBOL-${exp_name} \
-                --exp_name ${exp_name} \
+                --exp_name ssa-${exp_name} \
+                --epochs $epochs \
                 --n_dim $n \
                 --dagbo_mode ssa \
                 --performance_model_path dagbo/interface/rosenbrock_20d.txt \
