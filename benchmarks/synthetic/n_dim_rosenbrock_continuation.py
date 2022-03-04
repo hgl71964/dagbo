@@ -34,8 +34,8 @@ flags.DEFINE_string("performance_model_path", "must provide",
 flags.DEFINE_integer("n_dim", 10, "n-dim rosenbrock func")
 flags.DEFINE_integer("epochs", 20, "bo loop epoch", lower_bound=0)
 flags.DEFINE_integer("seed", 0, "rand seed")
-flags.DEFINE_boolean("norm", True, "whether or not normalise gp's output")
-flags.DEFINE_boolean("minimize", False, "min or max objective")
+flags.DEFINE_integer("norm", 1, "whether or not normalise gp's output")
+flags.DEFINE_boolean("minimize", True, "min or max objective")
 
 # flags cannot define dict, acq_func_config will be affected by side-effect
 acq_func_config = {
@@ -105,7 +105,8 @@ def main(_):
 
         model = build_model(FLAGS.tuner, exp, train_inputs_dict,
                             train_targets_dict, param_space, metric_space,
-                            obj_space, edges, acq_func_config, FLAGS.norm, FLAGS.minimize)
+                            obj_space, edges, acq_func_config, FLAGS.norm,
+                            FLAGS.minimize)
         candidates = inner_loop(
             exp,
             model,
