@@ -16,14 +16,6 @@ from ax.core.generator_run import GeneratorRun
 from ax import SearchSpace, Experiment, OptimizationConfig, Runner, Objective
 from ax.storage.json_store.load import load_experiment
 from ax.storage.json_store.save import save_experiment
-"""
-the order of params in candidates_to_generator_run,
-                        get_tensor_to_dict,
-                        get_tensor,
-                        get_bounds,
-    MUST be equal
-"""
-
 
 def candidates_to_generator_run(exp: Experiment, candidate: Tensor,
                                 params: list[str]) -> GeneratorRun:
@@ -44,47 +36,6 @@ def candidates_to_generator_run(exp: Experiment, candidate: Tensor,
         arms.append(Arm(parameters=p))
         #arms.append(Arm(parameters=p, name=f"bo_{n}_{i}"))
     return GeneratorRun(arms=arms)
-
-
-def get_dict_tensor(
-    exp: Experiment,
-    params: list[str],
-    dtype,
-) -> dict[str, Tensor]:
-    """retrieve data from experiment to tensor
-    single objective ONLY
-
-    Args:
-        exp (Experiment): Ax.Experiment
-        params (list): param name str list
-
-    Returns:
-        key: param name - val: Tensor [num_trials, ]
-    """
-    exp_df = exp.fetch_data().df
-    train_inputs_dict = {}
-
-    # follow trials order
-    num_trials = exp_df.shape[0]
-    arm_name_list = list(exp_df["arm_name"])  # [num_trials, ]
-
-    # retrieve data from experiment
-    for arm_name in arm_name_list:
-        arm_ = exp.arms_by_name[arm_name]
-        arm_param = arm_.parameters
-        for p in params:
-            val = deepcopy(arm_param[p])
-
-            if p in train_inputs_dict:
-                train_inputs_dict[p].append(arm_param[p])
-            else:
-                train_inputs_dict[p] = [arm_param[p]]
-
-    # convert to tensor
-    for k, v in train_inputs_dict.items():
-        train_inputs_dict[k] = torch.tensor(v, dtype=dtype)
-    return train_inputs_dict
-
 
 def get_bounds(exp: Experiment, params: list[str], dtype) -> Tensor:
     """get bounds for each parameters"""
@@ -124,7 +75,7 @@ def save_exp(exp: Experiment, name: str) -> None:
             print(f"save as {name}.json")
             i = True
         except:
-            print(f"fail to save {file_name}, try again")
+            print(f"fail to save {file_name}, try again in 10 mins")
             sleep(600)
     return None
 
@@ -147,7 +98,7 @@ def save_dict(train_targets_dict: Union[dict, list[dict]], name: str) -> None:
                 pickle.dump(train_targets_dict, f)
             i = True
         except:
-            print(f"fail to save {file_name}, try again")
+            print(f"fail to save {file_name}, try again in 10 mins")
             sleep(600)
     return None
 
@@ -169,6 +120,44 @@ def load_dict(name: str) -> Union[dict, list[dict]]:
         loaded_dict = pickle.load(f)
     return loaded_dict
 
+#def get_dict_tensor(
+#    exp: Experiment,
+#    params: list[str],
+#    dtype,
+#) -> dict[str, Tensor]:
+#    """retrieve data from experiment to tensor
+#    single objective ONLY
+#
+#    Args:
+#        exp (Experiment): Ax.Experiment
+#        params (list): param name str list
+#
+#    Returns:
+#        key: param name - val: Tensor [num_trials, ]
+#    """
+#    exp_df = exp.fetch_data().df
+#    train_inputs_dict = {}
+#
+#    # follow trials order
+#    num_trials = exp_df.shape[0]
+#    arm_name_list = list(exp_df["arm_name"])  # [num_trials, ]
+#
+#    # retrieve data from experiment
+#    for arm_name in arm_name_list:
+#        arm_ = exp.arms_by_name[arm_name]
+#        arm_param = arm_.parameters
+#        for p in params:
+#            val = deepcopy(arm_param[p])
+#
+#            if p in train_inputs_dict:
+#                train_inputs_dict[p].append(arm_param[p])
+#            else:
+#                train_inputs_dict[p] = [arm_param[p]]
+#
+#    # convert to tensor
+#    for k, v in train_inputs_dict.items():
+#        train_inputs_dict[k] = torch.tensor(v, dtype=dtype)
+#    return train_inputs_dict
 
 #def _check_name_consistency(all_params):
 #    for k, v in all_params.items():

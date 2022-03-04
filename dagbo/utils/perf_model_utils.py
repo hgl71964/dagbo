@@ -1,20 +1,22 @@
+import  numpy as np
 import torch
 from torch import Tensor
 from ax import Experiment
 from copy import deepcopy
+from typing import  Union
 
 from dagbo.dag import lazy_SO_Dag, Dag
 from dagbo.dag_gpytorch_model import DagGPyTorchModel, direct_DagGPyTorchModel
 
 
-def build_perf_model_from_spec_ssa(train_inputs_dict: dict[str, Tensor],
-                                   train_targets_dict: dict[str, Tensor],
+def build_perf_model_from_spec_ssa(train_inputs_dict: dict[str, np.ndarray],
+                                   train_targets_dict: dict[str, np.ndarray],
                                    num_samples: int, param_space: dict[str,
                                                                        str],
                                    metric_space: dict[str, str],
                                    obj_space: dict[str, str],
                                    edges: dict[str, list[str]],
-                                   normalisation: Union[bool, dict]) -> Dag:
+                                   standardisation: bool ) -> Dag:
     """
     build perf_dag from given spec (use sample average posterior)
 
@@ -38,6 +40,7 @@ def build_perf_model_from_spec_ssa(train_inputs_dict: dict[str, Tensor],
     # build
     reversed_edge = find_inverse_edges(edges)
     node_order = get_dag_topological_order(obj_space, edges)
+    # TODO norm
     train_input_names, train_target_names, train_inputs, train_targets = build_input_by_topological_order(
         train_inputs_dict, train_targets_dict, param_space, metric_space,
         obj_space, node_order)
@@ -57,14 +60,14 @@ def build_perf_model_from_spec_ssa(train_inputs_dict: dict[str, Tensor],
     return dag
 
 
-def build_perf_model_from_spec_direct(train_inputs_dict: dict[str, Tensor],
-                                      train_targets_dict: dict[str, Tensor],
+def build_perf_model_from_spec_direct(train_inputs_dict: dict[str, np.ndarray],
+                                      train_targets_dict: dict[str, np.ndarray],
                                       num_samples: int, param_space: dict[str,
                                                                           str],
                                       metric_space: dict[str, str],
                                       obj_space: dict[str, str],
                                       edges: dict[str, list[str]],
-                                      normalisation: Union[bool, dict]) -> Dag:
+                                      standardisation: bool ) -> Dag:
     """
     use approx. posterior
     """
@@ -81,6 +84,7 @@ def build_perf_model_from_spec_direct(train_inputs_dict: dict[str, Tensor],
     # build
     reversed_edge = find_inverse_edges(edges)
     node_order = get_dag_topological_order(obj_space, edges)
+    # TODO norm
     train_input_names, train_target_names, train_inputs, train_targets = build_input_by_topological_order(
         train_inputs_dict, train_targets_dict, param_space, metric_space,
         obj_space, node_order)
@@ -121,6 +125,8 @@ def build_input_by_topological_order(
         elif node in metric_space or node in obj_space:
             train_target_names.append(node)
             train_targets.append(train_targets_dict[node])
+        else:
+            raise RuntimeError("node not in param_space or metric_space or obj_space")
 
     # format tensor, must be consistent with Dag's signature shape
     train_inputs = torch.stack(train_inputs).T

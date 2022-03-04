@@ -19,12 +19,10 @@ from dagbo.dag import Dag
 from dagbo.fit_dag import fit_dag
 from dagbo.utils.perf_model_utils import build_perf_model_from_spec_ssa, build_perf_model_from_spec_direct
 from dagbo.utils.ax_experiment_utils import (candidates_to_generator_run,
-                                             load_exp, get_dict_tensor,
+                                             load_exp,
                                              load_dict,
                                              print_experiment_result,
                                              save_dict, save_exp)
-from dagbo.other_opt.model_factory import fit_gpr
-from dagbo.other_opt.bo_utils import inner_loop
 from dagbo.interface.exec_n_dim_rosenbrock import call_rosenbrock
 from dagbo.interface.parse_performance_model import parse_model
 """
@@ -32,13 +30,13 @@ load an experiment with initial sobol points & run opt loop
 """
 
 FLAGS = flags.FLAGS
-flags.DEFINE_enum("tuner", "bo", ["dagbo-direct", "dagbo-ssa"
-                                  "bo"], "tuner to use")
+flags.DEFINE_enum("tuner", "dagbo-ssa", ["dagbo-direct", "dagbo-ssa"
+                                  ], "tuner to use")
 flags.DEFINE_string("exp_name", "SOBOL-spark-wordcount", "Experiment name")
 flags.DEFINE_string("load_name", "SOBOL-spark-wordcount", "load from experiment name")
 flags.DEFINE_string("acq_name", "qEI", "acquisition function name")
 flags.DEFINE_string("performance_model_path",
-                    "dagbo/interface/rosenbrock_3d.txt",
+                    "must provide",
                     "graphviz source path")
 
 flags.DEFINE_integer("n_dim", 10, "n-dim rosenbrock func")
@@ -93,13 +91,7 @@ def get_model(exp: Experiment, param_names: list[str], param_space: dict,
     acq_func_config["y_max"] = train_targets_dict["final"].max()
 
     model = None
-    if FLAGS.tuner == "bo":
-        model = build_gp_from_spec(train_inputs_dict,
-                                   train_targets_dict,
-                                   param_space, metric_space,
-                                   obj_space, edges, FLAGS.norm)
-        fit_gpr(model)
-    elif FLAGS.tuner == "dagbo-ssa":
+    if FLAGS.tuner == "dagbo-ssa":
         model = build_perf_model_from_spec_ssa(train_inputs_dict,
                                                train_targets_dict,
                                                acq_func_config["num_samples"],
@@ -175,7 +167,7 @@ def main(_):
     print(print_experiment_result(exp))
     save_name = f"{FLAGS.exp_name}-{FLAGS.tuner}-{FLAGS.acq_name}"
     save_exp(exp, save_name)
-    save_dict([train_targets_dict, acq_func_config], save_name)
+    save_dict([train_inputs_dict, train_targets_dict, acq_func_config], save_name)
 
 
 if __name__ == "__main__":

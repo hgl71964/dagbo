@@ -9,7 +9,15 @@ from botorch.sampling.samplers import MCSampler
 from botorch.sampling.samplers import SobolQMCNormalSampler
 
 from dagbo.dag import Dag
+from dagbo.utils.ax_experiment_utils import get_bounds
 
+# TODO
+def inner_loop(exp: Experiment, model: Union[Dag,
+                                             SingleTaskGP], params: list[str],
+               acq_name: str, acq_func_config: dict, dtype) -> Tensor:
+    """acquisition function optimisation"""
+    bounds = get_bounds(exp, params, dtype)
+    return opt_acq_func(model, acq_name, bounds, acq_func_config)
 
 def opt_acq_func(model: Union[SingleTaskGP, Dag], acq_name: str,
                  bounds: Tensor, acq_func_config: dict) -> Tensor:

@@ -9,7 +9,7 @@ from dagbo.interface.metrics_extractor import *
 from dagbo.interface.parse_performance_model import parse_model
 
 
-class test_exec_spark(unittest.TestCase):
+class exec_spark_test(unittest.TestCase):
     def setUp(self):
         pass
 
@@ -72,7 +72,7 @@ class test_exec_spark(unittest.TestCase):
 class perf_utils_test(unittest.TestCase):
     def setUp(self):
         param_space, metric_space, obj_space, edges = parse_model(
-            "dagbo/interface/rosenbrock_3d_correct_model.txt")
+            "dagbo/interface/rosenbrock_20d_bo.txt")
             #"dagbo/interface/spark_performance_model.txt")
 
         self.param_space = param_space
@@ -108,7 +108,9 @@ class perf_model_test(unittest.TestCase):
     def setUp(self):
         # performance model
         param_space, metric_space, obj_space, edges = parse_model(
-            "dagbo/interface/rosenbrock_3d_correct_model.txt")
+            "dagbo/interface/rosenbrock_20d_bo.txt")
+            #"dagbo/interface/rosenbrock_3d_bo.txt")
+            #"dagbo/interface/rosenbrock_3d_correct_model.txt")
             #"dagbo/interface/spark_performance_model.txt")
 
         self.param_space = param_space
@@ -129,33 +131,47 @@ class perf_model_test(unittest.TestCase):
         self.acq_func_config = acq_func_config
 
         # make fake input tensor
-        train_inputs_dict = {
+        self.train_inputs_dict = {
             i: torch.rand(acq_func_config["q"])
             for i in list(param_space.keys())
         }
-        train_targets_dict = {
+        self.train_targets_dict = {
             i: torch.rand(acq_func_config["q"])
             for i in list(metric_space.keys()) + list(obj_space.keys())
         }
+        norm = True
 
         # build, build_perf_model_from_spec
-        self.dag = build_perf_model_from_spec_ssa(train_inputs_dict,
-                                              train_targets_dict,
+        self.dag = build_perf_model_from_spec_ssa(self.train_inputs_dict,
+                                              self.train_targets_dict,
                                               acq_func_config["num_samples"],
                                               param_space, metric_space,
-                                              obj_space, edges)
+                                              obj_space, edges, norm)
         # feature extractor
         self.app_id = "application_1641844906451_0006"
         self.base_url = "http://localhost:18080"
+
+    #@unittest.skip("ok")
+    def test_input_build(self):
+        node_order = get_dag_topological_order(self.obj_space, self.edges)
+        train_input_names, train_target_names, train_inputs, train_targets = build_input_by_topological_order(self.train_inputs_dict,
+                                              self.train_targets_dict,
+                                              self.param_space, self.metric_space,
+                                              self.obj_space, node_order)
+        print("input build:")
+        print(train_input_names)
+        print(train_target_names)
+        print(train_inputs.shape)
+        print(train_targets.shape)
+
+    #@unittest.skip("ok")
+    def test_dag_build(self):
+        print(self.dag)
 
     @unittest.skip("ok")
     def test_feat_extract(self):
         metric = request_history_server(self.base_url, self.app_id)
         print(metric)
-
-    #@unittest.skip("ok")
-    def test_dag_build(self):
-        print(self.dag)
 
     @unittest.skip("ok")
     def test_extract_throughput(self):
