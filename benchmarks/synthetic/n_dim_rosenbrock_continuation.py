@@ -41,6 +41,7 @@ flags.DEFINE_string("performance_model_path",
 
 flags.DEFINE_integer("n_dim", 10, "n-dim rosenbrock func")
 flags.DEFINE_integer("epochs", 20, "bo loop epoch", lower_bound=0)
+flags.DEFINE_integer("seed", 0, "rand seed")
 flags.DEFINE_boolean("norm", True, "whether or not normalise gp's output")
 flags.DEFINE_boolean("minimize", False, "min or max objective")
 
@@ -57,8 +58,6 @@ acq_func_config = {
 train_inputs_dict = {}
 train_targets_dict = {}
 torch_dtype = torch.float64
-#np.random.seed(0)
-#torch.manual_seed(0)
 
 
 class n_dim_Rosenbrock(Metric):
@@ -114,10 +113,18 @@ def get_model(exp: Experiment, param_space: dict,
 
 
 def main(_):
+
+    # seeding
+    np.random.seed(FLAGS.seed)
+    torch.manual_seed(FLAGS.seed)
+
+    # load
     register_metric(n_dim_Rosenbrock)
     exp = load_exp(FLAGS.load_name)
     global train_inputs_dict, train_targets_dict
     train_inputs_dict, train_targets_dict = load_dict(FLAGS.load_name)
+
+
     print()
     print(f"==== resume from experiment sobol ====")
     print(exp.fetch_data().df)

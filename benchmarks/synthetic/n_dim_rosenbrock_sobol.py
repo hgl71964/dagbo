@@ -27,11 +27,10 @@ flags.DEFINE_string("metric_name", "rosenbrock", "metric name")
 flags.DEFINE_string("exp_name", "rosenbrock-3D", "Experiment name")
 flags.DEFINE_integer("bootstrap", 5, "bootstrap", lower_bound=1)
 flags.DEFINE_integer("n_dim", 10, "n-dim rosenbrock func")
+flags.DEFINE_integer("seed", 0, "rand seed")
 flags.DEFINE_boolean("minimize", False, "min or max objective")
 train_inputs_dict = {}
 train_targets_dict = {}
-#np.random.seed(0)
-#torch.manual_seed(0)
 
 
 class n_dim_Rosenbrock(Metric):
@@ -56,6 +55,10 @@ class n_dim_Rosenbrock(Metric):
 
 
 def main(_):
+
+    # seeding
+    np.random.seed(FLAGS.seed)
+    torch.manual_seed(FLAGS.seed)
 
     # for saving
     register_metric(n_dim_Rosenbrock)
