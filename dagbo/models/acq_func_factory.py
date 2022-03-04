@@ -8,16 +8,42 @@ from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.sampling.samplers import MCSampler
 from botorch.sampling.samplers import SobolQMCNormalSampler
 
-from dagbo.dag import Dag
-from dagbo.utils.ax_experiment_utils import get_bounds
+from ax import Experiment
 
-# TODO
-def inner_loop(exp: Experiment, model: Union[Dag,
-                                             SingleTaskGP], params: list[str],
-               acq_name: str, acq_func_config: dict, dtype) -> Tensor:
+from dagbo.dag import Dag
+from dagbo.utils.perf_model_utils import get_dag_topological_order
+
+
+def inner_loop(exp: Experiment,
+               model: Union[Dag, SingleTaskGP],
+               param_space: dict,
+               obj_space: dict,
+               edges: dict,
+               acq_name: str,
+               acq_func_config: dict,
+               dtype=torch.float64) -> Tensor:
     """acquisition function optimisation"""
-    bounds = get_bounds(exp, params, dtype)
+    bounds = get_bounds(exp, param_space, obj_space, edges, dtype)
     return opt_acq_func(model, acq_name, bounds, acq_func_config)
+
+
+def get_bounds(exp: Experiment,
+               param_space: dict,
+               obj_space: dict,
+               edges: dict,
+               dtype=torch.float64) -> Tensor:
+    """get bounds for each parameters"""
+    node_order = get_dag_topological_order(obj_space, edges)
+    params = [name for name in node_order if node in param_space]
+
+    bounds = []
+    for p in params:
+        ax_param = exp.parameters[p]
+        bounds.append(ax_param.lower)
+        bounds.append(ax_param.upper)
+
+    return torch.tensor(bounds, dtype=dtype).reshape(-1, 2).T
+
 
 def opt_acq_func(model: Union[SingleTaskGP, Dag], acq_name: str,
                  bounds: Tensor, acq_func_config: dict) -> Tensor:

@@ -8,7 +8,9 @@ SCALE_MAPPING = {
 }
 
 
-def call_rosenbrock(params: dict[str, float], train_inputs_dict: dict[str, np.ndarray], train_targets_dict:dict[str, np.ndarray]) -> dict[str, np.ndarray]:
+def call_rosenbrock(
+        params: dict[str, float], train_inputs_dict: dict[str, np.ndarray],
+        train_targets_dict: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
 
     # NOTE: scale back because params are always defined within [0, 1]
     scale = SCALE_MAPPING["p"]

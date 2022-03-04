@@ -17,7 +17,7 @@ from ax.runners.synthetic import SyntheticRunner
 
 from dagbo.dag import Dag
 from dagbo.fit_dag import fit_dag
-from dagbo.utils.perf_model_utils import build_perf_model_from_spec_ssa, build_perf_model_from_spec_direct
+from dagbo.models.model_builder import (build_gp_from_spec, build_perf_model_from_spec_ssa, build_perf_model_from_spec_direct)
 from dagbo.utils.ax_experiment_utils import (candidates_to_generator_run,
                                              load_exp,
                                              load_dict,
@@ -30,7 +30,7 @@ load an experiment with initial sobol points & run opt loop
 """
 
 FLAGS = flags.FLAGS
-flags.DEFINE_enum("tuner", "dagbo-ssa", ["dagbo-direct", "dagbo-ssa"
+flags.DEFINE_enum("tuner", "dagbo-ssa", ["dagbo-direct", "dagbo-ssa", "bo"
                                   ], "tuner to use")
 flags.DEFINE_string("exp_name", "SOBOL-spark-wordcount", "Experiment name")
 flags.DEFINE_string("load_name", "SOBOL-spark-wordcount", "load from experiment name")
@@ -83,7 +83,7 @@ class n_dim_Rosenbrock(Metric):
         return ax.core.data.Data(df=pd.DataFrame.from_records(records))
 
 
-def get_model(exp: Experiment, param_names: list[str], param_space: dict,
+def get_model(exp: Experiment, param_space: dict,
               metric_space: dict, obj_space: dict, edges: dict,
               dtype) -> Union[Dag, SingleTaskGP]:
 
@@ -104,6 +104,8 @@ def get_model(exp: Experiment, param_names: list[str], param_space: dict,
             acq_func_config["num_samples"], param_space, metric_space,
             obj_space, edges, FLAGS.norm)
         fit_dag(model)
+    elif FLAGS.tuner == "bo":
+        raise ValueError("not support yet")
     else:
         raise ValueError("unable to recognize tuner")
 
@@ -125,9 +127,6 @@ def main(_):
     param_space, metric_space, obj_space, edges = parse_model(
         FLAGS.performance_model_path)
 
-    # NOTE: ensure its EXACTLY the same as define in sobol
-    param_names = [f"x{i}" for i in range(FLAGS.n_dim)]
-
     print()
     print(
         f"==== start experiment: {exp.name} with tuner: {FLAGS.tuner} & {FLAGS.acq_name} ===="
@@ -137,16 +136,15 @@ def main(_):
 
         start = time.perf_counter()
 
-        model = get_model(exp, param_names, param_space, metric_space,
+        model = get_model(exp, param_space, metric_space,
                           obj_space, edges, torch_dtype)
 
         candidates = inner_loop(exp,
                                 model,
-                                param_names,
                                 acq_name=FLAGS.acq_name,
                                 acq_func_config=acq_func_config,
                                 dtype=torch_dtype)
-        gen_run = candidates_to_generator_run(exp, candidates, param_names)
+        gen_run = candidates_to_generator_run(exp, candidates)
 
         # run
         if acq_func_config["q"] == 1:

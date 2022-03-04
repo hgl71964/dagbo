@@ -17,13 +17,20 @@ from ax import SearchSpace, Experiment, OptimizationConfig, Runner, Objective
 from ax.storage.json_store.load import load_experiment
 from ax.storage.json_store.save import save_experiment
 
+from dagbo.utils.perf_model_utils import get_dag_topological_order
+
+
 def candidates_to_generator_run(exp: Experiment, candidate: Tensor,
-                                params: list[str]) -> GeneratorRun:
+                                param_space: dict, obj_space: dict,
+                                edges: dict) -> GeneratorRun:
     """
     user-defined data type -> arms -> generator_run -> trial.run()
     Args:
         candidate: [q, dim]
     """
+    node_order = get_dag_topological_order(obj_space, edges)
+    params = [name for name in node_order if node in param_space]
+
     q = candidate.shape[0]
     arms = []
     for i in range(q):
@@ -36,16 +43,6 @@ def candidates_to_generator_run(exp: Experiment, candidate: Tensor,
         arms.append(Arm(parameters=p))
         #arms.append(Arm(parameters=p, name=f"bo_{n}_{i}"))
     return GeneratorRun(arms=arms)
-
-def get_bounds(exp: Experiment, params: list[str], dtype) -> Tensor:
-    """get bounds for each parameters"""
-    bounds = []
-    for p in params:
-        ax_param = exp.parameters[p]
-        bounds.append(ax_param.lower)
-        bounds.append(ax_param.upper)
-
-    return torch.tensor(bounds, dtype=dtype).reshape(-1, 2).T
 
 
 def print_experiment_result(exp: Experiment) -> None:
@@ -119,6 +116,7 @@ def load_dict(name: str) -> Union[dict, list[dict]]:
     with open(full_path, "rb") as f:
         loaded_dict = pickle.load(f)
     return loaded_dict
+
 
 #def get_dict_tensor(
 #    exp: Experiment,

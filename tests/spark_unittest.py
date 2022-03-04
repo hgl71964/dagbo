@@ -2,11 +2,13 @@ import ax
 import unittest
 import time
 from time import sleep
+import numpy as np
 
+from dagbo.models.model_builder import *
 from dagbo.interface.exec_spark import *
-from dagbo.utils.perf_model_utils import *
 from dagbo.interface.metrics_extractor import *
 from dagbo.interface.parse_performance_model import parse_model
+from dagbo.utils.perf_model_utils import find_inverse_edges, get_dag_topological_order
 
 
 class exec_spark_test(unittest.TestCase):
@@ -87,7 +89,7 @@ class perf_utils_test(unittest.TestCase):
         reversed_edge = find_inverse_edges(self.edges)
         print(reversed_edge)
 
-    #@unittest.skip("ok")
+    @unittest.skip("ok")
     def test_topological_sort(self):
         order = get_dag_topological_order(self.obj_space, self.edges)
         print(order)
@@ -108,8 +110,8 @@ class perf_model_test(unittest.TestCase):
     def setUp(self):
         # performance model
         param_space, metric_space, obj_space, edges = parse_model(
-            "dagbo/interface/rosenbrock_20d_bo.txt")
-            #"dagbo/interface/rosenbrock_3d_bo.txt")
+            #"dagbo/interface/rosenbrock_20d_bo.txt")
+            "dagbo/interface/rosenbrock_3d_bo.txt")
             #"dagbo/interface/rosenbrock_3d_correct_model.txt")
             #"dagbo/interface/spark_performance_model.txt")
 
@@ -132,11 +134,13 @@ class perf_model_test(unittest.TestCase):
 
         # make fake input tensor
         self.train_inputs_dict = {
-            i: torch.rand(acq_func_config["q"])
+            #i: torch.rand(acq_func_config["q"])
+            i: np.random.rand(acq_func_config["q"])
             for i in list(param_space.keys())
         }
         self.train_targets_dict = {
-            i: torch.rand(acq_func_config["q"])
+            #i: torch.rand(acq_func_config["q"])
+            i: np.random.rand(acq_func_config["q"])
             for i in list(metric_space.keys()) + list(obj_space.keys())
         }
         norm = True
@@ -163,8 +167,9 @@ class perf_model_test(unittest.TestCase):
         print(train_target_names)
         print(train_inputs.shape)
         print(train_targets.shape)
+        print(train_inputs)
 
-    #@unittest.skip("ok")
+    @unittest.skip("ok")
     def test_dag_build(self):
         print(self.dag)
 
