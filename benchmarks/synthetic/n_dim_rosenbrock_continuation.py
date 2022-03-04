@@ -15,12 +15,10 @@ from ax import SearchSpace, Experiment, OptimizationConfig, Objective, Metric
 from ax.storage.metric_registry import register_metric
 from ax.runners.synthetic import SyntheticRunner
 
-from dagbo.dag import Dag
-from dagbo.fit_dag import fit_dag
-from dagbo.models.model_builder import (build_gp_from_spec, build_perf_model_from_spec_ssa, build_perf_model_from_spec_direct)
+from dagbo.models.model_builder import build_model
+from dagbo.models.acq_func import inner_loop
 from dagbo.utils.ax_experiment_utils import (candidates_to_generator_run,
-                                             load_exp,
-                                             load_dict,
+                                             load_exp, load_dict,
                                              print_experiment_result,
                                              save_dict, save_exp)
 from dagbo.interface.exec_n_dim_rosenbrock import call_rosenbrock
@@ -30,13 +28,13 @@ load an experiment with initial sobol points & run opt loop
 """
 
 FLAGS = flags.FLAGS
-flags.DEFINE_enum("tuner", "dagbo-ssa", ["dagbo-direct", "dagbo-ssa", "bo"
-                                  ], "tuner to use")
+flags.DEFINE_enum("tuner", "dagbo-ssa", ["dagbo-direct", "dagbo-ssa", "bo"],
+                  "tuner to use")
 flags.DEFINE_string("exp_name", "SOBOL-spark-wordcount", "Experiment name")
-flags.DEFINE_string("load_name", "SOBOL-spark-wordcount", "load from experiment name")
+flags.DEFINE_string("load_name", "SOBOL-spark-wordcount",
+                    "load from experiment name")
 flags.DEFINE_string("acq_name", "qEI", "acquisition function name")
-flags.DEFINE_string("performance_model_path",
-                    "must provide",
+flags.DEFINE_string("performance_model_path", "must provide",
                     "graphviz source path")
 
 flags.DEFINE_integer("n_dim", 10, "n-dim rosenbrock func")
@@ -52,13 +50,11 @@ acq_func_config = {
     "raw_samples": 128,
     "num_samples": int(1024 * 2),
     # only a placeholder for {EI, qEI}, will be overwritten per iter
-    "y_max": torch.tensor([ 1. ]),
+    "y_max": torch.tensor([1.]),
     "beta": 1,  # for UCB
 }
 train_inputs_dict = {}
 train_targets_dict = {}
-torch_dtype = torch.float64
-
 
 class n_dim_Rosenbrock(Metric):
     def fetch_trial_data(self, trial, **kwargs):
@@ -67,7 +63,8 @@ class n_dim_Rosenbrock(Metric):
             params = arm.parameters
 
             # exec
-            obj = call_rosenbrock(params, train_inputs_dict, train_targets_dict)
+            obj = call_rosenbrock(params, train_inputs_dict,
+                                  train_targets_dict)
             mean = float(obj["final"])
             records.append({
                 "arm_name": arm_name,
@@ -81,37 +78,6 @@ class n_dim_Rosenbrock(Metric):
             print()
         return ax.core.data.Data(df=pd.DataFrame.from_records(records))
 
-
-def get_model(exp: Experiment, param_space: dict,
-              metric_space: dict, obj_space: dict, edges: dict,
-              dtype) -> Union[Dag, SingleTaskGP]:
-
-    # TODO update acq_func_config, e.g. update the best obs for expected improvement
-    acq_func_config["y_max"] = train_targets_dict["final"].max()
-
-    model = None
-    if FLAGS.tuner == "dagbo-ssa":
-        model = build_perf_model_from_spec_ssa(train_inputs_dict,
-                                               train_targets_dict,
-                                               acq_func_config["num_samples"],
-                                               param_space, metric_space,
-                                               obj_space, edges, FLAGS.norm)
-        fit_dag(model)
-    elif FLAGS.tuner == "dagbo-direct":
-        model = build_perf_model_from_spec_direct(
-            train_inputs_dict, train_targets_dict,
-            acq_func_config["num_samples"], param_space, metric_space,
-            obj_space, edges, FLAGS.norm)
-        fit_dag(model)
-    elif FLAGS.tuner == "bo":
-        raise ValueError("not support yet")
-    else:
-        raise ValueError("unable to recognize tuner")
-
-    assert model is not None, "get model error"
-    return model
-
-
 def main(_):
 
     # seeding
@@ -123,7 +89,6 @@ def main(_):
     exp = load_exp(FLAGS.load_name)
     global train_inputs_dict, train_targets_dict
     train_inputs_dict, train_targets_dict = load_dict(FLAGS.load_name)
-
 
     print()
     print(f"==== resume from experiment sobol ====")
@@ -140,20 +105,23 @@ def main(_):
     )
     print()
     for t in range(FLAGS.epochs):
-
         start = time.perf_counter()
 
-        model = get_model(exp, param_space, metric_space,
-                          obj_space, edges, torch_dtype)
-
-        candidates = inner_loop(exp,
-                                model,
-                                acq_name=FLAGS.acq_name,
-                                acq_func_config=acq_func_config,
-                                dtype=torch_dtype)
-        gen_run = candidates_to_generator_run(exp, candidates)
+        model = build_model(FLAGS.tuner, exp, train_inputs_dict,
+                            train_targets_dict, param_space, metric_space,
+                            obj_space, edges, FLAGS.norm)
+        candidates = inner_loop(
+            exp,
+            model,
+            param_space,
+            obj_space,
+            edges,
+            acq_name=FLAGS.acq_name,
+            acq_func_config=acq_func_config,
+        )
 
         # run
+        gen_run = candidates_to_generator_run(exp, candidates)
         if acq_func_config["q"] == 1:
             trial = exp.new_trial(generator_run=gen_run)
         else:
@@ -167,12 +135,16 @@ def main(_):
         print(f"{end:.2f}")
         print()
 
+        # update acq_func_config, e.g. update the best obs for expected improvement
+        acq_func_config["y_max"] = train_targets_dict["final"].max()
+
     print()
     print(f"==== done experiment: {exp.name}====")
     print(print_experiment_result(exp))
     save_name = f"{FLAGS.exp_name}-{FLAGS.tuner}-{FLAGS.acq_name}"
     save_exp(exp, save_name)
-    save_dict([train_inputs_dict, train_targets_dict, acq_func_config], save_name)
+    save_dict([train_inputs_dict, train_targets_dict, acq_func_config],
+              save_name)
 
 
 if __name__ == "__main__":

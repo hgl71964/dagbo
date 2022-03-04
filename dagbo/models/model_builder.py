@@ -1,3 +1,6 @@
+from typing import Union
+
+from ax import Experiment
 import botorch
 import gpytorch
 from torch import Tensor
@@ -6,8 +9,38 @@ from botorch.models import SingleTaskGP
 from botorch.fit import fit_gpytorch_model
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 
+from dagbo.dag import Dag
+from dagbo.fit_dag import fit_dag
 from dagbo.models.gp_factory import make_gps
 from dagbo.utils.perf_model_utils import get_dag_topological_order, find_inverse_edges
+
+
+def build_model(tuner: str, exp: Experiment, train_inputs_dict: dict,
+                train_targets_dict: dict, param_space: dict,
+                metric_space: dict, obj_space: dict, edges: dict,
+                standardisation: bool) -> Union[Dag, SingleTaskGP]:
+
+    model = None
+    if tuner == "dagbo-ssa":
+        model = build_perf_model_from_spec_ssa(train_inputs_dict,
+                                               train_targets_dict,
+                                               acq_func_config["num_samples"],
+                                               param_space, metric_space,
+                                               obj_space, edges,
+                                               standardisation)
+        fit_dag(model)
+    elif tuner == "dagbo-direct":
+        model = build_perf_model_from_spec_direct(
+            train_inputs_dict, train_targets_dict,
+            acq_func_config["num_samples"], param_space, metric_space,
+            obj_space, edges, standardisation)
+        fit_dag(model)
+    elif tuner == "bo":
+        model = build_gp_from_spec()
+    else:
+        raise ValueError("unable to recognize tuner")
+
+    return model
 
 
 def build_gp_from_spec(train_inputs_dict: dict[str, np.ndarray],

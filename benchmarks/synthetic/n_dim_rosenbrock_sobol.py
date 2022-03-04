@@ -39,7 +39,8 @@ class n_dim_Rosenbrock(Metric):
         for arm_name, arm in trial.arms_by_name.items():
             params = arm.parameters
             # exec
-            obj = call_rosenbrock(params, train_inputs_dict, train_targets_dict)
+            obj = call_rosenbrock(params, train_inputs_dict,
+                                  train_targets_dict)
             mean = float(obj["final"])
             records.append({
                 "arm_name": arm_name,
@@ -59,9 +60,6 @@ def main(_):
     # seeding
     np.random.seed(FLAGS.seed)
     torch.manual_seed(FLAGS.seed)
-
-    # for saving
-    register_metric(n_dim_Rosenbrock)
 
     # build experiment
     param_names = [f"x{i}" for i in range(FLAGS.n_dim)]
@@ -96,6 +94,7 @@ def main(_):
     print(print_experiment_result(exp))
 
     # save
+    register_metric(n_dim_Rosenbrock)
     save_name = f"SOBOL-{FLAGS.exp_name}"
     save_exp(exp, save_name)
     save_dict([train_inputs_dict, train_targets_dict], save_name)
