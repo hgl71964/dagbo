@@ -9,7 +9,6 @@ from botorch.optim.fit import fit_gpytorch_torch
 from botorch.sampling.samplers import SobolQMCNormalSampler
 from ax import Experiment
 
-from dagbo.other_opt.acq_func_factory import make_acq_func
 from .models.node import Node
 from .dag import Dag
 

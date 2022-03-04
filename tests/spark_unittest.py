@@ -71,11 +71,12 @@ class exec_spark_test(unittest.TestCase):
 
         print(metric)
 
+
 class perf_utils_test(unittest.TestCase):
     def setUp(self):
         param_space, metric_space, obj_space, edges = parse_model(
             "dagbo/interface/rosenbrock_20d_bo.txt")
-            #"dagbo/interface/spark_performance_model.txt")
+        #"dagbo/interface/spark_performance_model.txt")
 
         self.param_space = param_space
         self.metric_space = metric_space
@@ -112,8 +113,8 @@ class perf_model_test(unittest.TestCase):
         param_space, metric_space, obj_space, edges = parse_model(
             #"dagbo/interface/rosenbrock_20d_bo.txt")
             "dagbo/interface/rosenbrock_3d_bo.txt")
-            #"dagbo/interface/rosenbrock_3d_correct_model.txt")
-            #"dagbo/interface/spark_performance_model.txt")
+        #"dagbo/interface/rosenbrock_3d_correct_model.txt")
+        #"dagbo/interface/spark_performance_model.txt")
 
         self.param_space = param_space
         self.metric_space = metric_space
@@ -146,22 +147,20 @@ class perf_model_test(unittest.TestCase):
         norm = True
 
         # build, build_perf_model_from_spec
-        self.dag = build_perf_model_from_spec_ssa(self.train_inputs_dict,
-                                              self.train_targets_dict,
-                                              acq_func_config["num_samples"],
-                                              param_space, metric_space,
-                                              obj_space, edges, norm)
+        self.dag = build_perf_model_from_spec_ssa(
+            self.train_inputs_dict, self.train_targets_dict,
+            acq_func_config["num_samples"], param_space, metric_space,
+            obj_space, edges, norm)
         # feature extractor
         self.app_id = "application_1641844906451_0006"
         self.base_url = "http://localhost:18080"
 
-    #@unittest.skip("ok")
+    @unittest.skip("ok")
     def test_input_build(self):
         node_order = get_dag_topological_order(self.obj_space, self.edges)
-        train_input_names, train_target_names, train_inputs, train_targets = build_input_by_topological_order(self.train_inputs_dict,
-                                              self.train_targets_dict,
-                                              self.param_space, self.metric_space,
-                                              self.obj_space, node_order)
+        train_input_names, train_target_names, train_inputs, train_targets = build_input_by_topological_order(
+            self.train_inputs_dict, self.train_targets_dict, self.param_space,
+            self.metric_space, self.obj_space, node_order)
         print("input build:")
         print(train_input_names)
         print(train_target_names)

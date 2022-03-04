@@ -125,8 +125,8 @@ class Dag(Module):
         # instantial node
         node = Node(children, name, X, y, mean, covar, likelihood)
         self.add_module(
-            name, node
-        )  # nn.Module's method, keep a mapping dict[name, Module]
+            name,
+            node)  # nn.Module's method, keep a mapping dict[name, Module]
         self.registered_target_names.append(node.output_name)
         return name
 

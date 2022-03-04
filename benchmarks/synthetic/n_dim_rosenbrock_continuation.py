@@ -50,6 +50,7 @@ acq_func_config = {
 train_inputs_dict = {}
 train_targets_dict = {}
 
+
 class n_dim_Rosenbrock(Metric):
     def fetch_trial_data(self, trial, **kwargs):
         records = []
@@ -71,6 +72,7 @@ class n_dim_Rosenbrock(Metric):
             print(f"trial: {trial.index} - reward: {mean:.2f}")
             print()
         return ax.core.data.Data(df=pd.DataFrame.from_records(records))
+
 
 def main(_):
 
@@ -103,20 +105,19 @@ def main(_):
 
         model = build_model(FLAGS.tuner, exp, train_inputs_dict,
                             train_targets_dict, param_space, metric_space,
-                            obj_space, edges, FLAGS.norm)
+                            obj_space, edges, acq_func_config, FLAGS.norm, FLAGS.minimize)
         candidates = inner_loop(
             exp,
             model,
             param_space,
             obj_space,
-            edges,
             train_targets_dict,
             acq_name=FLAGS.acq_name,
             acq_func_config=acq_func_config,
         )
 
         # run
-        gen_run = candidates_to_generator_run(exp, candidates)
+        gen_run = candidates_to_generator_run(exp, candidates, param_space)
         if acq_func_config["q"] == 1:
             trial = exp.new_trial(generator_run=gen_run)
         else:
@@ -129,7 +130,6 @@ def main(_):
         end = time.perf_counter() - start
         print(f"{end:.2f}")
         print()
-
 
     print()
     print(f"==== done experiment: {exp.name}====")

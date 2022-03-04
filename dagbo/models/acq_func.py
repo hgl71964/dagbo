@@ -11,7 +11,6 @@ from botorch.sampling.samplers import MCSampler
 from botorch.sampling.samplers import SobolQMCNormalSampler
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
-
 from dagbo.dag import Dag
 from dagbo.utils.perf_model_utils import get_dag_topological_order
 
@@ -20,7 +19,7 @@ def inner_loop(exp: Experiment,
                model: Union[Dag, SingleTaskGP],
                param_space: dict,
                obj_space: dict,
-               train_targets_dict:dict,
+               train_targets_dict: dict,
                acq_name: str,
                acq_func_config: dict,
                dtype=torch.float64) -> Tensor:

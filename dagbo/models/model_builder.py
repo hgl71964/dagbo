@@ -1,12 +1,15 @@
 from typing import Union
+from copy import deepcopy
 
-from ax import Experiment
-import gpytorch
+import torch
+import numpy as np
 from torch import Tensor
+from ax import Experiment
 from botorch.models import SingleTaskGP
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
-from dagbo.dag import Dag
+from dagbo.dag import Dag, lazy_SO_Dag
+from dagbo.dag_gpytorch_model import DagGPyTorchModel, direct_DagGPyTorchModel
 from dagbo.fit_dag import fit_dag
 from dagbo.models.gp_factory import make_gps, fit_gpr
 from dagbo.utils.perf_model_utils import get_dag_topological_order, find_inverse_edges
@@ -15,7 +18,9 @@ from dagbo.utils.perf_model_utils import get_dag_topological_order, find_inverse
 def build_model(tuner: str, exp: Experiment, train_inputs_dict: dict,
                 train_targets_dict: dict, param_space: dict,
                 metric_space: dict, obj_space: dict, edges: dict,
-                standardisation: bool) -> Union[Dag, SingleTaskGP]:
+                acq_func_config: dict,
+                standardisation: bool,
+                minimize: bool) -> Union[Dag, SingleTaskGP]:
 
     model = None
     if tuner == "dagbo-ssa":
@@ -24,13 +29,14 @@ def build_model(tuner: str, exp: Experiment, train_inputs_dict: dict,
                                                acq_func_config["num_samples"],
                                                param_space, metric_space,
                                                obj_space, edges,
-                                               standardisation)
+                                               standardisation,
+                                               minimize)
         fit_dag(model)
     elif tuner == "dagbo-direct":
         model = build_perf_model_from_spec_direct(
             train_inputs_dict, train_targets_dict,
             acq_func_config["num_samples"], param_space, metric_space,
-            obj_space, edges, standardisation)
+            obj_space, edges, standardisation, minimize)
         fit_dag(model)
     elif tuner == "bo":
         model = build_gp_from_spec()
@@ -44,12 +50,12 @@ def build_gp_from_spec(train_inputs_dict: dict[str, np.ndarray],
                        train_targets_dict: dict[str, np.ndarray],
                        param_space: dict[str, str],
                        metric_space: dict[str, str], obj_space: dict[str, str],
-                       edges: dict[str, list[str]], standardisation: bool):
+                       edges: dict[str, list[str]], standardisation: bool, minimize:bool):
 
     node_order = get_dag_topological_order(obj_space, edges)
 
     ## standardisation
-    train_inputs_dict_ = standard_dict( train_inputs_dict, standardisation)
+    train_inputs_dict_ = standard_dict(train_inputs_dict, standardisation)
     train_targets_dict_ = standard_dict(train_targets_dict, standardisation)
 
     ##
@@ -58,8 +64,8 @@ def build_gp_from_spec(train_inputs_dict: dict[str, np.ndarray],
         obj_space, node_order)
 
     # TODO
-
     gpr = make_gps(x=x, y=y, gp_name="MA")
+    raise
     return gpr
 
 
@@ -70,7 +76,7 @@ def build_perf_model_from_spec_ssa(train_inputs_dict: dict[str, np.ndarray],
                                    metric_space: dict[str, str],
                                    obj_space: dict[str, str],
                                    edges: dict[str, list[str]],
-                                   standardisation: bool) -> Dag:
+                                   standardisation: bool, minimize:bool) -> Dag:
     """
     build perf_dag from given spec (use sample average posterior)
 
@@ -96,8 +102,11 @@ def build_perf_model_from_spec_ssa(train_inputs_dict: dict[str, np.ndarray],
     node_order = get_dag_topological_order(obj_space, edges)
 
     ## standardisation
-    train_inputs_dict_ = standard_dict( train_inputs_dict, standardisation)
+    train_inputs_dict_ = standard_dict(train_inputs_dict, standardisation)
     train_targets_dict_ = standard_dict(train_targets_dict, standardisation)
+
+    ## flip sign
+    train_targets_dict_ = flip_dict(train_targets_dict_, minimize)
 
     ##
     train_input_names, train_target_names, train_inputs, train_targets = build_input_by_topological_order(
@@ -126,7 +135,7 @@ def build_perf_model_from_spec_direct(train_inputs_dict: dict[str, np.ndarray],
                                       metric_space: dict[str, str],
                                       obj_space: dict[str, str],
                                       edges: dict[str, list[str]],
-                                      standardisation: bool) -> Dag:
+                                      standardisation: bool, minimize:bool) -> Dag:
     """
     use approx. posterior
     """
@@ -144,8 +153,10 @@ def build_perf_model_from_spec_direct(train_inputs_dict: dict[str, np.ndarray],
     reversed_edge = find_inverse_edges(edges)
     node_order = get_dag_topological_order(obj_space, edges)
     ## standardisation
-    train_inputs_dict_ = standard_dict( train_inputs_dict, standardisation)
+    train_inputs_dict_ = standard_dict(train_inputs_dict, standardisation)
     train_targets_dict_ = standard_dict(train_targets_dict, standardisation)
+    ## flip sign
+    train_targets_dict_ = flip_dict(train_targets_dict_, minimize)
 
     ##
     train_input_names, train_target_names, train_inputs, train_targets = build_input_by_topological_order(
@@ -187,11 +198,12 @@ def build_input_by_topological_order(
     # ensure sorted order - NOTE: in fact, this doesn't matter, but to keep consistency
     for node in sorted(list(param_space.keys())):
         train_input_names.append(node)
-        train_inputs.append(
-            torch.tensor(train_inputs_dict[node], dtype=dtype))
+        train_inputs.append(torch.tensor(train_inputs_dict[node], dtype=dtype))
 
     for node in node_order:
-        if node in metric_space or node in obj_space:
+        if node in param_space:
+            continue
+        elif node in metric_space or node in obj_space:
             train_target_names.append(node)
             train_targets.append(
                 torch.tensor(train_targets_dict[node], dtype=dtype))
@@ -209,7 +221,6 @@ def build_input_by_topological_order(
 
     return train_input_names, train_target_names, train_inputs, train_targets
 
-
 def standard_dict(input_dict, standardisation):
     dict_ = deepcopy(input_dict)
     if standardisation:
@@ -217,3 +228,13 @@ def standard_dict(input_dict, standardisation):
             tmp = StandardScaler().fit_transform(v.reshape(-1, 1))
             dict_[k] = tmp.reshape(-1)
     return dict_
+
+def flip_dict(input_dict: dict, obj_space: dict, minimize: bool):
+    """
+    In the case of minimization, need to flip the obj
+    """
+    if not minimize:
+        obj = list(obj_space.keys())[0]
+        tmp = input_dict[obj]
+        input_dict[obj] = -tmp
+    return input_dict
