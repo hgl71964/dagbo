@@ -18,8 +18,8 @@ from dagbo.utils.perf_model_utils import get_dag_topological_order, find_inverse
 def build_model(tuner: str, exp: Experiment, train_inputs_dict: dict,
                 train_targets_dict: dict, param_space: dict,
                 metric_space: dict, obj_space: dict, edges: dict,
-                acq_func_config: dict, standardisation: bool,
-                minimize: bool) -> Union[Dag, SingleTaskGP]:
+                acq_func_config: dict, standardisation: bool, minimize: bool,
+                device) -> Union[Dag, SingleTaskGP]:
 
     # format data
     ## standardisation - deepcopy
@@ -37,13 +37,13 @@ def build_model(tuner: str, exp: Experiment, train_inputs_dict: dict,
                                                train_targets_dict_,
                                                acq_func_config["num_samples"],
                                                param_space, metric_space,
-                                               obj_space, edges)
+                                               obj_space, edges, device)
         fit_dag(model)
     elif tuner == "dagbo-direct":
         model = build_perf_model_from_spec_direct(
             train_inputs_dict_, train_targets_dict_,
             acq_func_config["num_samples"], param_space, metric_space,
-            obj_space, edges)
+            obj_space, edges, device)
         fit_dag(model)
     elif tuner == "bo":
         model = build_gp_from_spec(train_inputs_dict_, train_targets_dict_,
@@ -75,6 +75,7 @@ def build_gp_from_spec(
     ##
     assert train_inputs.shape[0] == 1
     assert train_targets.shape[0] == 1
+    # NOTE: don't need gpu for inference?
     x = train_inputs.squeeze(0)
     y = train_targets.squeeze(0)[..., -1]
     y = y.reshape(-1, 1)  # [q, 1] for 1 dim output
@@ -97,6 +98,7 @@ def build_perf_model_from_spec_ssa(
     metric_space: dict[str, str],
     obj_space: dict[str, str],
     edges: dict[str, list[str]],
+    device,
 ) -> Dag:
     """
     build perf_dag from given spec (use sample average posterior)
@@ -113,21 +115,29 @@ def build_perf_model_from_spec_ssa(
         """
         def __init__(self, train_input_names: list[str],
                      train_target_names: list[str], train_inputs: Tensor,
-                     train_targets: Tensor, num_samples: int):
+                     train_targets: Tensor, num_samples: int, device):
             super().__init__(train_input_names, train_target_names,
-                             train_inputs, train_targets)
+                             train_inputs, train_targets, device)
             self.num_samples = num_samples
 
     # build
     reversed_edge = find_inverse_edges(edges)
     node_order = get_dag_topological_order(obj_space, edges)
 
-    ##
+    ## build input
     train_input_names, train_target_names, train_inputs, train_targets = build_input_by_topological_order(
         train_inputs_dict, train_targets_dict, param_space, metric_space,
         obj_space, node_order)
+    ## put into device, node will be taken into device automatically
+    train_inputs = train_inputs.to(device)
+    train_targets = train_targets.to(device)
+    #print(train_input_names, train_target_names)
+    #print(train_inputs.is_cuda, train_targets.is_cuda)
+    #print(train_inputs.shape, train_targets.shape)
+
+    ## build model
     dag = perf_DAG(train_input_names, train_target_names, train_inputs,
-                   train_targets, num_samples)
+                   train_targets, num_samples, device)
 
     # register nodes, MUST register in topological order
     # input space, TODO address for categorical variable in the future
@@ -138,6 +148,7 @@ def build_perf_model_from_spec_ssa(
             dag.register_metric(node, [i for i in reversed_edge[node]])
         else:
             raise RuntimeError("unknown node")
+    dag.to(device)
     return dag
 
 
@@ -148,7 +159,8 @@ def build_perf_model_from_spec_direct(train_inputs_dict: dict[str, np.ndarray],
                                                                           str],
                                       metric_space: dict[str, str],
                                       obj_space: dict[str, str],
-                                      edges: dict[str, list[str]]) -> Dag:
+                                      edges: dict[str,
+                                                  list[str]], device) -> Dag:
     """
     use approx. posterior
     """
@@ -157,9 +169,9 @@ def build_perf_model_from_spec_direct(train_inputs_dict: dict[str, np.ndarray],
         """
         def __init__(self, train_input_names: list[str],
                      train_target_names: list[str], train_inputs: Tensor,
-                     train_targets: Tensor, num_samples: int):
+                     train_targets: Tensor, num_samples: int, device):
             super().__init__(train_input_names, train_target_names,
-                             train_inputs, train_targets)
+                             train_inputs, train_targets, device)
             self.num_samples = num_samples
 
     # build
@@ -170,8 +182,10 @@ def build_perf_model_from_spec_direct(train_inputs_dict: dict[str, np.ndarray],
     train_input_names, train_target_names, train_inputs, train_targets = build_input_by_topological_order(
         train_inputs_dict, train_targets_dict, param_space, metric_space,
         obj_space, node_order)
+    train_inputs = train_inputs.to(device)
+    train_targets = train_targets.to(device)
     dag = perf_DAG(train_input_names, train_target_names, train_inputs,
-                   train_targets, num_samples)
+                   train_targets, num_samples, device)
 
     # register nodes, MUST register in topological order
     # input space, TODO address for categorical variable in the future
@@ -182,6 +196,7 @@ def build_perf_model_from_spec_direct(train_inputs_dict: dict[str, np.ndarray],
             dag.register_metric(node, [i for i in reversed_edge[node]])
         else:
             raise RuntimeError("unknown node")
+    dag.to(device)
     return dag
 
 

@@ -61,7 +61,8 @@ def opt_acq_func(model: Union[SingleTaskGP, Dag], acq_name: str,
         raw_samples=acq_func_config["raw_samples"],
         sequential=False,
     )
-    query = candidates.detach()
+    # in any case, need to put into cpu
+    query = candidates.detach().cpu()
     return query
 
 

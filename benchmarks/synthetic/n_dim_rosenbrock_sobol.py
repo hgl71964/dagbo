@@ -23,7 +23,7 @@ flags.DEFINE_string("exp_name", "rosenbrock-3D", "Experiment name")
 flags.DEFINE_integer("bootstrap", 5, "bootstrap", lower_bound=1)
 flags.DEFINE_integer("n_dim", 10, "n-dim rosenbrock func")
 flags.DEFINE_integer("seed", 0, "rand seed")
-flags.DEFINE_boolean("minimize", False, "min or max objective")
+flags.DEFINE_integer("minimize", 0, "min or max objective")
 train_inputs_dict = {}
 train_targets_dict = {}
 
@@ -62,7 +62,7 @@ def main(_):
 
     optimization_config = OptimizationConfig(
         Objective(metric=n_dim_Rosenbrock(name=FLAGS.metric_name),
-                  minimize=FLAGS.minimize))
+                  minimize=bool(FLAGS.minimize)))
     exp = Experiment(name=FLAGS.exp_name,
                      search_space=search_space,
                      optimization_config=optimization_config,

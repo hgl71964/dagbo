@@ -42,7 +42,7 @@ class Dag(Module):
     """
     def __init__(self, train_input_names: list[str],
                  train_target_names: list[str], train_inputs: Tensor,
-                 train_targets: Tensor):
+                 train_targets: Tensor, device):
         """
         Args:
             train_input_names: a d-length list of the names of each input
@@ -84,6 +84,7 @@ class Dag(Module):
 
         # tensor dtype and device conversion
         self.to(train_inputs)
+        self.device = device
 
     """
     -------------- materialise DAG --------------
@@ -261,11 +262,11 @@ class Dag(Module):
             raise RuntimeError(
                 "train_inputs and train_targets must be 3 dimensional tensor")
 
-        if train_inputs.shape[-1] != len(
-                train_input_names) or train_targets.shape[-1] != len(
-                    train_target_names):
-            raise RuntimeError(
-                "train_inputs and train_targets must be 3 dimensional tensor")
+        if train_inputs.shape[-1] != len(train_input_names):
+            raise RuntimeError("input dim != input name len")
+
+        if train_targets.shape[-1] != len(train_target_names):
+            raise RuntimeError("target dim != target name len")
 
         if train_inputs.shape[0] != 1 or train_targets.shape[0] != 1:
             raise RuntimeError(
@@ -365,9 +366,9 @@ class lazy_SO_Dag(Dag):
     """
     def __init__(self, train_input_names: list[str],
                  train_target_names: list[str], train_inputs: Tensor,
-                 train_targets: Tensor):
+                 train_targets: Tensor, device):
         super().__init__(train_input_names, train_target_names, train_inputs,
-                         train_targets)
+                         train_targets, device)
 
         # NOTE: this will be used by Botorch's API
         self._num_outputs = 1

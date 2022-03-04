@@ -35,14 +35,14 @@ flags.DEFINE_integer("n_dim", 10, "n-dim rosenbrock func")
 flags.DEFINE_integer("epochs", 20, "bo loop epoch", lower_bound=0)
 flags.DEFINE_integer("seed", 0, "rand seed")
 flags.DEFINE_integer("norm", 1, "whether or not normalise gp's output")
-flags.DEFINE_boolean("minimize", True, "min or max objective")
+flags.DEFINE_integer("minimize", 1, "min or max objective")
 
 # flags cannot define dict, acq_func_config will be affected by side-effect
 acq_func_config = {
     "q": 1,
-    "num_restarts": 48,
-    "raw_samples": 128,
-    "num_samples": int(1024 * 2),
+    "num_restarts": 128,
+    "raw_samples": int(1024),
+    "num_samples": int(512),  # most mem-intensive
     # only a placeholder for {EI, qEI}, will be overwritten per iter
     "y_max": torch.tensor([1.]),
     "beta": 1,  # for UCB
@@ -68,9 +68,6 @@ class n_dim_Rosenbrock(Metric):
                 "sem": 0,
                 "trial_index": trial.index,
             })
-            #print()
-            #print(f"trial: {trial.index} - reward: {mean:.2f}")
-            #print()
         return ax.core.data.Data(df=pd.DataFrame.from_records(records))
 
 
@@ -86,6 +83,10 @@ def main(_):
     global train_inputs_dict, train_targets_dict
     train_inputs_dict, train_targets_dict = load_dict(FLAGS.load_name)
 
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device_name = torch.cuda.get_device_name() if torch.cuda.is_available(
+    ) else device
+
     print()
     print(f"==== resume from experiment sobol ====")
     print(exp.fetch_data().df)
@@ -97,16 +98,17 @@ def main(_):
 
     print()
     print(
-        f"==== start experiment: {exp.name} with tuner: {FLAGS.tuner} & {FLAGS.acq_name} ===="
+        f"==== start experiment: {exp.name} with tuner: {FLAGS.tuner} & {FLAGS.acq_name} & device {device_name} ===="
     )
+    print("minimize: ", bool(FLAGS.minimize))
     print()
     for t in range(FLAGS.epochs):
         start = time.perf_counter()
 
         model = build_model(FLAGS.tuner, exp, train_inputs_dict,
-                            train_targets_dict, param_space, metric_space,
-                            obj_space, edges, acq_func_config, FLAGS.norm,
-                            FLAGS.minimize)
+                            train_targets_dict, param_space,
+                            metric_space, obj_space, edges, acq_func_config,
+                            bool(FLAGS.norm), bool(FLAGS.minimize), device)
         candidates = inner_loop(
             exp,
             model,

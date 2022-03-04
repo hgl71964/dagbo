@@ -52,7 +52,7 @@ class DagGPyTorchModel(GPyTorchModel):
         # expanded_X [num_sample, batch_size, q, d]
         original_shape = X.shape
         expanded_X = X.unsqueeze(dim=0).expand(self.num_samples,
-                                               *original_shape)
+                                               *original_shape).to(self.device)
         # DAG's forward
         with gpt_posterior_settings():
             mvn = self(expanded_X)
@@ -128,7 +128,7 @@ class direct_DagGPyTorchModel(GPyTorchModel):
         # expanded_X [num_sample, batch_size, q, d]
         original_shape = X.shape
         expanded_X = X.unsqueeze(dim=0).expand(self.num_samples,
-                                               *original_shape)
+                                               *original_shape).to(self.device)
         #expanded_X = X
 
         # DAG's forward
