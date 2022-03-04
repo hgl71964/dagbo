@@ -4,7 +4,7 @@ import numpy as np
 
 # NOTE: possibly the most important mapping, scale param range [0, 1] back to their original values
 SCALE_MAPPING = {
-    "p": 5,
+    "p": 3,
 }
 
 

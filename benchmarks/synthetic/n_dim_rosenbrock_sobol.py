@@ -44,9 +44,6 @@ class n_dim_Rosenbrock(Metric):
                 "sem": 0,
                 "trial_index": trial.index,
             })
-            print()
-            print(f"trial: {trial.index} - reward: {mean:.2f}")
-            print()
         return ax.core.data.Data(df=pd.DataFrame.from_records(records))
 
 

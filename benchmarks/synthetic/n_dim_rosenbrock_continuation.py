@@ -68,9 +68,9 @@ class n_dim_Rosenbrock(Metric):
                 "sem": 0,
                 "trial_index": trial.index,
             })
-            print()
-            print(f"trial: {trial.index} - reward: {mean:.2f}")
-            print()
+            #print()
+            #print(f"trial: {trial.index} - reward: {mean:.2f}")
+            #print()
         return ax.core.data.Data(df=pd.DataFrame.from_records(records))
 
 
@@ -126,9 +126,10 @@ def main(_):
         trial.mark_completed()
 
         print()
-        print("iteration time:")
+        print(f"iteration {t+1}:")
         end = time.perf_counter() - start
-        print(f"{end:.2f}")
+        res = float(trial.fetch_data().df["mean"])
+        print(f"time: {end:.2f} - results: {res:.2f}")
         print()
 
     print()
