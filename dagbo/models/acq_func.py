@@ -1,5 +1,7 @@
 from typing import Union
 
+from ax import Experiment
+import torch
 import botorch
 import gpytorch
 from torch import Tensor
@@ -7,8 +9,8 @@ from botorch.models import SingleTaskGP
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.sampling.samplers import MCSampler
 from botorch.sampling.samplers import SobolQMCNormalSampler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
-from ax import Experiment
 
 from dagbo.dag import Dag
 from dagbo.utils.perf_model_utils import get_dag_topological_order
@@ -19,10 +21,20 @@ def inner_loop(exp: Experiment,
                param_space: dict,
                obj_space: dict,
                edges: dict,
+               train_targets_dict:dict,
                acq_name: str,
                acq_func_config: dict,
                dtype=torch.float64) -> Tensor:
     """acquisition function optimisation"""
+
+    # update acq_func_config, e.g. update the best obs for EI or beta for UCB
+    keys = list(obj_space.keys())
+    assert len(keys) == 1
+    obj = keys[0]
+    tmp = train_targets_dict[obj].reshape(-1, 1)
+    stand_tmp = StandardScaler().fit_transform(tmp)
+    acq_func_config["y_max"] = torch.tensor(stand_tmp, dtype=dtype)
+
     bounds = get_bounds(exp, param_space, obj_space, edges, dtype)
     return opt_acq_func(model, acq_name, bounds, acq_func_config)
 

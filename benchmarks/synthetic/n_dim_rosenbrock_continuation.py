@@ -1,19 +1,13 @@
 import time
 from absl import app
 from absl import flags
-from typing import Union
 
 import numpy as np
 import pandas as pd
 import torch
-from torch import Tensor
-from botorch.models import SingleTaskGP
-
 import ax
-from ax.modelbridge.registry import Models
-from ax import SearchSpace, Experiment, OptimizationConfig, Objective, Metric
+from ax import Experiment, Metric
 from ax.storage.metric_registry import register_metric
-from ax.runners.synthetic import SyntheticRunner
 
 from dagbo.models.model_builder import build_model
 from dagbo.models.acq_func import inner_loop
@@ -116,6 +110,7 @@ def main(_):
             param_space,
             obj_space,
             edges,
+            train_targets_dict,
             acq_name=FLAGS.acq_name,
             acq_func_config=acq_func_config,
         )
@@ -135,8 +130,6 @@ def main(_):
         print(f"{end:.2f}")
         print()
 
-        # update acq_func_config, e.g. update the best obs for expected improvement
-        acq_func_config["y_max"] = train_targets_dict["final"].max()
 
     print()
     print(f"==== done experiment: {exp.name}====")

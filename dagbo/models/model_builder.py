@@ -1,17 +1,14 @@
 from typing import Union
 
 from ax import Experiment
-import botorch
 import gpytorch
 from torch import Tensor
-from gpytorch.kernels.kernel import Kernel
 from botorch.models import SingleTaskGP
-from botorch.fit import fit_gpytorch_model
-from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 from dagbo.dag import Dag
 from dagbo.fit_dag import fit_dag
-from dagbo.models.gp_factory import make_gps
+from dagbo.models.gp_factory import make_gps, fit_gpr
 from dagbo.utils.perf_model_utils import get_dag_topological_order, find_inverse_edges
 
 
