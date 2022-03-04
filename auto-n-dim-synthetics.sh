@@ -5,7 +5,7 @@ n=3
 epochs=30
 workload="rosenbrock-${n}D" # workload name need to match EXACTLY, it is lower case
 repeat=4
-norm=0
+norm=1
 
 # create if not exist
 mkdir -p benchmarks/data

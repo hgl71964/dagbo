@@ -21,25 +21,33 @@ def build_model(tuner: str, exp: Experiment, train_inputs_dict: dict,
                 acq_func_config: dict, standardisation: bool,
                 minimize: bool) -> Union[Dag, SingleTaskGP]:
 
+    # format data
+    ## standardisation - deepcopy
+    train_inputs_dict_ = standard_dict(train_inputs_dict, standardisation)
+    train_targets_dict_ = standard_dict(train_targets_dict, standardisation)
+    ## flip obj sign
+    train_targets_dict_ = flip_obj(train_targets_dict_, obj_space, minimize)
+    ## side-effect
+    update_acq_func_config(acq_func_config, obj_space, train_targets_dict_)
+
+    # build model
     model = None
     if tuner == "dagbo-ssa":
-        model = build_perf_model_from_spec_ssa(train_inputs_dict,
-                                               train_targets_dict,
+        model = build_perf_model_from_spec_ssa(train_inputs_dict_,
+                                               train_targets_dict_,
                                                acq_func_config["num_samples"],
                                                param_space, metric_space,
-                                               obj_space, edges,
-                                               standardisation, minimize)
+                                               obj_space, edges)
         fit_dag(model)
     elif tuner == "dagbo-direct":
         model = build_perf_model_from_spec_direct(
-            train_inputs_dict, train_targets_dict,
+            train_inputs_dict_, train_targets_dict_,
             acq_func_config["num_samples"], param_space, metric_space,
-            obj_space, edges, standardisation, minimize)
+            obj_space, edges)
         fit_dag(model)
     elif tuner == "bo":
-        model = build_gp_from_spec(train_inputs_dict, train_targets_dict,
-                                   param_space, metric_space, obj_space, edges,
-                                   standardisation, minimize)
+        model = build_gp_from_spec(train_inputs_dict_, train_targets_dict_,
+                                   param_space, metric_space, obj_space, edges)
         fit_gpr(model)
     else:
         raise ValueError("unable to recognize tuner")
@@ -47,26 +55,21 @@ def build_model(tuner: str, exp: Experiment, train_inputs_dict: dict,
     return model
 
 
-def build_gp_from_spec(train_inputs_dict: dict[str, np.ndarray],
-                       train_targets_dict: dict[str, np.ndarray],
-                       param_space: dict[str, str], metric_space: dict[str,
-                                                                       str],
-                       obj_space: dict[str, str], edges: dict[str, list[str]],
-                       standardisation: bool, minimize: bool):
+def build_gp_from_spec(
+    train_inputs_dict: dict[str, np.ndarray],
+    train_targets_dict: dict[str, np.ndarray],
+    param_space: dict[str, str],
+    metric_space: dict[str, str],
+    obj_space: dict[str, str],
+    edges: dict[str, list[str]],
+) -> SingleTaskGP:
 
     # build input
     node_order = get_dag_topological_order(obj_space, edges)
 
-    ## standardisation - deepcopy
-    train_inputs_dict_ = standard_dict(train_inputs_dict, standardisation)
-    train_targets_dict_ = standard_dict(train_targets_dict, standardisation)
-
-    ## flip sign
-    train_targets_dict_ = flip_dict(train_targets_dict_, obj_space, minimize)
-
     ##
     train_input_names, train_target_names, train_inputs, train_targets = build_input_by_topological_order(
-        train_inputs_dict_, train_targets_dict_, param_space, metric_space,
+        train_inputs_dict, train_targets_dict, param_space, metric_space,
         obj_space, node_order)
 
     ##
@@ -86,15 +89,15 @@ def build_gp_from_spec(train_inputs_dict: dict[str, np.ndarray],
     return gpr
 
 
-def build_perf_model_from_spec_ssa(train_inputs_dict: dict[str, np.ndarray],
-                                   train_targets_dict: dict[str, np.ndarray],
-                                   num_samples: int, param_space: dict[str,
-                                                                       str],
-                                   metric_space: dict[str, str],
-                                   obj_space: dict[str, str],
-                                   edges: dict[str, list[str]],
-                                   standardisation: bool,
-                                   minimize: bool) -> Dag:
+def build_perf_model_from_spec_ssa(
+    train_inputs_dict: dict[str, np.ndarray],
+    train_targets_dict: dict[str, np.ndarray],
+    num_samples: int,
+    param_space: dict[str, str],
+    metric_space: dict[str, str],
+    obj_space: dict[str, str],
+    edges: dict[str, list[str]],
+) -> Dag:
     """
     build perf_dag from given spec (use sample average posterior)
 
@@ -119,16 +122,9 @@ def build_perf_model_from_spec_ssa(train_inputs_dict: dict[str, np.ndarray],
     reversed_edge = find_inverse_edges(edges)
     node_order = get_dag_topological_order(obj_space, edges)
 
-    ## standardisation - deepcopy
-    train_inputs_dict_ = standard_dict(train_inputs_dict, standardisation)
-    train_targets_dict_ = standard_dict(train_targets_dict, standardisation)
-
-    ## flip sign
-    train_targets_dict_ = flip_dict(train_targets_dict_, obj_space, minimize)
-
     ##
     train_input_names, train_target_names, train_inputs, train_targets = build_input_by_topological_order(
-        train_inputs_dict_, train_targets_dict_, param_space, metric_space,
+        train_inputs_dict, train_targets_dict, param_space, metric_space,
         obj_space, node_order)
     dag = perf_DAG(train_input_names, train_target_names, train_inputs,
                    train_targets, num_samples)
@@ -152,9 +148,7 @@ def build_perf_model_from_spec_direct(train_inputs_dict: dict[str, np.ndarray],
                                                                           str],
                                       metric_space: dict[str, str],
                                       obj_space: dict[str, str],
-                                      edges: dict[str, list[str]],
-                                      standardisation: bool,
-                                      minimize: bool) -> Dag:
+                                      edges: dict[str, list[str]]) -> Dag:
     """
     use approx. posterior
     """
@@ -171,16 +165,10 @@ def build_perf_model_from_spec_direct(train_inputs_dict: dict[str, np.ndarray],
     # build
     reversed_edge = find_inverse_edges(edges)
     node_order = get_dag_topological_order(obj_space, edges)
-    ## standardisation - deepcopy
-    train_inputs_dict_ = standard_dict(train_inputs_dict, standardisation)
-    train_targets_dict_ = standard_dict(train_targets_dict, standardisation)
-
-    ## flip sign
-    train_targets_dict_ = flip_dict(train_targets_dict_, obj_space, minimize)
 
     ##
     train_input_names, train_target_names, train_inputs, train_targets = build_input_by_topological_order(
-        train_inputs_dict_, train_targets_dict_, param_space, metric_space,
+        train_inputs_dict, train_targets_dict, param_space, metric_space,
         obj_space, node_order)
     dag = perf_DAG(train_input_names, train_target_names, train_inputs,
                    train_targets, num_samples)
@@ -227,8 +215,6 @@ def build_input_by_topological_order(
             train_target_names.append(node)
             train_targets.append(
                 torch.tensor(train_targets_dict[node], dtype=dtype))
-            print(node)
-            print(train_targets_dict[node])
         else:
             raise RuntimeError(
                 "node not in param_space or metric_space or obj_space")
@@ -254,7 +240,7 @@ def standard_dict(input_dict, standardisation):
     return dict_
 
 
-def flip_dict(input_dict: dict, obj_space: dict, minimize: bool):
+def flip_obj(input_dict: dict, obj_space: dict, minimize: bool):
     """
     In the case of minimization, need to flip the obj
         (by default: bo maximizes obj)
@@ -264,3 +250,16 @@ def flip_dict(input_dict: dict, obj_space: dict, minimize: bool):
         tmp = input_dict[obj]
         input_dict[obj] = -tmp
     return input_dict
+
+
+def update_acq_func_config(acq_func_config,
+                           obj_space,
+                           train_targets_dict,
+                           dtype=torch.float64):
+
+    # update acq_func_config, e.g. update the best obs for EI or beta for UCB
+    keys = list(obj_space.keys())
+    assert len(keys) == 1
+    obj = keys[0]
+    tmp = train_targets_dict[obj]
+    acq_func_config["y_max"] = torch.tensor(tmp.max(), dtype=dtype)

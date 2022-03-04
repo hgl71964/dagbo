@@ -112,7 +112,6 @@ def main(_):
             model,
             param_space,
             obj_space,
-            train_targets_dict,
             acq_name=FLAGS.acq_name,
             acq_func_config=acq_func_config,
         )
