@@ -159,6 +159,63 @@ class normal_gp_test(unittest.TestCase):
         logging.info("candidates: ")
         print(query, val.detach())
 
+class dag_order_test(unittest.TestCase):
+    """
+    test ross' impl of sample average dagbo
+    """
+    def setUp(self):
+
+        # define dag
+        class TREE_DAG(SO_Dag, DagGPyTorchModel):
+            """
+            creation a simple tree-like DAG
+
+            x1      x2        x3
+              \     /         |
+                z1           z2
+                  \        /
+                      y
+            """
+            def __init__(self, train_input_names: list[str],
+                         train_target_names: list[str], train_inputs: Tensor,
+                         train_targets: Tensor, num_samples: int):
+                super().__init__(train_input_names, train_target_names,
+                                 train_inputs, train_targets)
+                # required for all classes that extend SparkDag
+                self.num_samples = num_samples
+            def define_dag(self, batch_shape: Size = Size([])) -> None:
+                x_1 = self.register_input("x1")
+                x_2 = self.register_input("x2")
+                x_3 = self.register_input("x3")
+                z_1 = self.register_metric("z1", [x_1, x_2])
+                z_2 = self.register_metric("z2", [x_3])
+                y = self.register_metric("y", [z_1, z_2])
+
+        # prepare input
+        train_input_names = [
+            "x1",
+            "x2",
+            "x3",
+        ]
+        train_target_names = [
+            "z1",
+            "z2",
+            "y",
+        ]
+        batch_size = 1
+        num_samples = 1000
+
+        train_inputs =
+        train_targets =
+
+        self.batch_size = batch_size
+        self.num_samples = num_samples
+        self.simple_dag = TREE_DAG(train_input_names, train_target_names,
+                                   train_inputs, train_targets, num_samples)
+
+    def test_node_input_irder(self):
+        print()
+
 
 class ross_dag_test(unittest.TestCase):
     """
@@ -280,7 +337,7 @@ class ross_dag_test(unittest.TestCase):
                     after = mean_squared_error(test_y, mean)
         print(f"MSE after fit: {after:.2f}")
 
-    #@unittest.skip("ok")
+    @unittest.skip("ok")
     def test_dag_posterior(self):
         """
         test posterior returned by the DAG,

@@ -20,7 +20,6 @@ def inner_loop(exp: Experiment,
                model: Union[Dag, SingleTaskGP],
                param_space: dict,
                obj_space: dict,
-               edges: dict,
                train_targets_dict:dict,
                acq_name: str,
                acq_func_config: dict,
@@ -35,18 +34,15 @@ def inner_loop(exp: Experiment,
     stand_tmp = StandardScaler().fit_transform(tmp)
     acq_func_config["y_max"] = torch.tensor(stand_tmp, dtype=dtype)
 
-    bounds = get_bounds(exp, param_space, obj_space, edges, dtype)
+    bounds = get_bounds(exp, param_space, dtype)
     return opt_acq_func(model, acq_name, bounds, acq_func_config)
 
 
 def get_bounds(exp: Experiment,
                param_space: dict,
-               obj_space: dict,
-               edges: dict,
                dtype=torch.float64) -> Tensor:
     """get bounds for each parameters"""
-    node_order = get_dag_topological_order(obj_space, edges)
-    params = [name for name in node_order if node in param_space]
+    params = sorted(list(param_space.keys()))
 
     bounds = []
     for p in params:

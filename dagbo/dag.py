@@ -8,7 +8,6 @@ from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.distributions.multitask_multivariate_normal import MultitaskMultivariateNormal
 from gpytorch.means.mean import Mean
 from gpytorch.module import Module
-from .models.parametric_mean import ParametricMean
 from .models.node import Node
 from .utils.tensor_dict_conversions import pack_to_tensor, unpack_to_dict
 
@@ -106,10 +105,12 @@ class Dag(Module):
             self,
             name: str,
             children: list[str],
-            mean: Optional[Union[Mean, ParametricMean]] = None,
+            mean: Optional[Mean] = None,
             covar: Optional[Kernel] = None,
             likelihood: Optional[_GaussianLikelihoodBase] = None) -> str:
-        # TODO: using "inspect" to add error for ParametricMeans with fwd arguments not in "children"
+        """
+        children is un-ordered
+        """
         self._error_missing_names([name] + children)
         self._error_unregistered_inputs(children, name)
 
@@ -125,7 +126,7 @@ class Dag(Module):
         node = Node(children, name, X, y, mean, covar, likelihood)
         self.add_module(
             name, node
-        )  # nn.Module's method, keep a mapping dict[name, Module] TODO use a dict to explictly manage?
+        )  # nn.Module's method, keep a mapping dict[name, Module]
         self.registered_target_names.append(node.output_name)
         return name
 
@@ -377,8 +378,11 @@ class lazy_SO_Dag(Dag):
     def forward(self, tensor_inputs: Tensor) -> MultivariateNormal:
         """
         Args:
-            tensor_inputs: batch_shape*q*d-dim tensor
+            tensor_inputs: batch_shape*q*d-dim tensor,
+                    its d-dim is ordered
+            this order should be maintained by bounds
         """
+        # will be update as traversal on-the-fly
         tensor_inputs_dict = unpack_to_dict(self.registered_input_names,
                                             tensor_inputs)
         node_dict = {}
@@ -392,6 +396,7 @@ class lazy_SO_Dag(Dag):
                 k: v
                 for k, v in tensor_inputs_dict.items() if k in node.input_names
             }
+            # node.input_names = register_metric's children, so order is preserved
             node_inputs = pack_to_tensor(node.input_names, node_inputs_dict)
 
             # make prediction via GP

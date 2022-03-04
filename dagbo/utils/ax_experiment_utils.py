@@ -21,15 +21,13 @@ from dagbo.utils.perf_model_utils import get_dag_topological_order
 
 
 def candidates_to_generator_run(exp: Experiment, candidate: Tensor,
-                                param_space: dict, obj_space: dict,
-                                edges: dict) -> GeneratorRun:
+                                param_space: dict) -> GeneratorRun:
     """
     user-defined data type -> arms -> generator_run -> trial.run()
     Args:
         candidate: [q, dim]
     """
-    node_order = get_dag_topological_order(obj_space, edges)
-    params = [name for name in node_order if node in param_space]
+    params = sorted(list(param_space.keys()))
 
     q = candidate.shape[0]
     arms = []

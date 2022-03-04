@@ -49,9 +49,8 @@ def build_gp_from_spec(train_inputs_dict: dict[str, np.ndarray],
     node_order = get_dag_topological_order(obj_space, edges)
 
     ## standardisation
-    train_inputs_dict_, train_targets_dict_ = standard_dict(
-        train_inputs_dict,
-        standardisation), standard_dict(train_targets_dict, standardisation)
+    train_inputs_dict_ = standard_dict( train_inputs_dict, standardisation)
+    train_targets_dict_ = standard_dict(train_targets_dict, standardisation)
 
     ##
     train_input_names, train_target_names, train_inputs, train_targets = build_input_by_topological_order(
@@ -97,9 +96,8 @@ def build_perf_model_from_spec_ssa(train_inputs_dict: dict[str, np.ndarray],
     node_order = get_dag_topological_order(obj_space, edges)
 
     ## standardisation
-    train_inputs_dict_, train_targets_dict_ = standard_dict(
-        train_inputs_dict,
-        standardisation), standard_dict(train_targets_dict, standardisation)
+    train_inputs_dict_ = standard_dict( train_inputs_dict, standardisation)
+    train_targets_dict_ = standard_dict(train_targets_dict, standardisation)
 
     ##
     train_input_names, train_target_names, train_inputs, train_targets = build_input_by_topological_order(
@@ -146,9 +144,8 @@ def build_perf_model_from_spec_direct(train_inputs_dict: dict[str, np.ndarray],
     reversed_edge = find_inverse_edges(edges)
     node_order = get_dag_topological_order(obj_space, edges)
     ## standardisation
-    train_inputs_dict_, train_targets_dict_ = standard_dict(
-        train_inputs_dict,
-        standardisation), standard_dict(train_targets_dict, standardisation)
+    train_inputs_dict_ = standard_dict( train_inputs_dict, standardisation)
+    train_targets_dict_ = standard_dict(train_targets_dict, standardisation)
 
     ##
     train_input_names, train_target_names, train_inputs, train_targets = build_input_by_topological_order(
@@ -186,12 +183,15 @@ def build_input_by_topological_order(
     """
     train_input_names, train_target_names = [], []
     train_inputs, train_targets = [], []
+
+    # ensure sorted order - NOTE: in fact, this doesn't matter, but to keep consistency
+    for node in sorted(list(param_space.keys())):
+        train_input_names.append(node)
+        train_inputs.append(
+            torch.tensor(train_inputs_dict[node], dtype=dtype))
+
     for node in node_order:
-        if node in param_space:
-            train_input_names.append(node)
-            train_inputs.append(
-                torch.tensor(train_inputs_dict[node], dtype=dtype))
-        elif node in metric_space or node in obj_space:
+        if node in metric_space or node in obj_space:
             train_target_names.append(node)
             train_targets.append(
                 torch.tensor(train_targets_dict[node], dtype=dtype))
