@@ -59,7 +59,7 @@ flags.DEFINE_integer("minimize", 1, "min or max objective")
 # flags cannot define dict, acq_func_config will be affected by side-effect
 acq_func_config = {
     "q": 1,
-    "num_restarts": 64,
+    "num_restarts": 128,
     "raw_samples": int(1024),
     "num_samples": int(1024),
     "y_max": torch.tensor([

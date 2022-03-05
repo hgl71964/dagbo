@@ -252,7 +252,7 @@ def standard_dict(input_dict, standardisation):
     if standardisation:
         for k, v in dict_.items():
             # StandardScaler, MinMaxScaler
-            tmp = StandardScaler().fit_transform(v.reshape(-1, 1))
+            tmp = MinMaxScaler().fit_transform(v.reshape(-1, 1))
             dict_[k] = tmp.reshape(-1)
     return dict_
 
