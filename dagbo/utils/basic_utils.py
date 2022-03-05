@@ -1,5 +1,6 @@
 import pynvml
 
+
 def gpu_usage():
     pynvml.nvmlInit()
     h = pynvml.nvmlDeviceGetHandleByIndex(0)

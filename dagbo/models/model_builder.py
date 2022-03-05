@@ -223,6 +223,7 @@ def build_input_by_topological_order(
         train_input_names.append(node)
         train_inputs.append(torch.tensor(train_inputs_dict[node], dtype=dtype))
 
+    # NOTE: if train_targets_dict has extra metrics that doesn't exist in performance model, they are not considerd
     for node in node_order:
         if node in param_space:
             continue

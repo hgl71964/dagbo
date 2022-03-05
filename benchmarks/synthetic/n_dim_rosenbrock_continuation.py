@@ -27,7 +27,7 @@ flags.DEFINE_enum("tuner", "dagbo-ssa", ["dagbo-direct", "dagbo-ssa", "bo"],
                   "tuner to use")
 flags.DEFINE_enum("device", "gpu", ["cpu", "gpu"], "device to use")
 flags.DEFINE_string("exp_name", "SOBOL-spark-wordcount", "Experiment name")
-flags.DEFINE_string("load_name", "SOBOL-spark-wordcount",
+flags.DEFINE_string("load_name", "must provide",
                     "load from experiment name")
 flags.DEFINE_string("acq_name", "qEI", "acquisition function name")
 flags.DEFINE_string("performance_model_path", "must provide",
@@ -43,10 +43,10 @@ flags.DEFINE_integer("minimize", 1, "min or max objective")
 acq_func_config = {
     "q": 1,
     "num_restarts": 64,
-    "raw_samples": int(1024*2),
+    "raw_samples": int(1024),
     # NOTE: most mem-intensive
     # for 3D-rosenbrock, can use 512
-    "num_samples": int(256),
+    "num_samples": int(512),
     # only a placeholder for {EI, qEI}, will be overwritten per iter
     "y_max": torch.tensor([1.]),
     "beta": 1,  # for UCB

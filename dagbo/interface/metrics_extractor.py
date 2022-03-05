@@ -1,5 +1,6 @@
 import re
 from warnings import warn
+import numpy as np
 
 import requests
 from absl import app
@@ -37,6 +38,58 @@ def main(_):
     app_id = "application_1641844906451_0006"
     base_url = "http://localhost:18080"
     request_history_server(base_url, app_id)
+
+
+def extract_and_aggregate(params: dict[str, float],
+                          train_inputs_dict: dict[str, np.ndarray],
+                          train_targets_dict: dict[str, np.ndarray],
+                          hibench_report_path: str, log_path: str,
+                          base_url: str) -> float:
+    """
+    extract & aggregation metric & populate data
+    """
+    # throughput
+    val = extract_throughput(hibench_report_path)
+    val = float(val)
+
+    # extract and append intermediate metric
+    app_id = extract_app_id(log_path)
+    metric = request_history_server(base_url, app_id)
+
+    ## get metrics across executors
+    agg_m = {}
+    for _, perf in metric.items():
+        for monitoring_metic, v in perf.items():
+            if monitoring_metic in agg_m:
+                agg_m[monitoring_metic].append(
+                    float(v))  # XXX all monitoring v are float?
+            else:
+                agg_m[monitoring_metic] = [float(v)]
+    ### add final obj
+    agg_m["throughput"] = val
+
+    ## aggregate metrics
+    ## NOTE: k: feature name - v: list[float], shape: [num_executors, ]
+    ## NOTE: k includes all metrics name defined in _aggregate_across_stages
+    for k, v in agg_m.items():
+        # convert to tensor & average
+        #agg_v = torch.tensor(v, dtype=torch_dtype).mean().reshape(-1)
+        agg_v = np.array(v).mean().reshape(-1)
+        agg_m[k] = agg_v
+
+    # populate input
+    for k, v in params.items():
+        if k in train_inputs_dict:
+            train_inputs_dict[k] = np.append(train_inputs_dict[k], v)
+        else:
+            train_inputs_dict[k] = v
+    # populate output
+    for k, v in agg_m.items():
+        if k in train_targets_dict:
+            train_targets_dict[k] = np.append(train_targets_dict[k], v)
+        else:
+            train_targets_dict[k] = v
+    return val
 
 
 def extract_throughput(hibench_report_path: str) -> str:
