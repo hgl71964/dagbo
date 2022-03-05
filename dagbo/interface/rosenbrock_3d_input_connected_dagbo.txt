@@ -1,0 +1,32 @@
+digraph rosenbrock {
+	graph [rankdir=LR]
+	subgraph cluster_0 {
+		color=lightgrey style=filled
+		label=param
+		x0 [label=x0 shape=triangle]
+		x1 [label=x1 shape=triangle]
+		x2 [label=x2 shape=triangle]
+	}
+	subgraph cluster_1 {
+		color=blue
+		i0 [label=i0]
+		i1 [label=i1]
+		f0 [label=f0]
+		f1 [label=f1]
+		label="intermediate metrics"
+	}
+	subgraph cluster_2 {
+		final [label=final]
+	}
+	x0 -> i0
+	x0 -> f0
+	x1 -> i1
+	x2 -> i1
+	i0 -> f0
+	i1 -> f1
+	x0 -> final
+	x1 -> final
+	x2 -> final
+	f0 -> final
+	f1 -> final
+}

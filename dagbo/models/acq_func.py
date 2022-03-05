@@ -18,7 +18,6 @@ from dagbo.utils.perf_model_utils import get_dag_topological_order
 def inner_loop(exp: Experiment,
                model: Union[Dag, SingleTaskGP],
                param_space: dict,
-               obj_space: dict,
                acq_name: str,
                acq_func_config: dict,
                dtype=torch.float64) -> Tensor:

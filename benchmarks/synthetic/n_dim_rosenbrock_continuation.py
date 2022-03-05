@@ -119,7 +119,6 @@ def main(_):
             exp,
             model,
             param_space,
-            obj_space,
             acq_name=FLAGS.acq_name,
             acq_func_config=acq_func_config,
         )
