@@ -57,7 +57,7 @@ def obj(params: dict[str, float]) -> float:
     val = extract_throughput(FLAGS.hibench_report_path)
     val = float(val)
     print()
-    print(f"reward: {val:.2f}x")
+    print(f"reward: {val:.2f}")
     print()
     # NOTE: convert if not minimize
     if bool(FLAGS.minimize):

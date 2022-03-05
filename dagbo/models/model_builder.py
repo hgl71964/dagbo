@@ -251,7 +251,8 @@ def standard_dict(input_dict, standardisation):
     dict_ = deepcopy(input_dict)
     if standardisation:
         for k, v in dict_.items():
-            tmp = StandardScaler().fit_transform(v.reshape(-1, 1))
+            # StandardScaler, MinMaxScaler
+            tmp = MinMaxScaler().fit_transform(v.reshape(-1, 1))
             dict_[k] = tmp.reshape(-1)
     return dict_
 
