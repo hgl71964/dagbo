@@ -1,11 +1,13 @@
 #! /bin/bash
 
 # config
-n=3
+n=20
 epochs=30
 workload="rosenbrock-${n}D" # workload name need to match EXACTLY, it is lower case
-repeat=4
+repeat=9
 norm=1
+minimize=1  # rosenbrock obj is to be minimized
+device=gpu
 
 # create if not exist
 mkdir -p benchmarks/data
@@ -41,8 +43,10 @@ do
                 --epochs $epochs \
                 --n_dim $n \
                 --norm $norm \
-                --performance_model_path dagbo/interface/rosenbrock_3d_dagbo.txt \
-                --tuner bo \
+                --minimize $minimize \
+                --device ${device} \
+                --performance_model_path dagbo/interface/rosenbrock_20d_dagbo.txt \
+                --tuner dagbo-ssa \
                 --acq_name qUCB
 
         python3.9 ./benchmarks/synthetic/n_dim_rosenbrock_continuation.py \
@@ -52,8 +56,10 @@ do
                 --epochs $epochs \
                 --n_dim $n \
                 --norm $norm \
-                --performance_model_path dagbo/interface/rosenbrock_3d_dagbo.txt \
-                --tuner bo \
+                --minimize $minimize \
+                --device ${device} \
+                --performance_model_path dagbo/interface/rosenbrock_20d_dagbo.txt \
+                --tuner dagbo-ssa \
                 --acq_name qEI
 
         python3.9 ./benchmarks/synthetic/n_dim_rosenbrock_continuation.py \
@@ -63,8 +69,10 @@ do
                 --epochs $epochs \
                 --n_dim $n \
                 --norm $norm \
-                --performance_model_path dagbo/interface/rosenbrock_3d_dagbo.txt \
-                --tuner dagbo-ssa \
+                --minimize $minimize \
+                --device ${device} \
+                --performance_model_path dagbo/interface/rosenbrock_20d_dagbo.txt \
+                --tuner bo \
                 --acq_name qUCB
 
         python3.9 ./benchmarks/synthetic/n_dim_rosenbrock_continuation.py \
@@ -74,8 +82,10 @@ do
                 --epochs $epochs \
                 --n_dim $n \
                 --norm $norm \
-                --performance_model_path dagbo/interface/rosenbrock_3d_dagbo.txt \
-                --tuner dagbo-ssa \
+                --minimize $minimize \
+                --device ${device} \
+                --performance_model_path dagbo/interface/rosenbrock_20d_dagbo.txt \
+                --tuner bo \
                 --acq_name qEI
 done
 

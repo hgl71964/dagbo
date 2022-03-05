@@ -11,6 +11,7 @@ from ax.storage.metric_registry import register_metric
 
 from dagbo.models.model_builder import build_model
 from dagbo.models.acq_func import inner_loop
+from dagbo.utils.basic_utils import gpu_usage
 from dagbo.utils.ax_experiment_utils import (candidates_to_generator_run,
                                              load_exp, load_dict,
                                              print_experiment_result,
@@ -24,6 +25,7 @@ load an experiment with initial sobol points & run opt loop
 FLAGS = flags.FLAGS
 flags.DEFINE_enum("tuner", "dagbo-ssa", ["dagbo-direct", "dagbo-ssa", "bo"],
                   "tuner to use")
+flags.DEFINE_enum("device", "gpu", ["cpu", "gpu"], "device to use")
 flags.DEFINE_string("exp_name", "SOBOL-spark-wordcount", "Experiment name")
 flags.DEFINE_string("load_name", "SOBOL-spark-wordcount",
                     "load from experiment name")
@@ -40,9 +42,11 @@ flags.DEFINE_integer("minimize", 1, "min or max objective")
 # flags cannot define dict, acq_func_config will be affected by side-effect
 acq_func_config = {
     "q": 1,
-    "num_restarts": 128,
-    "raw_samples": int(1024),
-    "num_samples": int(512),  # most mem-intensive
+    "num_restarts": 64,
+    "raw_samples": int(1024*2),
+    # NOTE: most mem-intensive
+    # for 3D-rosenbrock, can use 512
+    "num_samples": int(256),
     # only a placeholder for {EI, qEI}, will be overwritten per iter
     "y_max": torch.tensor([1.]),
     "beta": 1,  # for UCB
@@ -83,9 +87,12 @@ def main(_):
     global train_inputs_dict, train_targets_dict
     train_inputs_dict, train_targets_dict = load_dict(FLAGS.load_name)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    device_name = torch.cuda.get_device_name() if torch.cuda.is_available(
-    ) else device
+    # device
+    device = torch.device("cpu")
+    device_name = device
+    if torch.cuda.is_available() and FLAGS.device == "gpu":
+        device = torch.device("cuda")
+        device_name = torch.cuda.get_device_name()
 
     print()
     print(f"==== resume from experiment sobol ====")
@@ -98,7 +105,7 @@ def main(_):
 
     print()
     print(
-        f"==== start experiment: {exp.name} with tuner: {FLAGS.tuner} & {FLAGS.acq_name} & device {device_name} ===="
+        f"==== start experiment: {exp.name} with tuner: {FLAGS.tuner} & {FLAGS.acq_name} ===="
     )
     print("minimize: ", bool(FLAGS.minimize))
     print()
@@ -132,6 +139,9 @@ def main(_):
         end = time.perf_counter() - start
         res = float(trial.fetch_data().df["mean"])
         print(f"time: {end:.2f} - results: {res:.2f}")
+        if torch.cuda.is_available() and FLAGS.device == "gpu":
+            torch.cuda.empty_cache()
+            gpu_usage()
         print()
 
     print()
