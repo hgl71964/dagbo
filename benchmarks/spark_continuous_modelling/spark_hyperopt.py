@@ -2,7 +2,7 @@ from absl import app
 from absl import flags
 
 import numpy as np
-from hyperopt import fmin, tpe, rand
+from hyperopt import fmin
 
 from ax import Metric
 from ax.storage.metric_registry import register_metric

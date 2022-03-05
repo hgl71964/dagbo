@@ -4,7 +4,7 @@
 
 ## tuner
 epochs=20
-repeat=2
+repeat=4
 norm=1
 minimize=0
 device="cpu"
@@ -52,7 +52,7 @@ do
         echo
 
         # sequential experiment
-        python3.9 ./benchmarks/spark_sobol.py \
+        python3.9 ./benchmarks/spark_continuous_modelling/spark_sobol.py \
                 --bootstrap 5 \
                 --exp_name ${exp_name} \
                 --seed $num \
@@ -81,23 +81,6 @@ do
                 --base_url ${base_url}
 
         python3.9 ./benchmarks/spark_continuous_modelling/spark_continuation.py \
-                --tuner dagbo-ssa \
-                --acq_name qEI \
-                --epochs $epochs \
-                --load_name SOBOL-${exp_name} \
-                --exp_name ${exp_name} \
-                --seed $num \
-                --norm $norm \
-                --minimize $minimize \
-                --device ${device} \
-                --performance_model_path ${performance_model_path} \
-                --conf_path ${conf_path} \
-                --exec_path ${exec_path} \
-                --log_path ${log_path} \
-                --hibench_report_path ${hibench_report_path} \
-                --base_url ${base_url}
-
-        python3.9 ./benchmarks/spark_continuous_modelling/spark_continuation.py \
                 --tuner bo \
                 --acq_name qUCB \
                 --epochs $epochs \
@@ -114,16 +97,13 @@ do
                 --hibench_report_path ${hibench_report_path} \
                 --base_url ${base_url}
 
-        python3.9 ./benchmarks/spark_continuous_modelling/spark_continuation.py \
-                --tuner bo \
-                --acq_name qEI \
+        python3.9 ./benchmarks/spark_continuous_modelling/spark_hyperopt.py \
+                --tuner rand \
                 --epochs $epochs \
                 --load_name SOBOL-${exp_name} \
                 --exp_name ${exp_name} \
                 --seed $num \
-                --norm $norm \
                 --minimize $minimize \
-                --device ${device} \
                 --performance_model_path ${performance_model_path} \
                 --conf_path ${conf_path} \
                 --exec_path ${exec_path} \

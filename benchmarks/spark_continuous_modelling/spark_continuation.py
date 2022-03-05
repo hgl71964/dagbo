@@ -61,7 +61,7 @@ acq_func_config = {
     "q": 1,
     "num_restarts": 64,
     "raw_samples": int(1024),
-    "num_samples": int(512),
+    "num_samples": int(1024),
     "y_max": torch.tensor([
         1.
     ]),  # only a placeholder for {EI, qEI}, will be overwritten per iter

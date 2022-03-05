@@ -1,7 +1,7 @@
 import datetime
 import pandas as pd
 
-from hyperopt import hp
+from hyperopt import hp, tpe, rand
 from hyperopt.base import Trials, trials_from_docs, JOB_STATE_DONE
 import ax
 from ax import Experiment, RangeParameter
