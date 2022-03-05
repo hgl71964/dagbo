@@ -27,8 +27,7 @@ flags.DEFINE_enum("tuner", "dagbo-ssa", ["dagbo-direct", "dagbo-ssa", "bo"],
                   "tuner to use")
 flags.DEFINE_enum("device", "gpu", ["cpu", "gpu"], "device to use")
 flags.DEFINE_string("exp_name", "SOBOL-spark-wordcount", "Experiment name")
-flags.DEFINE_string("load_name", "must provide",
-                    "load from experiment name")
+flags.DEFINE_string("load_name", "must provide", "load from experiment name")
 flags.DEFINE_string("acq_name", "qEI", "acquisition function name")
 flags.DEFINE_string("performance_model_path", "must provide",
                     "graphviz source path")

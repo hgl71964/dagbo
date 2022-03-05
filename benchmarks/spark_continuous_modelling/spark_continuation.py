@@ -13,8 +13,7 @@ from dagbo.models.model_builder import build_model
 from dagbo.models.acq_func import inner_loop
 from dagbo.utils.basic_utils import gpu_usage
 from dagbo.utils.ax_experiment_utils import (candidates_to_generator_run,
-                                             load_exp,
-                                             load_dict,
+                                             load_exp, load_dict,
                                              print_experiment_result,
                                              save_dict, save_exp)
 from dagbo.interface.exec_spark import call_spark
@@ -29,10 +28,10 @@ flags.DEFINE_enum("tuner", "dagbo-ssa", ["dagbo-direct", "dagbo-ssa", "bo"],
                   "tuner to use")
 flags.DEFINE_enum("device", "gpu", ["cpu", "gpu"], "device to use")
 flags.DEFINE_string("exp_name", "SOBOL-spark-wordcount", "Experiment name")
-flags.DEFINE_string("load_name", "must provide",
-                    "load from experiment name")
+flags.DEFINE_string("load_name", "must provide", "load from experiment name")
 flags.DEFINE_string("acq_name", "qUCB", "acquisition function name")
-flags.DEFINE_string( "performance_model_path", "must provide", "graphviz source path")
+flags.DEFINE_string("performance_model_path", "must provide",
+                    "graphviz source path")
 
 flags.DEFINE_string(
     "conf_path", "/home/gh512/workspace/bo/spark-dir/hiBench/conf/spark.conf",
@@ -71,6 +70,7 @@ acq_func_config = {
 train_inputs_dict = {}
 train_targets_dict = {}
 
+
 class SparkMetric(Metric):
     def fetch_trial_data(self, trial, **kwargs):
         records = []
@@ -92,6 +92,7 @@ class SparkMetric(Metric):
                 "trial_index": trial.index,
             })
         return ax.core.data.Data(df=pd.DataFrame.from_records(records))
+
 
 def main(_):
     # seeding
@@ -167,7 +168,8 @@ def main(_):
     print(print_experiment_result(exp))
     save_name = f"{FLAGS.exp_name}-{FLAGS.tuner}-{FLAGS.acq_name}"
     save_exp(exp, save_name)
-    save_dict([train_inputs_dict, train_targets_dict, acq_func_config], save_name)
+    save_dict([train_inputs_dict, train_targets_dict, acq_func_config],
+              save_name)
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
 # config
 
 ## tuner
-epoch=20
+epochs=20
 repeat=2
 norm=1
 minimize=0
@@ -15,7 +15,7 @@ hibench_home="/home/gh512/workspace/bo/spark-dir/hiBench"
 hdfs_path="/HiBench"
 
 ## paths
-performance_model_path=""
+performance_model_path="dagbo/interface/spark_continuous_performance_model.txt"
 conf_path="/home/gh512/workspace/bo/spark-dir/hiBench/conf/spark.conf"
 exec_path="/home/gh512/workspace/bo/spark-dir/hiBench/bin/workloads/micro/wordcount/spark/run.sh"
 log_path="/home/gh512/workspace/bo/spark-dir/hiBench/report/wordcount/spark/bench.log"
@@ -131,10 +131,19 @@ do
                 --hibench_report_path ${hibench_report_path} \
                 --base_url ${base_url}
 
-        # TODO
         python3.9 ./benchmarks/spark_continuous_modelling/spark_hyperopt.py \
+                --tuner tpe \
+                --epochs $epochs \
+                --load_name SOBOL-${exp_name} \
                 --exp_name ${exp_name} \
-                --tuner tpe
+                --seed $num \
+                --minimize $minimize \
+                --performance_model_path ${performance_model_path} \
+                --conf_path ${conf_path} \
+                --exec_path ${exec_path} \
+                --log_path ${log_path} \
+                --hibench_report_path ${hibench_report_path} \
+                --base_url ${base_url}
 done
 
 

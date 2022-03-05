@@ -7,6 +7,15 @@ import ax
 from ax import Experiment, RangeParameter
 
 
+def get_model(tuner: str):
+    if tuner == "rand":
+        return rand.suggest
+    elif tuner == "tpe":
+        return tpe.suggest
+    else:
+        raise ValueError("unable to recognize tuner")
+
+
 def search_space_from_ax_experiment(exp: Experiment) -> dict:
     """
     convert ax-platform's experiment search space
@@ -101,8 +110,3 @@ def build_trials_from_sobol(exp: Experiment) -> Trials:
 
     return trials_from_docs(
         docs)  # built-in func to gen Trials for hyperopt from docs
-
-
-# TODO
-def print_hyperopt_results():
-    return
