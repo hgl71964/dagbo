@@ -5,14 +5,9 @@ from absl import flags
 import numpy as np
 import pandas as pd
 import torch
-from torch import Tensor
-from botorch.models import SingleTaskGP
-
 import ax
-from ax.modelbridge.registry import Models
-from ax import SearchSpace, Experiment, OptimizationConfig, Objective, Metric
+from ax import Experiment, Metric
 from ax.storage.metric_registry import register_metric
-from ax.runners.synthetic import SyntheticRunner
 
 from dagbo.models.model_builder import build_model
 from dagbo.models.acq_func import inner_loop
@@ -65,9 +60,9 @@ flags.DEFINE_integer("minimize", 1, "min or max objective")
 # flags cannot define dict, acq_func_config will be affected by side-effect
 acq_func_config = {
     "q": 1,
-    "num_restarts": 48,
-    "raw_samples": 128,
-    "num_samples": int(1024 * 2),
+    "num_restarts": 64,
+    "raw_samples": int(1024),
+    "num_samples": int(512),
     "y_max": torch.tensor([
         1.
     ]),  # only a placeholder for {EI, qEI}, will be overwritten per iter
@@ -83,6 +78,7 @@ class SparkMetric(Metric):
             params = arm.parameters
             # exec spark & retrieve throughput
             call_spark(params, FLAGS.conf_path, FLAGS.exec_path)
+            # side-effect
             val = extract_and_aggregate(params, train_inputs_dict,
                                         train_targets_dict,
                                         FLAGS.hibench_report_path,
@@ -147,8 +143,9 @@ def main(_):
         )
         gen_run = candidates_to_generator_run(exp, candidates, param_space)
 
-        # before run, param will be type-checked, so some XXX param needs to be conversed before this line
         # run
+        # before run, param will be type-checked,
+        # so some XXX param needs to be conversed before this line
         if acq_func_config["q"] == 1:
             trial = exp.new_trial(generator_run=gen_run)
         else:

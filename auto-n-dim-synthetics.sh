@@ -88,5 +88,3 @@ do
                 --tuner bo \
                 --acq_name qEI
 done
-
-
