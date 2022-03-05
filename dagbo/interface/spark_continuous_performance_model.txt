@@ -30,6 +30,7 @@ digraph "continuous-spark-performance-model" {
 	"executor.memory" -> throughput
 	"default.parallelism" -> executorDeserializeCpuTime
 	"default.parallelism" -> executorCpuTime
+	"default.parallelism" -> throughput
 	"memory.fraction" -> jvmGcTime
 	"memory.fraction" -> throughput
 	executorCpuTime -> executorRunTime

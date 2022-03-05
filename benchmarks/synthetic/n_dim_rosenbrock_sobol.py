@@ -12,7 +12,7 @@ from ax.storage.metric_registry import register_metric
 from ax.runners.synthetic import SyntheticRunner
 
 from dagbo.interface.exec_n_dim_rosenbrock import call_rosenbrock
-from dagbo.utils.ax_experiment_utils import candidates_to_generator_run, save_exp, save_dict, print_experiment_result
+from dagbo.utils.ax_experiment_utils import save_exp, save_dict, print_experiment_result
 """
 gen initial sobol points for an experiment
 """

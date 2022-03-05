@@ -1,15 +1,9 @@
-import os
-import sys
 from absl import app
 from absl import flags
-from typing import Union
-import datetime
 
 import numpy as np
 import pandas as pd
 import torch
-from torch import Tensor
-from botorch.models import SingleTaskGP
 
 import ax
 from ax.modelbridge.registry import Models
@@ -19,8 +13,7 @@ from ax.runners.synthetic import SyntheticRunner
 
 from dagbo.dag import Dag
 from dagbo.fit_dag import fit_dag
-from dagbo.utils.perf_model_utils import build_perf_model_from_spec_ssa, build_perf_model_from_spec_direct
-from dagbo.utils.ax_experiment_utils import candidates_to_generator_run, save_exp, get_dict_tensor, save_dict, print_experiment_result
+from dagbo.utils.ax_experiment_utils import save_exp, save_dict, print_experiment_result
 from dagbo.interface.exec_spark import call_spark
 from dagbo.interface.parse_performance_model import parse_model
 from dagbo.interface.metrics_extractor import extract_throughput, extract_app_id, request_history_server
@@ -31,6 +24,10 @@ gen initial sobol points for an experiment
 FLAGS = flags.FLAGS
 flags.DEFINE_string("metric_name", "spark_throughput", "metric name")
 flags.DEFINE_string("exp_name", "spark-wordcount", "Experiment name")
+flags.DEFINE_integer("bootstrap", 5, "bootstrap", lower_bound=1)
+flags.DEFINE_integer("seed", 0, "rand seed")
+flags.DEFINE_integer("minimize", 0, "min or max objective")
+
 flags.DEFINE_string(
     "conf_path", "/home/gh512/workspace/bo/spark-dir/hiBench/conf/spark.conf",
     "conf file path")
@@ -48,15 +45,9 @@ flags.DEFINE_string(
     "hibench report file path")
 flags.DEFINE_string("base_url", "http://localhost:18080",
                     "history server base url")
-flags.DEFINE_integer("bootstrap", 5, "bootstrap", lower_bound=1)
-flags.DEFINE_boolean("minimize", False, "min or max objective")
 
-# global var so that SparkMetric can populate
+train_inputs_dict = {}
 train_targets_dict = {}
-normal_dict = {}  # hold original value for metric, used for normalised metric
-torch_dtype = torch.float64
-#np.random.seed(0)
-#torch.manual_seed(0)
 
 
 class SparkMetric(Metric):
@@ -65,6 +56,7 @@ class SparkMetric(Metric):
         for arm_name, arm in trial.arms_by_name.items():
             params = arm.parameters
 
+            # TODO
             # exec spark & retrieve throughput
             call_spark(params, FLAGS.conf_path, FLAGS.exec_path)
             val = extract_throughput(FLAGS.hibench_report_path)
@@ -127,8 +119,9 @@ class SparkMetric(Metric):
 
 def main(_):
 
-    # for saving
-    register_metric(SparkMetric)
+    # seeding
+    np.random.seed(FLAGS.seed)
+    torch.manual_seed(FLAGS.seed)
 
     # build experiment
     ## for now need to define manually
@@ -187,7 +180,7 @@ def main(_):
     print(print_experiment_result(exp))
 
     # save
-    dt = datetime.datetime.today()
+    register_metric(SparkMetric)
     save_name = f"SOBOL-{FLAGS.exp_name}"
     save_exp(exp, save_name)
     save_dict([train_targets_dict, normal_dict], save_name)
