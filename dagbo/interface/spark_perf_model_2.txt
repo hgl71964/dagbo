@@ -1,0 +1,39 @@
+digraph "perf-model-2" {
+	graph [rankdir=LR]
+	subgraph cluster_0 {
+		color=lightgrey style=filled
+		label=param
+		"executor.num[*]" [label="executor.num[*]" shape=circle]
+		"executor.memory" [label="executor.memory" shape=circle]
+		"executor.cores" [label="executor.cores" shape=circle]
+		"default.parallelism" [label="default.parallelism" shape=circle]
+		"memory.fraction" [label="memory.fraction" shape=circle]
+	}
+	subgraph cluster_1 {
+		color=blue
+		taskTime [label=taskTime]
+		executorRunTime [label=executorRunTime]
+		executorDeserializeTime [label=executorDeserializeTime]
+		jvmGcTime [label=jvmGcTime]
+		label="intermediate metrics"
+	}
+	subgraph cluster_2 {
+		throughput [label=throughput]
+	}
+	"executor.num[*]" -> executorRunTime
+	"executor.num[*]" -> executorDeserializeTime
+	"executor.cores" -> executorRunTime
+	"executor.cores" -> executorDeserializeTime
+	"default.parallelism" -> executorRunTime
+	"default.parallelism" -> executorDeserializeTime
+	"executor.memory" -> executorRunTime
+	"executor.memory" -> executorDeserializeTime
+	"memory.fraction" -> executorRunTime
+	"memory.fraction" -> executorDeserializeTime
+	"executor.memory" -> jvmGcTime
+	"memory.fraction" -> jvmGcTime
+	jvmGcTime -> taskTime
+	executorRunTime -> taskTime
+	executorDeserializeTime -> taskTime
+	taskTime -> throughput
+}

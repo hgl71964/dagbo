@@ -91,6 +91,9 @@ def extract_and_aggregate(params: dict[str, float],
             train_targets_dict[k] = v
     return val
 
+"""
+App-level extraction
+"""
 
 def extract_throughput(hibench_report_path: str) -> str:
     """
@@ -134,6 +137,9 @@ def request_history_server(base_url,
     exec_map = _get_executors_metric(base_url, app_id, stage_ids)
     return _post_processing(exec_map)
 
+"""
+fine-grained metric extraction
+"""
 
 def _post_processing(exec_map):
     """
