@@ -70,11 +70,11 @@ class Node(ExactGP):
         self.input_names = input_names
         self.output_name = output_name
 
-        self.mean = ConstantMean(
-            batch_shape=batch_shape) if mean is None else mean
-        #self.mean = LinearMean(
-        #    input_size=num_inputs,
+        #self.mean = ConstantMean(
         #    batch_shape=batch_shape) if mean is None else mean
+        self.mean = LinearMean(
+            input_size=num_inputs,
+            batch_shape=batch_shape) if mean is None else mean
 
         # Use UniformPrior for MCMC, use GammaPrior for Torch/Scipy
         # loss = inf when using UniformPrior with Torch/Scipy so they can't learn

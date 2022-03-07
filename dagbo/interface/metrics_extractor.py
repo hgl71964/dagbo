@@ -74,7 +74,8 @@ def extract_and_aggregate(params: dict[str, float],
     for k, v in agg_m.items():
         # convert to tensor & average
         #agg_v = torch.tensor(v, dtype=torch_dtype).mean().reshape(-1)
-        agg_v = np.array(v).mean().reshape(-1)
+        #agg_v = np.array(v).mean().reshape(-1)
+        agg_v = np.array(v).sum().reshape(-1)
         agg_m[k] = agg_v
 
     # populate input
