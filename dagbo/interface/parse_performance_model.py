@@ -36,12 +36,26 @@ def _population_spaces(path: str):
             elif c == 1:  # metric
                 if '=' not in l[0]:  # ok
                     name = l[0].strip("\"")
-                    metric_space[name] = 0
+                    try:
+                        shape = l[2]
+                    except:
+                        shape = None
+                    ppt = 0
+                    if shape and "square" in shape:
+                        ppt = "add"
+                    metric_space[name] = ppt
 
             elif c == 2:  # obj
                 if '=' not in l[0]:  # ok
                     name = l[0].strip("\"")
-                    obj_space[name] = 0
+                    try:
+                        shape = l[2]
+                    except:
+                        shape = None
+                    ppt = 0
+                    if shape and "square" in shape:
+                        ppt = "add"
+                    obj_space[name] = ppt
 
     #print(param_space)
     #print(metric_space)

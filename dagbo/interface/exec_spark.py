@@ -106,7 +106,7 @@ CAT_MAPPING = {
 
 # they should mean the same thing
 DUPLICATE_MAPPING = {
-        "hibench.yarn.executor.num": "spark.executor.instances",
+    "hibench.yarn.executor.num": "spark.executor.instances",
 }
 
 

@@ -2,9 +2,13 @@ from typing import Union
 from copy import deepcopy
 
 import torch
+import gpytorch
 import numpy as np
 from torch import Tensor
 from ax import Experiment
+from gpytorch.priors.torch_priors import GammaPrior
+from gpytorch.kernels.matern_kernel import MaternKernel
+from gpytorch.kernels.scale_kernel import ScaleKernel
 from botorch.models import SingleTaskGP
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
@@ -105,8 +109,8 @@ def build_perf_model_from_spec_ssa(
 
     Core Args:
         param_space: key: param name - val: `categorical` or `continuous`
-        metric_space: key: metric name - val: no meaning
-        obj_space: key: obj name - val: no meaning
+        metric_space: key: metric name - val: property of the node
+        obj_space: key: obj name - val: property of the node
         edges: key: node names - val: list of name this node point to
             NOTE: edges are forward directions, i.e. from param_space -> metric_space -> obj_space
     """
@@ -145,7 +149,10 @@ def build_perf_model_from_spec_ssa(
         if node in param_space:
             dag.register_input(node)
         elif node in metric_space or node in obj_space:
-            dag.register_metric(node, [i for i in reversed_edge[node]])
+            covar = build_covar(node, metric_space, obj_space,
+                                reversed_edge[node])
+            dag.register_metric(node, [i for i in reversed_edge[node]],
+                                covar=covar)
         else:
             raise RuntimeError("unknown node")
     dag.to(device)
@@ -193,7 +200,10 @@ def build_perf_model_from_spec_direct(train_inputs_dict: dict[str, np.ndarray],
         if node in param_space:
             dag.register_input(node)
         elif node in metric_space or node in obj_space:
-            dag.register_metric(node, [i for i in reversed_edge[node]])
+            covar = build_covar(node, metric_space, obj_space,
+                                reversed_edge[node])
+            dag.register_metric(node, [i for i in reversed_edge[node]],
+                                covar=covar)
         else:
             raise RuntimeError("unknown node")
     dag.to(device)
@@ -280,3 +290,23 @@ def update_acq_func_config(acq_func_config,
     obj = keys[0]
     tmp = train_targets_dict[obj]
     acq_func_config["y_max"] = torch.tensor(tmp.max(), dtype=dtype)
+
+
+def build_covar(node: str, metric_space: dict, obj_space: dict,
+                children: list):
+    if node in metric_space:
+        ppt = metric_space[node]
+    elif node in obj_space:
+        ppt = obj_space[node]
+
+    covar = None
+    if isinstance(ppt, str):
+        if ppt == "add":
+            n = len(children)
+            base_kernel = ScaleKernel(MaternKernel(
+                nu=2.5, lengthscale_prior=GammaPrior(3.0, 6.0)),
+                                      outputscale_prior=GammaPrior(2.0, 0.15))
+            covar = gpytorch.kernels.AdditiveStructureKernel(
+                base_kernel=base_kernel, num_dims=n)
+            print(f"building {node} with additive kernels")
+    return covar
