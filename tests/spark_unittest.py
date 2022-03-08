@@ -111,8 +111,7 @@ class perf_model_test(unittest.TestCase):
     def setUp(self):
         # performance model
         param_space, metric_space, obj_space, edges = parse_model(
-            #"dagbo/interface/rosenbrock_20d_bo.txt")
-            "dagbo/interface/rosenbrock_3d_bo.txt")
+            "dagbo/interface/rosenbrock_3d_dagbo.txt")
         #"dagbo/interface/rosenbrock_3d_correct_model.txt")
         #"dagbo/interface/spark_performance_model.txt")
 
@@ -190,7 +189,7 @@ class perf_model_test(unittest.TestCase):
         print("app id")
         print(app_id)
 
-    @unittest.skip("ok")
+    #@unittest.skip("ok")
     def test_app_id_feat_extraction(self):
         log_path = "/home/gh512/workspace/bo/spark-dir/hiBench/report/wordcount/spark/bench.log"
         app_id = extract_app_id(log_path)

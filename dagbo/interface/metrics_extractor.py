@@ -54,29 +54,14 @@ def extract_and_aggregate(params: dict[str, float],
 
     # extract and append intermediate metric
     app_id = extract_app_id(log_path)
-    metric = request_history_server(base_url, app_id)
+    metric_list = request_history_server(base_url, app_id)
 
-    ## get metrics across executors
-    agg_m = {}
-    for _, perf in metric.items():
-        for monitoring_metic, v in perf.items():
-            if monitoring_metic in agg_m:
-                agg_m[monitoring_metic].append(
-                    float(v))  # XXX all monitoring v are float?
-            else:
-                agg_m[monitoring_metic] = [float(v)]
-    ### add final obj
+    # agg
+    agg_m = _aggregation(metric_list)
+    ## add final obj
     agg_m["throughput"] = val
-
-    ## aggregate metrics
-    ## NOTE: k: feature name - v: list[float], shape: [num_executors, ]
-    ## NOTE: k includes all metrics name defined in _aggregate_across_stages
-    for k, v in agg_m.items():
-        # convert to tensor & average
-        #agg_v = torch.tensor(v, dtype=torch_dtype).mean().reshape(-1)
-        #agg_v = np.array(v).mean().reshape(-1)
-        agg_v = np.array(v).sum().reshape(-1)
-        agg_m[k] = agg_v
+    ## unit conversion
+    agg_m = _post_processing(agg_m)
 
     # populate input
     for k, v in params.items():
@@ -92,9 +77,56 @@ def extract_and_aggregate(params: dict[str, float],
             train_targets_dict[k] = v
     return val
 
+
+def _aggregation(exec_metric_list: list[dict[str, list[float]]]) -> dict:
+    straggler_metric_list = []
+    num_stages = len(exec_metric_list)
+    if num_stages < 1:
+        raise RuntimeError("num stage < 1?")
+
+    # aggregate across executors, i.e. for each stage, find the straggler (max taskTime)
+    for stage_dict in range(num_stages):
+        straggler_id = None
+        straggler_time = -float("inf")
+        for executor_id, metric in stage_dict.items():
+            t = metric["taskTime"]
+            if t > straggler_time:
+                straggler_id = executor_id
+                straggler_time = t
+        if straggler_id is None:
+            raise ValueError("unable to find straggler")
+
+        straggler_metric_list.append(stage_dict[straggler_id])
+
+    # aggregate across stages, sum
+    d = {}
+    for per_stage_dict in straggler_metric_list:
+        for metric_name, val in per_stage_dict.items():
+            if metric_name not in d:
+                d[metric_name] = sum(val)
+            else:
+                d[metric_name] += sum(val)
+    return d
+
+
+def _post_processing(metric_map: dict[str, float]) -> dict[str, float]:
+    """
+    unit conversion etc...
+
+    time:
+    taskTime, executorDeserializeTime, executorRunTime, jvmGcTime are milliseconds
+    executorDeserializeCpuTime, executorCpuTime are nanoseconds
+    """
+    metric_map["executorDeserializeCpuTime"] = metric_map[
+        "executorDeserializeCpuTime"] * 1e-6
+    metric_map["executorCpuTime"] = metric_map["executorCpuTime"] * 1e-6
+    return metric_map
+
+
 """
 App-level extraction
 """
+
 
 def extract_throughput(hibench_report_path: str) -> str:
     """
@@ -126,39 +158,25 @@ def extract_app_id(log_path: str) -> str:
     return app_id
 
 
-def request_history_server(base_url,
-                           app_id) -> dict[str, dict[str, Union[int, float]]]:
+def request_history_server(base_url, app_id) -> list[dict]:
     """
     send request to spark's history_server, and extract monitoring metrics
 
     Returns:
-        exec_map. key: executor id - val: k, v pair of metric (map[str, union[int, float]])
+        exec_metric_list. list of per-stage exec_map, where k: executor id - v: list of metric values
     """
     stage_ids = _get_stages(base_url, app_id)
-    exec_map = _get_executors_metric(base_url, app_id, stage_ids)
-    return _post_processing(exec_map)
+    exec_metric_list = _get_executors_metric(base_url, app_id, stage_ids)
+    return exec_metric_list
+
 
 """
 fine-grained metric extraction
 """
 
-def _post_processing(exec_map):
-    """
-    unit conversion etc...
 
-    time:
-    taskTime, executorDeserializeTime, executorRunTime, jvmGcTime are milliseconds
-    executorDeserializeCpuTime, executorCpuTime are nanoseconds
-    """
-    for exec_id in exec_map:
-        exec_map[exec_id]["executorDeserializeCpuTime"] = exec_map[exec_id][
-            "executorDeserializeCpuTime"] * 1e-6
-        exec_map[exec_id][
-            "executorCpuTime"] = exec_map[exec_id]["executorCpuTime"] * 1e-6
-    return exec_map
-
-
-def _get_executors_metric(base_url, app_id, stage_ids):
+def _get_executors_metric(base_url, app_id,
+                          stage_ids) -> list[dict[str, list[float]]]:
     exec_metric_list = []
     for s_id in stage_ids:
         resp = requests.get(
@@ -180,56 +198,7 @@ def _get_executors_metric(base_url, app_id, stage_ids):
         stage_exec_map = _parse_per_stage_json(js)
         exec_metric_list.append(stage_exec_map)
 
-    return _aggregate_across_stages(exec_metric_list)
-
-
-def _aggregate_across_stages(exec_metric_list):
-    """
-    impl aggregation logic across stages
-    Args:
-        exec_metric_list: a list of exec_map, where each exec_map records per-stage executor metrics
-    Returns:
-        aggregated exec_map. key: executor id - val: k, v pair of metric (map[str, union[int, float]])
-    """
-    n = len(exec_metric_list)
-    if n < 1:
-        raise RuntimeError("num stage < 1?")
-
-    # init exec_map & its id
-    exec_map = {}
-    for stage in exec_metric_list:
-        for idx in stage:
-            if idx not in exec_map:
-                exec_map[idx] = {
-                    "taskTime": 0,
-                    "memoryBytesSpilled": 0,
-                    "diskBytesSpilled": 0,
-                    "executorDeserializeTime": 0,
-                    "executorDeserializeCpuTime": 0,
-                    "executorRunTime": 0,
-                    "executorCpuTime": 0,
-                    "jvmGcTime": 0,
-                }
-
-    # aggregate
-    for stage in exec_metric_list:
-        for idx in stage.keys():
-            exec_map[idx]["taskTime"] += stage[idx]["taskTime"]
-            exec_map[idx]["memoryBytesSpilled"] += stage[idx][
-                "memoryBytesSpilled"]
-            exec_map[idx]["diskBytesSpilled"] += stage[idx]["diskBytesSpilled"]
-
-            # list, where each element is task-level metric
-            exec_map[idx]["executorDeserializeTime"] += sum(
-                stage[idx]["executorDeserializeTime"])
-            exec_map[idx]["executorDeserializeCpuTime"] += sum(
-                stage[idx]["executorDeserializeCpuTime"])
-            exec_map[idx]["executorRunTime"] += sum(
-                stage[idx]["executorRunTime"])
-            exec_map[idx]["executorCpuTime"] += sum(
-                stage[idx]["executorCpuTime"])
-            exec_map[idx]["jvmGcTime"] += sum(stage[idx]["jvmGcTime"])
-    return exec_map
+    return exec_metric_list
 
 
 def _parse_per_stage_json(js) -> dict:
@@ -251,12 +220,15 @@ def _parse_per_stage_json(js) -> dict:
             tsp = task['speculative']
             warn(f"task {tid} has status {ts} and speculative {tsp}")
 
-        exec_map = _add_metric(exec_map, task)
+        exec_map = _append_metric(exec_map, task)
 
     return exec_map
 
 
-def _add_metric(exec_map, task):
+def _append_metric(exec_map, task):
+    """
+    add per-task level metric, to executor summary dict
+    """
     idx = task["executorId"]
 
     # XXX cases where the task's metrics cannot be extracted, just ignore for now
