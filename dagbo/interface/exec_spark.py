@@ -205,9 +205,12 @@ def _pre_process(param: dict[str, float]) -> dict[str, str]:
         param_[NAME_MAPPING[key]] = str(val)
 
     # duplicate mapping
+    add = {}
     for key, val in param_.items():
         if key in DUPLICATE_MAPPING:
-            param_[DUPLICATE_MAPPING[key]] = val
+            add[DUPLICATE_MAPPING[key]] = val
+    for k, v in add.items():
+        param_[k] = v
 
     # cat mapping
     for key in list(param_.keys()):
