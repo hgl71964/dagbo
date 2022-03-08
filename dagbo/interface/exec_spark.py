@@ -205,7 +205,7 @@ def _pre_process(param: dict[str, float]) -> dict[str, str]:
         param_[NAME_MAPPING[key]] = str(val)
 
     # duplicate mapping
-    for key, val in param.items():
+    for key, val in param_.items():
         if key in DUPLICATE_MAPPING:
             param_[DUPLICATE_MAPPING[key]] = val
 
