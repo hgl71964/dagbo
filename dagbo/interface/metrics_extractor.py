@@ -52,7 +52,7 @@ def extract_and_aggregate(params: dict[str, float],
     val = extract_throughput(hibench_report_path)
     val = float(val)
 
-    # extract and append intermediate metric
+    # extract app_id & intermediate metric
     app_id = extract_app_id(log_path)
     metric_list = request_history_server(base_url, app_id)
 
