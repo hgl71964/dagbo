@@ -104,6 +104,11 @@ CAT_MAPPING = {
     ]
 }
 
+# they should mean the same thing
+DUPLICATE_MAPPING = {
+        "hibench.yarn.executor.num": "spark.executor.instances",
+}
+
 
 def call_spark(param: dict[str, Union[float, int]], file_path: str,
                exec_path: str) -> None:
@@ -168,7 +173,6 @@ def _pre_process(param: dict[str, float]) -> dict[str, str]:
     """
     name mapping & unit mapping & bool mapping &
     """
-    param_ = {}
 
     # scale mapping
     for key, val in param.items():
@@ -195,9 +199,15 @@ def _pre_process(param: dict[str, float]) -> dict[str, str]:
         else:
             raise TypeError(f"unknown param {key} with value {val}")
 
-    # map from param to actual spark config name
+    # name mapping
+    param_ = {}
     for key, val in param.items():
         param_[NAME_MAPPING[key]] = str(val)
+
+    # duplicate mapping
+    for key, val in param.items():
+        if key in DUPLICATE_MAPPING:
+            param_[DUPLICATE_MAPPING[key]] = val
 
     # cat mapping
     for key in list(param_.keys()):

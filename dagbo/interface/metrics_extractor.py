@@ -85,7 +85,7 @@ def _aggregation(exec_metric_list: list[dict[str, list[float]]]) -> dict:
         raise RuntimeError("num stage < 1?")
 
     # aggregate across executors, i.e. for each stage, find the straggler (max taskTime)
-    for stage_dict in range(num_stages):
+    for stage_dict in exec_metric_list:
         straggler_id = None
         straggler_time = -float("inf")
         for executor_id, metric in stage_dict.items():
@@ -102,10 +102,12 @@ def _aggregation(exec_metric_list: list[dict[str, list[float]]]) -> dict:
     d = {}
     for per_stage_dict in straggler_metric_list:
         for metric_name, val in per_stage_dict.items():
+            if isinstance(val, list):
+                val = sum(val)
             if metric_name not in d:
-                d[metric_name] = sum(val)
+                d[metric_name] = val
             else:
-                d[metric_name] += sum(val)
+                d[metric_name] += val
     return d
 
 
