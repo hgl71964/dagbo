@@ -16,7 +16,7 @@ hdfs_path="/HiBench"
 
 ## paths
 exec_path="/home/gh512/workspace/bo/spark-dir/hiBench/bin/workloads/micro/wordcount/spark/run.sh"
-performance_model_path="dagbo/interface/spark_continuous_performance_model.txt"
+performance_model_path="dagbo/interface/spark_perf_model_4.txt"
 conf_path="/home/gh512/workspace/bo/spark-dir/hiBench/conf/spark.conf"
 log_path="/home/gh512/workspace/bo/spark-dir/hiBench/report/wordcount/spark/bench.log"
 hibench_report_path="/home/gh512/workspace/bo/spark-dir/hiBench/report/hibench.report"
