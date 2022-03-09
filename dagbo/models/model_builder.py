@@ -16,6 +16,7 @@ from dagbo.dag import Dag, lazy_SO_Dag
 from dagbo.dag_gpytorch_model import DagGPyTorchModel, direct_DagGPyTorchModel
 from dagbo.fit_dag import fit_dag
 from dagbo.models.gp_factory import make_gps, fit_gpr
+from dagbo.models.parametric_mean import LinearMean
 from dagbo.utils.perf_model_utils import get_dag_topological_order, find_inverse_edges
 
 
@@ -149,10 +150,10 @@ def build_perf_model_from_spec_ssa(
         if node in param_space:
             dag.register_input(node)
         elif node in metric_space or node in obj_space:
-            covar = build_covar(node, metric_space, obj_space,
-                                reversed_edge[node])
-            dag.register_metric(node, [i for i in reversed_edge[node]],
-                                covar=covar)
+            children = [i for i in reversed_edge[node]]
+            mean = build_mean(node, metric_space, obj_space, children)
+            covar = build_covar(node, metric_space, obj_space, children)
+            dag.register_metric(node, children, mean=mean, covar=covar)
         else:
             raise RuntimeError("unknown node")
     dag.to(device)
@@ -200,10 +201,10 @@ def build_perf_model_from_spec_direct(train_inputs_dict: dict[str, np.ndarray],
         if node in param_space:
             dag.register_input(node)
         elif node in metric_space or node in obj_space:
-            covar = build_covar(node, metric_space, obj_space,
-                                reversed_edge[node])
-            dag.register_metric(node, [i for i in reversed_edge[node]],
-                                covar=covar)
+            children = [i for i in reversed_edge[node]]
+            mean = build_mean(node, metric_space, obj_space, children)
+            covar = build_covar(node, metric_space, obj_space, children)
+            dag.register_metric(node, children, mean=mean, covar=covar)
         else:
             raise RuntimeError("unknown node")
     dag.to(device)
@@ -292,8 +293,23 @@ def update_acq_func_config(acq_func_config,
     acq_func_config["y_max"] = torch.tensor(tmp.max(), dtype=dtype)
 
 
+def build_mean(node: str, metric_space: dict, obj_space: dict,
+               children: list[str]):
+    if node in metric_space:
+        ppt = metric_space[node]
+    elif node in obj_space:
+        ppt = obj_space[node]
+
+    mean = None
+    if isinstance(ppt, str):
+        if ppt == "add":
+            n = len(children)
+            mean = LinearMean(input_size=n)
+    return mean
+
+
 def build_covar(node: str, metric_space: dict, obj_space: dict,
-                children: list):
+                children: list[str]):
     if node in metric_space:
         ppt = metric_space[node]
     elif node in obj_space:
@@ -308,5 +324,40 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
                                       outputscale_prior=GammaPrior(2.0, 0.15))
             covar = gpytorch.kernels.AdditiveStructureKernel(
                 base_kernel=base_kernel, num_dims=n)
-            print(f"building {node} with additive kernels")
+
+    # NOTE: only work with perf-model-7
+    elif node == "throughput":
+        print(f"building {node} with custom kernel")
+
+        m = {}
+        for i, child in enumerate(
+                children):  # executor.num[*], default.parallelism, taskTime
+            m[child] = i
+
+        # custom additive kernels
+        active_dims_1 = (m["executor.num[*]"], )
+        active_dims_2 = (m["default.parallelism"], )
+        active_dims_3 = (m["executor.num[*]"], m["default.parallelism"])
+        active_dims_4 = (m["taskTime"], )
+        base_1 = ScaleKernel(MaternKernel(nu=2.5,
+                                          active_dims=active_dims_1,
+                                          lengthscale_prior=GammaPrior(
+                                              3.0, 6.0)),
+                             outputscale_prior=GammaPrior(2.0, 0.15))
+        base_2 = ScaleKernel(MaternKernel(nu=2.5,
+                                          active_dims=active_dims_2,
+                                          lengthscale_prior=GammaPrior(
+                                              3.0, 6.0)),
+                             outputscale_prior=GammaPrior(2.0, 0.15))
+        base_3 = ScaleKernel(MaternKernel(nu=2.5,
+                                          active_dims=active_dims_3,
+                                          lengthscale_prior=GammaPrior(
+                                              3.0, 6.0)),
+                             outputscale_prior=GammaPrior(2.0, 0.15))
+        base_4 = ScaleKernel(MaternKernel(nu=2.5,
+                                          active_dims=active_dims_4,
+                                          lengthscale_prior=GammaPrior(
+                                              3.0, 6.0)),
+                             outputscale_prior=GammaPrior(2.0, 0.15))
+        covar = base_1 + base_2 + base_3 + base_4
     return covar
