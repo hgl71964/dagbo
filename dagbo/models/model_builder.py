@@ -337,7 +337,7 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
         # custom additive kernels
         active_dims_1 = (m["executor.num[*]"], )
         active_dims_2 = (m["default.parallelism"], )
-        active_dims_3 = (m["executor.num[*]"], m["default.parallelism"])
+        active_dims_3 = (m["executor.num[*]"], m["default.parallelism"]) # model 2D interaction
         active_dims_4 = (m["taskTime"], )
         base_1 = ScaleKernel(MaternKernel(nu=2.5,
                                           active_dims=active_dims_1,
