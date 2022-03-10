@@ -6,7 +6,7 @@
 epochs=20
 repeat=4
 norm=1
-minimize=0
+minimize=1
 device="cpu"
 
 ## hibench
