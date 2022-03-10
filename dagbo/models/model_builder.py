@@ -331,8 +331,8 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
             m[child] = i
 
         # active dim
-        mem_only_dim = (m["executor.memory"], )
-        mem_dim = (m["executor.memory"], m["memory.fraction"])
+        mem_dim = (m["executor.memory"], )
+        mem_2d_dim = (m["executor.memory"], m["memory.fraction"])
         rest_dim = ([
             v for k, v in m.items()
             if k != "memory.fraction" and k != "executor.memory"
@@ -345,7 +345,7 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
                                              3.0, 6.0)),
                             outputscale_prior=GammaPrior(2.0, 0.15))
         mem_2 = ScaleKernel(MaternKernel(nu=2.5,
-                                         active_dims=mem_only_dim,
+                                         active_dims=mem_2d_dim,
                                          lengthscale_prior=GammaPrior(
                                              3.0, 6.0)),
                             outputscale_prior=GammaPrior(2.0, 0.15))
@@ -380,7 +380,8 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
         # custom additive kernels
         active_dims_1 = (m["executor.num[*]"], )
         active_dims_2 = (m["default.parallelism"], )
-        active_dims_3 = (m["executor.num[*]"], m["default.parallelism"]
+        active_dims_3 = (m["executor.num[*]"], m["default.parallelism"])
+        active_dims_4 = (m["taskTime"],)
         all_dim = tuple([i for i in range(n)])
         base_1 = ScaleKernel(MaternKernel(nu=2.5,
                                           active_dims=active_dims_1,
@@ -398,9 +399,14 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
                                               3.0, 6.0)),
                              outputscale_prior=GammaPrior(2.0, 0.15))
         base_4 = ScaleKernel(MaternKernel(nu=2.5,
+                                          active_dims=active_dims_4,
+                                          lengthscale_prior=GammaPrior(
+                                              3.0, 6.0)),
+                             outputscale_prior=GammaPrior(2.0, 0.15))
+        base_5 = ScaleKernel(MaternKernel(nu=2.5,
                                           active_dims=all_dim,
                                           lengthscale_prior=GammaPrior(
                                               3.0, 6.0)),
                              outputscale_prior=GammaPrior(2.0, 0.15))
-        covar = base_1 + base_2 + base_3 + base_4
+        covar = base_1 + base_2 + base_3 + base_4 + base_5
     return covar
