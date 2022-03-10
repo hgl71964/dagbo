@@ -349,14 +349,15 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
                                          lengthscale_prior=GammaPrior(
                                              3.0, 6.0)),
                             outputscale_prior=GammaPrior(2.0, 0.15))
-        base_1 = ScaleKernel(MaternKernel(nu=2.5,
-                                          active_dims=set([i for i in range(n)]),
-                                          lengthscale_prior=GammaPrior(
-                                              3.0, 6.0)),
+        base_1 = ScaleKernel(MaternKernel(
+            nu=2.5,
+            active_dims=set([i for i in range(n)]),
+            lengthscale_prior=GammaPrior(3.0, 6.0)),
                              outputscale_prior=GammaPrior(2.0, 0.15))
         covar = mem_1 + mem_2 + base_1
 
     elif node == "taskTime":
+        print(f"building {node} with custom kernel")
         n = len(children)
         base_kernel = ScaleKernel(MaternKernel(nu=2.5,
                                                lengthscale_prior=GammaPrior(

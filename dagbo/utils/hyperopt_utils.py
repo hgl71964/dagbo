@@ -82,9 +82,15 @@ def build_trials_from_sobol(exp: Experiment, minimize: bool) -> Trials:
 
     # NOTE: the reward needs to flip sign, as hyperopt by default perform minimization
     if minimize:
-        results = [{"loss": i, "status": "ok"} for i in join_df["mean"].to_list()]
+        results = [{
+            "loss": i,
+            "status": "ok"
+        } for i in join_df["mean"].to_list()]
     else:
-        results = [{"loss": -i, "status": "ok"} for i in join_df["mean"].to_list()]
+        results = [{
+            "loss": -i,
+            "status": "ok"
+        } for i in join_df["mean"].to_list()]
     miscs = [{
         "tid": i,
         "cmd": ("domain_attachment", "FMinIter_Domain"),
