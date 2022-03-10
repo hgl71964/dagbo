@@ -351,7 +351,7 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
                             outputscale_prior=GammaPrior(2.0, 0.15))
         base_1 = ScaleKernel(MaternKernel(
             nu=2.5,
-            active_dims=set([i for i in range(n)]),
+            active_dims=tuple([i for i in range(n)]),
             lengthscale_prior=GammaPrior(3.0, 6.0)),
                              outputscale_prior=GammaPrior(2.0, 0.15))
         covar = mem_1 + mem_2 + base_1
