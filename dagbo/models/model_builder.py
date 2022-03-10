@@ -262,6 +262,8 @@ def standard_dict(input_dict, standardisation):
     dict_ = deepcopy(input_dict)
     if standardisation:
         for k, v in dict_.items():
+            if not isinstance(v, np.ndarray):
+                v = np.array([v])
             # StandardScaler, MinMaxScaler
             tmp = MinMaxScaler().fit_transform(v.reshape(-1, 1))
             dict_[k] = tmp.reshape(-1)
@@ -301,10 +303,9 @@ def build_mean(node: str, metric_space: dict, obj_space: dict,
         ppt = obj_space[node]
 
     mean = None
-    if isinstance(ppt, str):
-        if ppt == "add":
-            n = len(children)
-            mean = LinearMean(input_size=n)
+    if node == "taskTime":
+        n = len(children)
+        mean = LinearMean(input_size=n)
     return mean
 
 
@@ -316,7 +317,16 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
         ppt = obj_space[node]
 
     covar = None
-    if node == "taskTime":
+    if node == "executorRunTime":
+        print(f"building {node} with custom kernel")
+        child_set = set(["executor.memory", "memory.fraction", "executor.cores", "executor.num[*]", "default.parallelism"])
+        assert set(children) == child_set, f"{node} children error"
+
+        m = {}
+        for i, child in enumerate(children):
+            m[child] = i
+
+    elif node == "taskTime":
         n = len(children)
         base_kernel = ScaleKernel(MaternKernel(nu=2.5,
                                                lengthscale_prior=GammaPrior(
@@ -326,12 +336,13 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
             base_kernel=base_kernel, num_dims=n)
 
     # NOTE: only work with children has executor.num[*], default.parallelism, taskTime
-    elif node == "throughput":
+    elif node == "duration":
         print(f"building {node} with custom kernel")
+        child_set = set(["executor.num[*]", "default.parallelism", "taskTime"])
+        assert set(children) == child_set, f"{node} children error"
 
         m = {}
-        for i, child in enumerate(
-                children):  # executor.num[*], default.parallelism, taskTime
+        for i, child in enumerate(children):
             m[child] = i
 
         # custom additive kernels

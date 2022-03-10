@@ -15,6 +15,7 @@ hdfs_path="/HiBench"
 ## paths
 exec_path="/home/gh512/workspace/bo/spark-dir/hiBench/bin/workloads/ml/kmeans/spark/run.sh"
 performance_model_path="dagbo/interface/spark_perf_model_8.txt"
+hibench_report_path="/home/gh512/workspace/bo/spark-dir/hiBench/report/hibench.report"
 conf_path="/home/gh512/workspace/bo/spark-dir/hiBench/conf/spark.conf"
 base_url="http://localhost:18080"
 
@@ -55,6 +56,7 @@ do
                 --minimize $minimize \
                 --conf_path ${conf_path} \
                 --exec_path ${exec_path} \
+                --hibench_report_path ${hibench_report_path} \
                 --base_url ${base_url}
 
         python3.9 ./benchmarks/spark_continuous_modelling/spark_continuation.py \
@@ -70,6 +72,7 @@ do
                 --performance_model_path ${performance_model_path} \
                 --conf_path ${conf_path} \
                 --exec_path ${exec_path} \
+                --hibench_report_path ${hibench_report_path} \
                 --base_url ${base_url}
 
         python3.9 ./benchmarks/spark_continuous_modelling/spark_continuation.py \
@@ -85,6 +88,7 @@ do
                 --performance_model_path ${performance_model_path} \
                 --conf_path ${conf_path} \
                 --exec_path ${exec_path} \
+                --hibench_report_path ${hibench_report_path} \
                 --base_url ${base_url}
 
         python3.9 ./benchmarks/spark_continuous_modelling/spark_hyperopt.py \
@@ -97,6 +101,7 @@ do
                 --performance_model_path ${performance_model_path} \
                 --conf_path ${conf_path} \
                 --exec_path ${exec_path} \
+                --hibench_report_path ${hibench_report_path} \
                 --base_url ${base_url}
 
         python3.9 ./benchmarks/spark_continuous_modelling/spark_hyperopt.py \
@@ -109,6 +114,7 @@ do
                 --performance_model_path ${performance_model_path} \
                 --conf_path ${conf_path} \
                 --exec_path ${exec_path} \
+                --hibench_report_path ${hibench_report_path} \
                 --base_url ${base_url}
 done
 

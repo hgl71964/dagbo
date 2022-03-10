@@ -43,6 +43,7 @@ def main(_):
 def extract_and_aggregate(params: dict[str, float],
                           train_inputs_dict: dict[str, np.ndarray],
                           train_targets_dict: dict[str, np.ndarray],
+                          hibench_report_path: str,
                           base_url: str) -> float:
     """
     extract & aggregation metric & populate data
@@ -52,7 +53,8 @@ def extract_and_aggregate(params: dict[str, float],
     #val = float(val)
     #app_id = extract_app_id(base_url)
 
-    app_id, val = extract_duration_app_id(base_url)
+    app_id, _ = extract_duration_app_id(base_url)
+    val, _ = extract_throughput(hibench_report_path)
     val = float(val)
 
     metric_list = request_history_server(base_url, app_id)
@@ -140,7 +142,7 @@ def extract_duration_app_id(base_url: str) -> tuple[str, str]:
         )
     js = resp.json()
 
-    # XXX consider the first item the latest?
+    # NOTE: the first item is the latest run
     latest = js[0]
     app_id = latest["id"]
     print(f"get app id: {app_id}")
@@ -152,7 +154,7 @@ def extract_duration_app_id(base_url: str) -> tuple[str, str]:
     duration = None
     for i in range(n):
         tmp = latest["attempts"][i]
-        if tmp["completed"] == "true":
+        if tmp["completed"] is True:
             duration = tmp["duration"]
 
     if duration is None:
@@ -162,7 +164,7 @@ def extract_duration_app_id(base_url: str) -> tuple[str, str]:
     return app_id, duration
 
 
-def extract_throughput(hibench_report_path: str) -> str:
+def extract_throughput(hibench_report_path: str) -> tuple[str, str]:
     """
     according to hibench report log text structure
         by default the last line is the latest run results
@@ -173,7 +175,8 @@ def extract_throughput(hibench_report_path: str) -> str:
 
         #for line in lines:
         #    print(line.strip().split())
-    return l[-2]
+        # NOTE: l[-3]: duration, l[-2]: throughput,
+    return l[-3], l[-2]
 
 
 def extract_app_id(log_path: str) -> str:

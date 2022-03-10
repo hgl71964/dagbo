@@ -10,7 +10,7 @@ from ax.storage.metric_registry import register_metric
 from dagbo.interface.exec_spark import call_spark
 from dagbo.utils.ax_experiment_utils import load_exp, save_dict, load_dict
 from dagbo.utils.hyperopt_utils import search_space_from_ax_experiment, build_trials_from_sobol, get_model
-from dagbo.interface.metrics_extractor import extract_and_aggregate, extract_duration_app_id
+from dagbo.interface.metrics_extractor import extract_and_aggregate, extract_duration_app_id, extract_throughput
 
 FLAGS = flags.FLAGS
 flags.DEFINE_enum("tuner", "rand", ["rand", "tpe"], "tuner to use")
@@ -21,6 +21,9 @@ flags.DEFINE_string("performance_model_path", "...", "graphviz source path")
 flags.DEFINE_string(
     "conf_path", "/home/gh512/workspace/bo/spark-dir/hiBench/conf/spark.conf",
     "conf file path")
+flags.DEFINE_string(
+    "hibench_report_path", "must given",
+    "hibench_report_path")
 flags.DEFINE_string(
     "exec_path",
     "/home/gh512/workspace/bo/spark-dir/hiBench/bin/workloads/micro/wordcount/spark/run.sh",
@@ -46,8 +49,8 @@ def obj(params: dict[str, float]) -> float:
     """
     # exec spark & retrieve throughput
     call_spark(params, FLAGS.conf_path, FLAGS.exec_path)
-    _, val = extract_duration_app_id(FLAGS.base_url)
-    #val = extract_throughput(FLAGS.hibench_report_path)
+    #_, val = extract_duration_app_id(FLAGS.base_url)
+    val, _ = extract_throughput(FLAGS.hibench_report_path)
     val = float(val)
     print()
     print(f"reward: {val:.2f}")

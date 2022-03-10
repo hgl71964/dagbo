@@ -37,6 +37,9 @@ flags.DEFINE_string(
     "conf_path", "/home/gh512/workspace/bo/spark-dir/hiBench/conf/spark.conf",
     "conf file path")
 flags.DEFINE_string(
+    "hibench_report_path", "must given",
+    "hibench_report_path")
+flags.DEFINE_string(
     "exec_path",
     "/home/gh512/workspace/bo/spark-dir/hiBench/bin/workloads/micro/wordcount/spark/run.sh",
     "executable path")
@@ -73,6 +76,7 @@ class SparkMetric(Metric):
             # side-effect
             val = extract_and_aggregate(params, train_inputs_dict,
                                         train_targets_dict,
+                                        FLAGS.hibench_report_path,
                                         FLAGS.base_url)
             # to records
             records.append({
