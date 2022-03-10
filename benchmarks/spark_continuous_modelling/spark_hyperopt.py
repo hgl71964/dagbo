@@ -10,7 +10,7 @@ from ax.storage.metric_registry import register_metric
 from dagbo.interface.exec_spark import call_spark
 from dagbo.utils.ax_experiment_utils import load_exp, save_dict, load_dict
 from dagbo.utils.hyperopt_utils import search_space_from_ax_experiment, build_trials_from_sobol, get_model
-from dagbo.interface.metrics_extractor import extract_and_aggregate, extract_throughput
+from dagbo.interface.metrics_extractor import extract_and_aggregate, extract_duration_app_id
 
 FLAGS = flags.FLAGS
 flags.DEFINE_enum("tuner", "rand", ["rand", "tpe"], "tuner to use")
@@ -25,14 +25,6 @@ flags.DEFINE_string(
     "exec_path",
     "/home/gh512/workspace/bo/spark-dir/hiBench/bin/workloads/micro/wordcount/spark/run.sh",
     "executable path")
-flags.DEFINE_string(
-    "log_path",
-    "/home/gh512/workspace/bo/spark-dir/hiBench/report/wordcount/spark/bench.log",
-    "log file's path for app id extraction")
-flags.DEFINE_string(
-    "hibench_report_path",
-    "/home/gh512/workspace/bo/spark-dir/hiBench/report/hibench.report",
-    "hibench report file path")
 flags.DEFINE_string("base_url", "http://localhost:18080",
                     "history server base url")
 
@@ -54,7 +46,8 @@ def obj(params: dict[str, float]) -> float:
     """
     # exec spark & retrieve throughput
     call_spark(params, FLAGS.conf_path, FLAGS.exec_path)
-    val = extract_throughput(FLAGS.hibench_report_path)
+    _, val = extract_duration_app_id(FLAGS.base_url)
+    #val = extract_throughput(FLAGS.hibench_report_path)
     val = float(val)
     print()
     print(f"reward: {val:.2f}")

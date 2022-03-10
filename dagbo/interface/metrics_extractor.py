@@ -43,23 +43,24 @@ def main(_):
 def extract_and_aggregate(params: dict[str, float],
                           train_inputs_dict: dict[str, np.ndarray],
                           train_targets_dict: dict[str, np.ndarray],
-                          hibench_report_path: str, log_path: str,
                           base_url: str) -> float:
     """
     extract & aggregation metric & populate data
     """
     # throughput
-    val = extract_throughput(hibench_report_path)
+    #val = extract_throughput(hibench_report_path)
+    #val = float(val)
+    #app_id = extract_app_id(base_url)
+
+    app_id, val = extract_duration_app_id(base_url)
     val = float(val)
 
-    # extract app_id & intermediate metric
-    app_id = extract_app_id(log_path)
     metric_list = request_history_server(base_url, app_id)
 
     # agg
     agg_m = _aggregation(metric_list)
     ## add final obj
-    agg_m["throughput"] = val
+    agg_m["duration"] = val
     ## unit conversion
     agg_m = _post_processing(agg_m)
 
@@ -128,6 +129,37 @@ def _post_processing(metric_map: dict[str, float]) -> dict[str, float]:
 """
 App-level extraction
 """
+
+
+def extract_duration_app_id(base_url: str) -> tuple[str, str]:
+    resp = requests.get(f"{base_url}/api/v1/applications/")
+
+    if resp.status_code != 200:
+        raise RuntimeError(
+            f"get request not ok - status code: {resp.status_code} - {base_url}/api/v1/applications/{app_id}/stages"
+        )
+    js = resp.json()
+
+    # XXX consider the first item the latest?
+    latest = js[0]
+    app_id = latest["id"]
+    print(f"get app id: {app_id}")
+
+    n = len(latest["attempts"])
+    if n > 1:
+        warn(f"{app_id} has more than one attempt")
+
+    duration = None
+    for i in range(n):
+        tmp = latest["attempts"][i]
+        if tmp["completed"] == "true":
+            duration = tmp["duration"]
+
+    if duration is None:
+        raise RuntimeError(
+            f"unable to get duration from {base_url}/api/v1/applications/{app_id}"
+        )
+    return app_id, duration
 
 
 def extract_throughput(hibench_report_path: str) -> str:

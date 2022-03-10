@@ -28,10 +28,6 @@ flags.DEFINE_string(
     "/home/gh512/workspace/bo/spark-dir/hiBench/bin/workloads/micro/wordcount/spark/run.sh",
     "executable path")
 flags.DEFINE_string(
-    "log_path",
-    "/home/gh512/workspace/bo/spark-dir/hiBench/report/wordcount/spark/bench.log",
-    "log file's path for app id extraction")
-flags.DEFINE_string(
     "hibench_report_path",
     "/home/gh512/workspace/bo/spark-dir/hiBench/report/hibench.report",
     "hibench report file path")
@@ -57,7 +53,7 @@ class SparkMetric(Metric):
             val = extract_throughput(FLAGS.hibench_report_path)
 
             # extract and append intermediate metric
-            app_id = extract_app_id(FLAGS.log_path)
+            app_id = extract_app_id(FLAGS.base_url)
             metric = request_history_server(FLAGS.base_url, app_id)
 
             ## get metrics across executors

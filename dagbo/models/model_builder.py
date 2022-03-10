@@ -316,16 +316,16 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
         ppt = obj_space[node]
 
     covar = None
-    if isinstance(ppt, str):
-        if ppt == "add":
-            n = len(children)
-            base_kernel = ScaleKernel(MaternKernel(
-                nu=2.5, lengthscale_prior=GammaPrior(3.0, 6.0)),
-                                      outputscale_prior=GammaPrior(2.0, 0.15))
-            covar = gpytorch.kernels.AdditiveStructureKernel(
-                base_kernel=base_kernel, num_dims=n)
+    if node == "taskTime":
+        n = len(children)
+        base_kernel = ScaleKernel(MaternKernel(nu=2.5,
+                                               lengthscale_prior=GammaPrior(
+                                                   3.0, 6.0)),
+                                  outputscale_prior=GammaPrior(2.0, 0.15))
+        covar = gpytorch.kernels.AdditiveStructureKernel(
+            base_kernel=base_kernel, num_dims=n)
 
-    # NOTE: only work with perf-model-7
+    # NOTE: only work with children has executor.num[*], default.parallelism, taskTime
     elif node == "throughput":
         print(f"building {node} with custom kernel")
 
@@ -337,7 +337,8 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
         # custom additive kernels
         active_dims_1 = (m["executor.num[*]"], )
         active_dims_2 = (m["default.parallelism"], )
-        active_dims_3 = (m["executor.num[*]"], m["default.parallelism"]) # model 2D interaction
+        active_dims_3 = (m["executor.num[*]"], m["default.parallelism"]
+                         )  # model 2D interaction
         active_dims_4 = (m["taskTime"], )
         base_1 = ScaleKernel(MaternKernel(nu=2.5,
                                           active_dims=active_dims_1,
