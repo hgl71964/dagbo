@@ -18,8 +18,6 @@ hdfs_path="/HiBench"
 exec_path="/home/gh512/workspace/bo/spark-dir/hiBench/bin/workloads/micro/wordcount/spark/run.sh"
 performance_model_path="dagbo/interface/spark_perf_model_7.txt"
 conf_path="/home/gh512/workspace/bo/spark-dir/hiBench/conf/spark.conf"
-log_path="/home/gh512/workspace/bo/spark-dir/hiBench/report/wordcount/spark/bench.log"
-hibench_report_path="/home/gh512/workspace/bo/spark-dir/hiBench/report/hibench.report"
 base_url="http://localhost:18080"
 
 # create if not exist
@@ -59,8 +57,6 @@ do
                 --minimize $minimize \
                 --conf_path ${conf_path} \
                 --exec_path ${exec_path} \
-                --log_path ${log_path} \
-                --hibench_report_path ${hibench_report_path} \
                 --base_url ${base_url}
 
         python3.9 ./benchmarks/spark_continuous_modelling/spark_continuation.py \
@@ -76,8 +72,6 @@ do
                 --performance_model_path ${performance_model_path} \
                 --conf_path ${conf_path} \
                 --exec_path ${exec_path} \
-                --log_path ${log_path} \
-                --hibench_report_path ${hibench_report_path} \
                 --base_url ${base_url}
 
         python3.9 ./benchmarks/spark_continuous_modelling/spark_continuation.py \
@@ -93,8 +87,6 @@ do
                 --performance_model_path ${performance_model_path} \
                 --conf_path ${conf_path} \
                 --exec_path ${exec_path} \
-                --log_path ${log_path} \
-                --hibench_report_path ${hibench_report_path} \
                 --base_url ${base_url}
 
         python3.9 ./benchmarks/spark_continuous_modelling/spark_hyperopt.py \
@@ -107,8 +99,6 @@ do
                 --performance_model_path ${performance_model_path} \
                 --conf_path ${conf_path} \
                 --exec_path ${exec_path} \
-                --log_path ${log_path} \
-                --hibench_report_path ${hibench_report_path} \
                 --base_url ${base_url}
 
         python3.9 ./benchmarks/spark_continuous_modelling/spark_hyperopt.py \
@@ -121,8 +111,6 @@ do
                 --performance_model_path ${performance_model_path} \
                 --conf_path ${conf_path} \
                 --exec_path ${exec_path} \
-                --log_path ${log_path} \
-                --hibench_report_path ${hibench_report_path} \
                 --base_url ${base_url}
 done
 
