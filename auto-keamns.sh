@@ -2,7 +2,7 @@
 
 # config
 epochs=20
-repeat=4
+repeat=2
 norm=1
 minimize=1
 device="cpu"
@@ -14,7 +14,7 @@ hdfs_path="/HiBench"
 
 ## paths
 exec_path="/home/gh512/workspace/bo/spark-dir/hiBench/bin/workloads/ml/kmeans/spark/run.sh"
-performance_model_path="dagbo/interface/spark_perf_model_7.txt"
+performance_model_path="dagbo/interface/spark_perf_model_8.txt"
 conf_path="/home/gh512/workspace/bo/spark-dir/hiBench/conf/spark.conf"
 base_url="http://localhost:18080"
 
