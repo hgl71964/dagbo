@@ -35,14 +35,6 @@ flags.DEFINE_string(
     "exec_path",
     "/home/gh512/workspace/bo/spark-dir/hiBench/bin/workloads/micro/wordcount/spark/run.sh",
     "executable path")
-flags.DEFINE_string(
-    "log_path",
-    "/home/gh512/workspace/bo/spark-dir/hiBench/report/wordcount/spark/bench.log",
-    "log file's path for app id extraction")
-flags.DEFINE_string(
-    "hibench_report_path",
-    "/home/gh512/workspace/bo/spark-dir/hiBench/report/hibench.report",
-    "hibench report file path")
 flags.DEFINE_string("base_url", "http://localhost:18080",
                     "history server base url")
 
@@ -60,8 +52,7 @@ class SparkMetric(Metric):
             call_spark(params, FLAGS.conf_path, FLAGS.exec_path)
             val = extract_and_aggregate(params, train_inputs_dict,
                                         train_targets_dict,
-                                        FLAGS.hibench_report_path,
-                                        FLAGS.log_path, FLAGS.base_url)
+                                        FLAGS.base_url)
             # to records
             records.append({
                 "arm_name": arm_name,
