@@ -50,7 +50,8 @@ def obj(params: dict[str, float]) -> float:
     # exec spark & retrieve throughput
     call_spark(params, FLAGS.conf_path, FLAGS.exec_path)
     #_, val = extract_duration_app_id(FLAGS.base_url)
-    val, _ = extract_throughput(FLAGS.hibench_report_path)
+    val, throughput = extract_throughput(FLAGS.hibench_report_path)
+    throughput = float(throughput)
     val = float(val)
     print()
     print(f"reward: {val:.2f}")

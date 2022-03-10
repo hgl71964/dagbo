@@ -48,12 +48,9 @@ def extract_and_aggregate(params: dict[str, float],
     extract & aggregation metric & populate data
     """
     # throughput
-    #val = extract_throughput(hibench_report_path)
-    #val = float(val)
-    #app_id = extract_app_id(base_url)
-
     app_id, _ = extract_duration_app_id(base_url)
-    val, _ = extract_throughput(hibench_report_path)
+    val, throughput = extract_throughput(hibench_report_path)
+    throughput = float(throughput)
     val = float(val)
 
     metric_list = request_history_server(base_url, app_id)
@@ -62,6 +59,7 @@ def extract_and_aggregate(params: dict[str, float],
     agg_m = _aggregation(metric_list)
     ## add final obj
     agg_m["duration"] = val
+    agg_m["throughput"] = throughput
     ## unit conversion
     agg_m = _post_processing(agg_m)
 

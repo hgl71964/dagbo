@@ -333,10 +333,10 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
         # active dim
         mem_only_dim = (m["executor.memory"], )
         mem_dim = (m["executor.memory"], m["memory.fraction"])
-        #rest_dim = ([
-        #    v for k, v in m.items()
-        #    if k != "memory.fraction" and k != "executor.memory"
-        #])
+        rest_dim = ([
+            v for k, v in m.items()
+            if k != "memory.fraction" and k != "executor.memory"
+        ])
 
         # base kernels
         mem_1 = ScaleKernel(MaternKernel(nu=2.5,
@@ -351,7 +351,8 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
                             outputscale_prior=GammaPrior(2.0, 0.15))
         base_1 = ScaleKernel(MaternKernel(
             nu=2.5,
-            active_dims=tuple([i for i in range(n)]),
+            #active_dims=tuple([i for i in range(n)]),
+            active_dims=rest_dim,
             lengthscale_prior=GammaPrior(3.0, 6.0)),
                              outputscale_prior=GammaPrior(2.0, 0.15))
         covar = mem_1 + mem_2 + base_1
@@ -368,6 +369,7 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
 
     elif node == "duration":
         print(f"building {node} with custom kernel")
+        n = len(children)
         child_set = set(["executor.num[*]", "default.parallelism", "taskTime"])
         assert set(children) == child_set, f"{node} children error"
 
@@ -379,8 +381,7 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
         active_dims_1 = (m["executor.num[*]"], )
         active_dims_2 = (m["default.parallelism"], )
         active_dims_3 = (m["executor.num[*]"], m["default.parallelism"]
-                         )  # model 2D interaction
-        active_dims_4 = (m["taskTime"], )
+        all_dim = tuple([i for i in range(n)])
         base_1 = ScaleKernel(MaternKernel(nu=2.5,
                                           active_dims=active_dims_1,
                                           lengthscale_prior=GammaPrior(
@@ -397,7 +398,7 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
                                               3.0, 6.0)),
                              outputscale_prior=GammaPrior(2.0, 0.15))
         base_4 = ScaleKernel(MaternKernel(nu=2.5,
-                                          active_dims=active_dims_4,
+                                          active_dims=all_dim,
                                           lengthscale_prior=GammaPrior(
                                               3.0, 6.0)),
                              outputscale_prior=GammaPrior(2.0, 0.15))
