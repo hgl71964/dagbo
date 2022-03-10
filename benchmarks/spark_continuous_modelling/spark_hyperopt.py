@@ -77,7 +77,7 @@ def main(_):
     print()
 
     # build trials (hyperopt's opt history container)
-    t = build_trials_from_sobol(exp)
+    t = build_trials_from_sobol(exp, bool(FLAGS.minimize))
 
     print()
     print(f"==== start experiment: {exp.name} with tuner: {FLAGS.tuner} ====")

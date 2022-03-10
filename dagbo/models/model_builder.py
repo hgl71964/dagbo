@@ -319,6 +319,7 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
     covar = None
     if node == "executorRunTime":
         print(f"building {node} with custom kernel")
+        n = len(children)
         child_set = set([
             "executor.memory", "memory.fraction", "executor.cores",
             "executor.num[*]", "default.parallelism"
@@ -330,37 +331,30 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
             m[child] = i
 
         # active dim
-        mem_dim = (m["executor.memory"], )
-        mem_fra_dim = (m["memory.fraction"], )
-        mem_all_dim = (m["executor.memory"], m["memory.fraction"])
-        rest_dim = ([
-            v for k, v in m.items()
-            if k != "memory.fraction" and k != "executor.memory"
-        ])
+        mem_only_dim = (m["executor.memory"], )
+        mem_dim = (m["executor.memory"], m["memory.fraction"])
+        #rest_dim = ([
+        #    v for k, v in m.items()
+        #    if k != "memory.fraction" and k != "executor.memory"
+        #])
 
         # base kernels
         mem_1 = ScaleKernel(MaternKernel(nu=2.5,
-                                                active_dims=mem_dim,
-                                                lengthscale_prior=GammaPrior(
-                                                    3.0, 6.0)),
-                                   outputscale_prior=GammaPrior(2.0, 0.15))
+                                         active_dims=mem_dim,
+                                         lengthscale_prior=GammaPrior(
+                                             3.0, 6.0)),
+                            outputscale_prior=GammaPrior(2.0, 0.15))
         mem_2 = ScaleKernel(MaternKernel(nu=2.5,
-                                                active_dims=mem_fra_dim,
-                                                lengthscale_prior=GammaPrior(
-                                                    3.0, 6.0)),
-                                   outputscale_prior=GammaPrior(2.0, 0.15))
-        mem_3 = mem_1 * mem_2
-        mem_4 = ScaleKernel(MaternKernel(nu=2.5,
-                                        active_dims=mem_all_dim,
-                                        lengthscale_prior=GammaPrior(
-                                            3.0, 6.0)),
-                           outputscale_prior=GammaPrior(2.0, 0.15))
+                                         active_dims=mem_only_dim,
+                                         lengthscale_prior=GammaPrior(
+                                             3.0, 6.0)),
+                            outputscale_prior=GammaPrior(2.0, 0.15))
         base_1 = ScaleKernel(MaternKernel(nu=2.5,
-                                          active_dims=rest_dim,
+                                          active_dims=set([i for i in range(n)]),
                                           lengthscale_prior=GammaPrior(
                                               3.0, 6.0)),
                              outputscale_prior=GammaPrior(2.0, 0.15))
-        covar =  mem_3 + mem_4 + base_1
+        covar = mem_1 + mem_2 + base_1
 
     elif node == "taskTime":
         n = len(children)
