@@ -43,8 +43,7 @@ def main(_):
 def extract_and_aggregate(params: dict[str, float],
                           train_inputs_dict: dict[str, np.ndarray],
                           train_targets_dict: dict[str, np.ndarray],
-                          hibench_report_path: str,
-                          base_url: str) -> float:
+                          hibench_report_path: str, base_url: str) -> float:
     """
     extract & aggregation metric & populate data
     """
