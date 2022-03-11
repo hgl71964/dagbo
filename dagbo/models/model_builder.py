@@ -330,7 +330,7 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
         for i, child in enumerate(children):
             m[child] = i
 
-        # active dim
+        # active dim TODO separate mem dim
         mem_dim = (m["executor.memory"], )
         mem_2d_dim = (m["executor.memory"], m["memory.fraction"])
         rest_dim = ([
@@ -377,7 +377,7 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
         for i, child in enumerate(children):
             m[child] = i
 
-        # custom additive kernels
+        # custom additive kernels TODO del taskTime dim
         active_dims_1 = (m["executor.num[*]"], )
         active_dims_2 = (m["default.parallelism"], )
         active_dims_3 = (m["executor.num[*]"], m["default.parallelism"])
