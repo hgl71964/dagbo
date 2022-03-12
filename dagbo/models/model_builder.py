@@ -349,12 +349,13 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
                                          lengthscale_prior=GammaPrior(
                                              3.0, 6.0)),
                             outputscale_prior=GammaPrior(2.0, 0.15))
-        base_1 = ScaleKernel(MaternKernel(
-            nu=2.5,
-            #active_dims=tuple([i for i in range(n)]),
-            active_dims=rest_dim,
-            lengthscale_prior=GammaPrior(3.0, 6.0)),
-                             outputscale_prior=GammaPrior(2.0, 0.15))
+        base_1 = ScaleKernel(
+            MaternKernel(
+                nu=2.5,
+                #active_dims=tuple([i for i in range(n)]),
+                active_dims=rest_dim,
+                lengthscale_prior=GammaPrior(3.0, 6.0)),
+            outputscale_prior=GammaPrior(2.0, 0.15))
         covar = mem_1 + mem_2 + base_1
 
     elif node == "taskTime":
@@ -381,7 +382,7 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
         active_dims_1 = (m["executor.num[*]"], )
         active_dims_2 = (m["default.parallelism"], )
         active_dims_3 = (m["executor.num[*]"], m["default.parallelism"])
-        active_dims_4 = (m["taskTime"],)
+        active_dims_4 = (m["taskTime"], )
         all_dim = tuple([i for i in range(n)])
         base_1 = ScaleKernel(MaternKernel(nu=2.5,
                                           active_dims=active_dims_1,

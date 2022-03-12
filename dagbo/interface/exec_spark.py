@@ -69,6 +69,10 @@ MIN_MAPPING = {
     "memory.fraction": 0.1,
 }
 
+MAX_MAPPING = {
+    "memory.fraction": 0.95,
+}
+
 # 0.5 -> 0, 0.51 -> 1
 ROUND_MAPPING = {
     "executor.num[*]": "int",
@@ -183,6 +187,11 @@ def _pre_process(param: dict[str, float]) -> dict[str, str]:
     for key, val in param.items():
         if key in MIN_MAPPING:
             param[key] = max(val, MIN_MAPPING[key])
+
+    # max mapping
+    for key, val in param.items():
+        if key in MAX_MAPPING:
+            param[key] = min(val, MAX_MAPPING[key])
 
     # round mapping
     for key, val in param.items():

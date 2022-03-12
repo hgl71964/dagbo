@@ -21,9 +21,7 @@ flags.DEFINE_string("performance_model_path", "...", "graphviz source path")
 flags.DEFINE_string(
     "conf_path", "/home/gh512/workspace/bo/spark-dir/hiBench/conf/spark.conf",
     "conf file path")
-flags.DEFINE_string(
-    "hibench_report_path", "must given",
-    "hibench_report_path")
+flags.DEFINE_string("hibench_report_path", "must given", "hibench_report_path")
 flags.DEFINE_string(
     "exec_path",
     "/home/gh512/workspace/bo/spark-dir/hiBench/bin/workloads/micro/wordcount/spark/run.sh",
