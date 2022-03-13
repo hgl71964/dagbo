@@ -159,3 +159,6 @@ solution:
         stop-dfs.sh
         for datanote: delete rm -rf .../datanode/*, then start-dfs.sh
         for namenode: hadoop namenode -format
+
+5. fail with connection reset by peer:
+        https://stackoverflow.com/questions/39347392/how-to-fix-connection-reset-by-peer-message-from-apache-spark

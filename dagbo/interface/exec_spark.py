@@ -70,7 +70,7 @@ MIN_MAPPING = {
 }
 
 MAX_MAPPING = {
-    "memory.fraction": 0.95,
+    "memory.fraction": 0.9,
 }
 
 # 0.5 -> 0, 0.51 -> 1
@@ -208,6 +208,8 @@ def _pre_process(param: dict[str, float]) -> dict[str, str]:
         else:
             raise TypeError(f"unknown param {key} with value {val}")
 
+    param = mem_safeguard(param)
+
     # name mapping
     param_ = {}
     for key, val in param.items():
@@ -248,3 +250,12 @@ def _pre_process(param: dict[str, float]) -> dict[str, str]:
                 raise ValueError("unknown boolean val")
 
     return param_
+
+def mem_safeguard(param: dict) -> dict:
+    if "executor.memory" in param and "memory.fraction" in param:
+
+        # keep at least 300M user-memory if executor.memory=1g.
+        # for mem: https://luminousmen.com/post/dive-into-spark-memory
+        if param["executor.memory"] == 1 and param["memory.fraction"] > 0.7:
+            param["memory.fraction"] = 0.7
+    return param
