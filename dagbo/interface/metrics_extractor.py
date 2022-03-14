@@ -47,18 +47,18 @@ def extract_and_aggregate(params: dict[str, float],
     """
     extract & aggregation metric & populate data
     """
-    # throughput
+    # final objective
     app_id, _ = extract_duration_app_id(base_url)
-    val, throughput = extract_throughput(hibench_report_path)
+    duration, throughput = extract_throughput(hibench_report_path)
+    duration = float(duration)
     throughput = float(throughput)
-    val = float(val)
 
     metric_list = request_history_server(base_url, app_id)
 
     # agg
     agg_m = _aggregation(metric_list)
     ## add final obj
-    agg_m["duration"] = val
+    agg_m["duration"] = duration
     agg_m["throughput"] = throughput
     ## unit conversion
     agg_m = _post_processing(agg_m)
@@ -75,7 +75,7 @@ def extract_and_aggregate(params: dict[str, float],
             train_targets_dict[k] = np.append(train_targets_dict[k], v)
         else:
             train_targets_dict[k] = v
-    return val
+    return throughput
 
 
 def _aggregation(exec_metric_list: list[dict[str, list[float]]]) -> dict:

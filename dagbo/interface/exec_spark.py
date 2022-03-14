@@ -251,6 +251,7 @@ def _pre_process(param: dict[str, float]) -> dict[str, str]:
 
     return param_
 
+
 def mem_safeguard(param: dict) -> dict:
     if "executor.memory" in param and "memory.fraction" in param:
 
@@ -258,4 +259,10 @@ def mem_safeguard(param: dict) -> dict:
         # for mem: https://luminousmen.com/post/dive-into-spark-memory
         if param["executor.memory"] == 1 and param["memory.fraction"] > 0.7:
             param["memory.fraction"] = 0.7
+        elif param["executor.memory"] == 2 and param["memory.fraction"] > 0.8:
+            param["memory.fraction"] = 0.8
+
+        # `sometimes` needs more executor memory
+        elif param["executor.memory"] == 1 and param["memory.fraction"] < 0.2:
+            param["memory.fraction"] = 0.2
     return param
