@@ -75,7 +75,7 @@ def extract_and_aggregate(params: dict[str, float],
             train_targets_dict[k] = np.append(train_targets_dict[k], v)
         else:
             train_targets_dict[k] = v
-    return throughput
+    return duration
 
 
 def _aggregation(exec_metric_list: list[dict[str, list[float]]]) -> dict:
