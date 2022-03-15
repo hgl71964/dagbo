@@ -164,4 +164,4 @@ solution:
         https://stackoverflow.com/questions/39347392/how-to-fix-connection-reset-by-peer-message-from-apache-spark
 
 6. fail with permission denied in bench.log
-        fix hiBench/bin/functions/execute_with_log.py line 93?
+        rm bench.log per iteration?
