@@ -19,6 +19,10 @@ hibench_report_path="/home/gh512/workspace/bo/spark-dir/hiBench/report/hibench.r
 conf_path="/home/gh512/workspace/bo/spark-dir/hiBench/conf/spark.conf"
 base_url="http://localhost:18080"
 
+clear_benchlog () {
+  rm -rf /home/gh512/workspace/bo/spark-dir/hiBench/report/kmeans/spark
+}
+
 # create if not exist
 mkdir -p benchmarks/data
 
@@ -49,6 +53,7 @@ do
         echo
 
         # sequential experiment
+        clear_benchlog
         python3.9 ./benchmarks/spark_continuous_modelling/spark_sobol.py \
                 --bootstrap 5 \
                 --exp_name ${exp_name} \
@@ -59,6 +64,7 @@ do
                 --hibench_report_path ${hibench_report_path} \
                 --base_url ${base_url}
 
+        clear_benchlog
         python3.9 ./benchmarks/spark_continuous_modelling/spark_continuation.py \
                 --tuner dagbo-ssa \
                 --acq_name qUCB \
@@ -75,6 +81,7 @@ do
                 --hibench_report_path ${hibench_report_path} \
                 --base_url ${base_url}
 
+        clear_benchlog
         python3.9 ./benchmarks/spark_continuous_modelling/spark_continuation.py \
                 --tuner bo \
                 --acq_name qUCB \
@@ -91,6 +98,7 @@ do
                 --hibench_report_path ${hibench_report_path} \
                 --base_url ${base_url}
 
+        clear_benchlog
         python3.9 ./benchmarks/spark_continuous_modelling/spark_hyperopt.py \
                 --tuner rand \
                 --epochs $epochs \
@@ -104,6 +112,7 @@ do
                 --hibench_report_path ${hibench_report_path} \
                 --base_url ${base_url}
 
+        clear_benchlog
         python3.9 ./benchmarks/spark_continuous_modelling/spark_hyperopt.py \
                 --tuner tpe \
                 --epochs $epochs \
