@@ -1,0 +1,35 @@
+digraph "perf-model-14" {
+	graph [rankdir=LR]
+	subgraph cluster_0 {
+		color=lightgrey style=filled
+		label=param
+		"executor.num[*]" [label="executor.num[*]" shape=circle]
+		"executor.memory" [label="executor.memory" shape=circle]
+		"executor.cores" [label="executor.cores" shape=circle]
+		"default.parallelism" [label="default.parallelism" shape=circle]
+		"memory.fraction" [label="memory.fraction" shape=circle]
+	}
+	subgraph cluster_1 {
+		color=blue
+		taskTime [label=taskTime]
+		executorRunTime [label=executorRunTime]
+		executorDeserializeTime [label=executorDeserializeTime]
+		label="intermediate metrics"
+	}
+	subgraph cluster_2 {
+		duration [label=duration attr=circle]
+	}
+	"executor.num[*]" -> executorRunTime
+	"executor.num[*]" -> executorDeserializeTime
+	"executor.num[*]" -> duration
+	"executor.cores" -> executorRunTime
+	"executor.cores" -> executorDeserializeTime
+	"default.parallelism" -> executorRunTime
+	"default.parallelism" -> executorDeserializeTime
+	"executor.memory" -> duration
+	"memory.fraction" -> duration
+	executorRunTime -> taskTime
+	executorDeserializeTime -> taskTime
+	taskTime -> duration
+}
+

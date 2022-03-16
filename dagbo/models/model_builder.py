@@ -297,6 +297,9 @@ def update_acq_func_config(acq_func_config,
 
 def build_mean(node: str, metric_space: dict, obj_space: dict,
                children: list[str]):
+    """
+    apply custom policy to build mean func
+    """
     if node in metric_space:
         ppt = metric_space[node]
     elif node in obj_space:
@@ -311,6 +314,9 @@ def build_mean(node: str, metric_space: dict, obj_space: dict,
 
 def build_covar(node: str, metric_space: dict, obj_space: dict,
                 children: list[str]):
+    """
+    apply custom policy to build kernel
+    """
     if node in metric_space:
         ppt = metric_space[node]
     elif node in obj_space:
