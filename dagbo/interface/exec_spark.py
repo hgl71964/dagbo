@@ -178,6 +178,10 @@ def _pre_process(param: dict[str, float]) -> dict[str, str]:
     name mapping & unit mapping & bool mapping &
     """
 
+    print("candidate:")
+    print(param)
+    print()
+
     # scale mapping
     for key, val in param.items():
         if key in SCALE_MAPPING:

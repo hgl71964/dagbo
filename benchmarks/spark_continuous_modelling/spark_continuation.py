@@ -58,7 +58,7 @@ acq_func_config = {
     "y_max": torch.tensor([
         1.
     ]),  # only a placeholder for {EI, qEI}, will be overwritten per iter
-    "beta": 1,  # for UCB
+    "beta": 10,  # for UCB
 }
 train_inputs_dict = {}
 train_targets_dict = {}

@@ -28,9 +28,13 @@ def _population_spaces(path: str):
                 if '=' not in l[0]:  # ok
                     #print(l[0].strip("\""))
                     param_name = l[0].strip("\"")
-                    shape = l[2]
-                    #shape = l[2].strip("]")
-                    ppt = "continuous" if "circle" in shape else "categorical"
+                    try:
+                        shape = l[2]
+                    except:
+                        shape = None
+                    ppt = "categorical"
+                    if shape and "circle" in shape:
+                        ppt = "continuous"
                     param_space[param_name] = ppt
 
             elif c == 1:  # metric
