@@ -140,6 +140,7 @@ def _exec(exec_path: str) -> None:
     """
     must given enough time to properly write log & execute
     """
+    sleep(1)
     rc = subprocess.run([exec_path])
     if rc.returncode != 0:
         print("stderr: ")
@@ -155,6 +156,7 @@ def _write_spec_from_param(param: dict[str, str], file_path: str) -> None:
     # remove if exists
     if os.path.exists(file_path):
         os.remove(file_path)
+    sleep(3)
 
     # write config
     with open(file_path, "a") as f:

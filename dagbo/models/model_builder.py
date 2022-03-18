@@ -333,7 +333,7 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
     #    covar = gpytorch.kernels.AdditiveStructureKernel(
     #        base_kernel=base_kernel, num_dims=n)
 
-    #elif node == "executorRunTime":
+    #elif node == "duration" or node == "throughput":
     #    print(f"building {node} with custom kernel")
 
     #    m = {}
@@ -341,31 +341,22 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
     #    for i, child in enumerate(children):
     #        m[child] = i
 
-    #    mem_dim = (m["executor.memory"], )
-    #    mem_fra_dim = (m["memory.fraction"], )
-    #    #rest_dim = tuple([ v for k, v in m.items() if k != "executor.memory" and k!="memory.fraction"])
-    #    all_dim = tuple([i for i in range(n)])
+    #    task_dim = (m["taskTime"], )
+    #    rest_dim = tuple([ v for k, v in m.items() if k != "taskTime"])
 
-    #    mem_kernel = ScaleKernel(MaternKernel(nu=2.5,
-    #                                      active_dims=mem_dim,
+    #    task_kernel = ScaleKernel(MaternKernel(nu=2.5,
+    #                                      active_dims=task_dim,
     #                                      lengthscale_prior=GammaPrior(
     #                                          3.0, 6.0)),
     #                         outputscale_prior=GammaPrior(2.0, 0.15))
-    #    mem_fra_kernel = ScaleKernel(MaternKernel(nu=2.5,
-    #                                      active_dims=mem_fra_dim,
-    #                                      lengthscale_prior=GammaPrior(
-    #                                          3.0, 6.0)),
-    #                         outputscale_prior=GammaPrior(2.0, 0.15))
-    #    joint_mem_kernel = mem_kernel * mem_fra_kernel
-
     #    rest_kernel = ScaleKernel(MaternKernel(nu=2.5,
-    #                                      active_dims=all_dim,
+    #                                      active_dims=rest_dim,
     #                                      lengthscale_prior=GammaPrior(
     #                                          3.0, 6.0)),
     #                         outputscale_prior=GammaPrior(2.0, 0.15))
-    #    covar = joint_mem_kernel + rest_kernel
+    #    covar = task_kernel + rest_kernel
 
-    #elif node == "duration" or node == "throughput":
+    #elif node == "executorRunTime":
     #    print(f"building {node} with custom kernel")
 
     #    m = {}
