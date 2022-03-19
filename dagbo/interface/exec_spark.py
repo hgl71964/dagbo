@@ -64,7 +64,7 @@ SCALE_MAPPING = {
 MIN_MAPPING = {
     "executor.num[*]": 2,
     "executor.cores": 1,
-    "executor.memory": 1,
+    "executor.memory": 1,  # for pagerank at least 2
     "default.parallelism": 2,
     "memory.fraction": 0.1,
 }
