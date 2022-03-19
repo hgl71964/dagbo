@@ -26,7 +26,6 @@ workflow to interface with hiBench & Spark
         .../applications/{XXX _APPID}/stages/[stage-id]
 
 NOTE: the description for each metric: https://spark.apache.org/docs/2.4.5/monitoring.html
-
 Example url:
      curl http://localhost:18080/api/v1/applications/application_1641844906451_0006/stages/
 """
@@ -57,6 +56,9 @@ def extract_and_aggregate(params: dict[str, float],
 
     # agg
     agg_m = _aggregation(metric_list)
+    # add unified memory
+    assert "memory.fraction" in params and "executor.memory" in params, "input space error"
+    agg_m["unified_mem"] = params["memory.fraction"] * params["executor.memory"]
     ## add final obj
     agg_m["duration"] = duration
     agg_m["throughput"] = throughput
