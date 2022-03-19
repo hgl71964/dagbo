@@ -259,6 +259,8 @@ def _pre_process(param: dict[str, float]) -> dict[str, str]:
 
 
 def mem_safeguard(param: dict) -> dict:
+
+    # NOTE: memory guard for kmeans workload
     if "executor.memory" in param and "memory.fraction" in param:
 
         # keep at least 300M user-memory if executor.memory=1g.
