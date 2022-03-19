@@ -11,11 +11,8 @@ from ax import SearchSpace, Experiment, OptimizationConfig, Objective, Metric
 from ax.storage.metric_registry import register_metric
 from ax.runners.synthetic import SyntheticRunner
 
-from dagbo.dag import Dag
-from dagbo.fit_dag import fit_dag
 from dagbo.utils.ax_experiment_utils import save_exp, save_dict, print_experiment_result
 from dagbo.interface.exec_spark import call_spark
-from dagbo.interface.parse_performance_model import parse_model
 from dagbo.interface.metrics_extractor import extract_and_aggregate
 """
 gen initial sobol points for an experiment
