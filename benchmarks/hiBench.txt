@@ -78,6 +78,16 @@ DISTRIBUTED ENV SET-UPS:
                 <name>yarn.scheduler.maximum-allocation-mb</name>
                 <value>8192</value>
         </property>
+
+        # to avoid running out of mem limited
+        <property>
+                <name>yarn.nodemanager.pmem-check-enabled</name>
+                <value>false</value>
+        </property>
+        <property>
+                <name>yarn.nodemanager.vmem-check-enabled</name>
+                <value>false</value>
+        </property>
         '''
 
         In mapred-site.xml
