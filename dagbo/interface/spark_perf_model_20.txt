@@ -1,0 +1,31 @@
+digraph "perf-model-20" {
+	graph [rankdir=LR]
+	subgraph cluster_0 {
+		color=lightgrey style=filled
+		label=param
+		"executor.num[*]" [label="executor.num[*]"]
+		"executor.memory" [label="executor.memory"]
+		"executor.cores" [label="executor.cores"]
+		"default.parallelism" [label="default.parallelism"]
+		"memory.fraction" [label="memory.fraction"]
+	}
+	subgraph cluster_1 {
+		color=blue
+		taskTime [label=taskTime]
+		label="intermediate metrics"
+	}
+	subgraph cluster_2 {
+		duration [label=duration]
+	}
+	"executor.num[*]" -> taskTime
+	"executor.num[*]" -> duration
+	"executor.cores" -> taskTime
+	"executor.cores" -> duration
+	"default.parallelism" -> taskTime
+	"default.parallelism" -> duration
+	"executor.memory" -> taskTime
+	"executor.memory" -> duration
+	"memory.fraction" -> taskTime
+	"memory.fraction" -> duration
+	taskTime -> duration
+}
