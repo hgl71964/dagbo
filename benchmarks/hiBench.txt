@@ -57,6 +57,10 @@ DISTRIBUTED ENV SET-UPS:
                 <value>{master-hostname}</value>
         </property>
         <property>
+                <name>yarn.nodemanager.hostname</name>
+                <value>{master-hostname}</value>
+        </property>
+        <property>
                 <name>yarn.nodemanager.aux-services</name>
                 <value>mapreduce_shuffle</value>
         </property>
