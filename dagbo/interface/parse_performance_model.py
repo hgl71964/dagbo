@@ -90,5 +90,8 @@ def parse_model(path):
 
 
 if __name__ == '__main__':
-    path = 'dagbo/interface/spark_performance_model.txt'
-    parse_model(path)
+    path = 'dagbo/interface/spark_perf_model_21.txt'
+    a, b, c , d = parse_model(path)
+    print(a)
+    print(b)
+    print(c)
