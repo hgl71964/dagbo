@@ -61,7 +61,19 @@ DISTRIBUTED ENV SET-UPS:
                 <value>mapreduce_shuffle</value>
         </property>
 
-        & other config related container
+        # other config related container
+        <property> <!-- for this node -->
+                <name>yarn.nodemanager.resource.memory-mb</name>
+                <value>24000</value>
+        </property>
+        <property> <!-- for one container -->
+                <name>yarn.scheduler.minimum-allocation-mb</name>
+                <value>1024</value>
+        </property>
+        <property> <!-- for one container -->
+                <name>yarn.scheduler.maximum-allocation-mb</name>
+                <value>8192</value>
+        </property>
         '''
 
         In mapred-site.xml
@@ -82,6 +94,12 @@ DISTRIBUTED ENV SET-UPS:
                 <name>dfs.datanode.data.dir</name>
                 <value>{path to local fs dir}</value>
         </property>
+
+        # to change to hostname of a datanode (as shown in hdfs dfsadmin -report)
+	<property>
+		  <name>dfs.datanode.hostname</name>
+		  <value>IP-ADDRESS</value>
+	</property>
         '''
 
         In masters
@@ -165,3 +183,6 @@ solution:
 
 6. fail with permission denied in bench.log
         rm bench.log per iteration?
+
+7. fail to launch history server
+       make sure /tmp/spark-events exists! & permission 777

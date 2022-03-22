@@ -58,7 +58,8 @@ def extract_and_aggregate(params: dict[str, float],
     agg_m = _aggregation(metric_list)
     # add unified memory
     assert "memory.fraction" in params and "executor.memory" in params, "input space error"
-    agg_m["unified_mem"] = params["memory.fraction"] * params["executor.memory"]
+    agg_m[
+        "unified_mem"] = params["memory.fraction"] * params["executor.memory"]
     ## add final obj
     agg_m["duration"] = duration
     agg_m["throughput"] = throughput

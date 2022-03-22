@@ -332,38 +332,42 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
                                   outputscale_prior=GammaPrior(2.0, 0.15))
         covar = gpytorch.kernels.ProductStructureKernel(
             base_kernel=base_kernel, num_dims=n)
-    elif node == "taskTime":
+
+    #elif node == "taskTime":
+    #    print(f"building {node} with custom kernel")
+    #    n = len(children)
+    #    base_kernel = ScaleKernel(MaternKernel(nu=2.5,
+    #                                           lengthscale_prior=GammaPrior(
+    #                                               3.0, 6.0)),
+    #                              outputscale_prior=GammaPrior(2.0, 0.15))
+    #    covar = gpytorch.kernels.AdditiveStructureKernel(
+    #        base_kernel=base_kernel, num_dims=n)
+
+    elif node == "duration" or node == "throughput":
         print(f"building {node} with custom kernel")
+        print(f"with children", children)
+
+        m = {}
         n = len(children)
-        base_kernel = ScaleKernel(MaternKernel(nu=2.5,
+        for i, child in enumerate(children):
+            m[child] = i
+
+        task_dim = (m["taskTime"], )
+        rest_dim = tuple([v for k, v in m.items() if k != "taskTime"])
+        print("task dim:", task_dim)
+        print("rest dim:", rest_dim)
+
+        task_kernel = ScaleKernel(MaternKernel(nu=2.5,
+                                               active_dims=task_dim,
                                                lengthscale_prior=GammaPrior(
                                                    3.0, 6.0)),
                                   outputscale_prior=GammaPrior(2.0, 0.15))
-        covar = gpytorch.kernels.AdditiveStructureKernel(
-            base_kernel=base_kernel, num_dims=n)
-
-    #elif node == "duration" or node == "throughput":
-    #    print(f"building {node} with custom kernel")
-
-    #    m = {}
-    #    n = len(children)
-    #    for i, child in enumerate(children):
-    #        m[child] = i
-
-    #    task_dim = (m["taskTime"], )
-    #    rest_dim = tuple([ v for k, v in m.items() if k != "taskTime"])
-
-    #    task_kernel = ScaleKernel(MaternKernel(nu=2.5,
-    #                                      active_dims=task_dim,
-    #                                      lengthscale_prior=GammaPrior(
-    #                                          3.0, 6.0)),
-    #                         outputscale_prior=GammaPrior(2.0, 0.15))
-    #    rest_kernel = ScaleKernel(MaternKernel(nu=2.5,
-    #                                      active_dims=rest_dim,
-    #                                      lengthscale_prior=GammaPrior(
-    #                                          3.0, 6.0)),
-    #                         outputscale_prior=GammaPrior(2.0, 0.15))
-    #    covar = task_kernel + rest_kernel
+        rest_kernel = ScaleKernel(MaternKernel(nu=2.5,
+                                               active_dims=rest_dim,
+                                               lengthscale_prior=GammaPrior(
+                                                   3.0, 6.0)),
+                                  outputscale_prior=GammaPrior(2.0, 0.15))
+        covar = task_kernel + rest_kernel
 
     #elif node == "executorRunTime":
     #    print(f"building {node} with custom kernel")
