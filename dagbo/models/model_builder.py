@@ -92,9 +92,10 @@ def build_gp_from_spec(
     #print(y.shape)  # [q, 1]
     #print(y)
     #print()
-    gpr = make_gps(x=x, y=y, gp_name="MA")
+    # NOTE: the following gives the same results with a fixed seed, therefore gp node is ok
+    #gpr = make_gps(x=x, y=y, gp_name="MA")
     #gpr = make_node(x=x, y=y, gp_name="MA")
-    #gpr = make_SingleTaskGP_node(x=x, y=y, gp_name="MA")
+    gpr = make_SingleTaskGP_node(x=x, y=y, gp_name="MA")
     return gpr
 
 
@@ -327,6 +328,10 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
         ppt = obj_space[node]
 
     covar = None
+    if covar is None:
+        print(f"building {node}")
+        covar = ScaleKernel(MaternKernel(nu=2.5, lengthscale_prior=GammaPrior(3.0, 6.0)), outputscale_prior=GammaPrior( 2.0, 0.15))
+
     #if node == "unified_mem":
     #    print(f"building {node} with custom kernel")
     #    n = len(children)

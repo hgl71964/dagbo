@@ -45,8 +45,6 @@ class DagGPyTorchModel(GPyTorchModel):
         """
         self.eval()  # make sure model is in eval mode
 
-        verbose = kwargs.get("verbose", False)
-
         # create multiple posteriors at identical input points
         # use multiple identical batch to represent i.i.d sample from posterior
         # expanded_X [num_sample, batch_size, q, d]
@@ -73,11 +71,6 @@ class DagGPyTorchModel(GPyTorchModel):
         #print(mvn.loc)
         #print()
 
-        if verbose:
-            logging.info("DAG's posterior: ")
-            print("expanded_X: ", expanded_X.shape)
-            print("mvn: ", mvn)
-            print("posterior: ", posterior.event_shape, posterior.mean.shape)
         if hasattr(self, "outcome_transform"):
             # posterior = self.outcome_transform.untransform_posterior(posterior)
             raise RuntimeError("does not support outcome_transform atm")
@@ -130,8 +123,6 @@ class direct_DagGPyTorchModel(GPyTorchModel):
         """
         self.eval()  # make sure model is in eval mode
 
-        verbose = kwargs.get("verbose", False)
-
         # create multiple posteriors at identical input points
         # use multiple identical batch to represent i.i.d sample from posterior
         # expanded_X [num_sample, batch_size, q, d]
@@ -154,12 +145,14 @@ class direct_DagGPyTorchModel(GPyTorchModel):
             mvn.loc.mean(0),
             mvn.covariance_matrix.mean(0))  # take ave. along samples dim
         posterior = GPyTorchPosterior(mvn=gpytorch_mvn)
-        if verbose:
-            logging.info("DAG's posterior: ")
-            print("expanded_X: ", expanded_X.shape)
-            print("mvn: ", mvn)
-            print("posterior: ", posterior.event_shape, posterior.mean.shape)
-            print(posterior.mean)
+
+        #print()
+        #print("X::: ", X.shape)
+        #print(X)
+        #print("mvn:::")
+        #print(mvn)
+        #print(mvn.loc)
+        #print()
         if hasattr(self, "outcome_transform"):
             # posterior = self.outcome_transform.untransform_posterior(posterior)
             raise RuntimeError("does not support outcome_transform atm")

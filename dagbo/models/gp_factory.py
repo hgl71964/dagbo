@@ -103,6 +103,31 @@ def make_SingleTaskGP_node(x: Tensor, y: Tensor, gp_name: str):
     #print(x.shape)  # [batch_size, q, dim]
     #print(y.shape)  # [batch_size, q]
     #print()
-    model = SingleTaskGP_Node([f"x{i}" for i in range(20)], "final", x, y)
+    class gp(SingleTaskGP_Node):
+        def __init__(self, input_names, output_name, train_inputs,
+                     train_targets):
+            super().__init__(input_names, output_name, train_inputs,
+                             train_targets)
+
+        # expose posterior to print shape
+        def posterior(self,
+                      X: Tensor,
+                      observation_noise=False,
+                      **kwargs) -> GPyTorchPosterior:
+            self.eval()  # make sure model is in eval mode
+            with gpt_posterior_settings():
+                mvn = self(X)
+            #print()
+            #print("X::: ", X.shape)
+            #print(X)
+            #print("mvn:::")
+            #print(mvn)
+            #print(mvn.loc)
+            #print()
+            #print(mvn.loc)  # can verify identical mvn
+            posterior = GPyTorchPosterior(mvn=mvn)
+            return posterior
+    #model = SingleTaskGP_Node([f"x{i}" for i in range(20)], "final", x, y)
+    model = gp([f"x{i}" for i in range(20)], "final", x, y)
     model.covar_module = make_kernels(gp_name)
     return model

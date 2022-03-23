@@ -98,15 +98,9 @@ class normal_gp_test(unittest.TestCase):
 
         self.model = gp(["x1", "x2", "x3"], "t", train_inputs, train_targets)
 
-    @unittest.skip("print sample shape")
+    #@unittest.skip("print sample shape")
     def test_normal_gp_sampling_shape(self):
         fit_gpr(self.model)
-
-        #print("print param::::")
-        #for i in self.model.covar.parameters():
-        #    print(i)
-        #for i in self.model.mean.parameters():
-        #    print(i)
 
         train_input_names = ["x1", "x2", "x3"]
         q = 1
@@ -116,17 +110,13 @@ class normal_gp_test(unittest.TestCase):
         print()
         print("normal gp sampling:::")
         print("input shape: ", new_input.shape)
-        print(new_input)
-
-        pst = self.model.posterior(new_input, **{"verbose": True})
+        pst = self.model.posterior(new_input)
 
         print()
         print("posterior:::")
-        print(pst.mean)
-        print(pst.variance)
-        print(pst.event_shape)
+        print(pst.mvn)
         sampler = SobolQMCNormalSampler(
-            num_samples=2, seed=1234)  # sampler just expand 0-dim as samples
+            num_samples=4, seed=0)
         samples = sampler(pst)
         print()
         print("sampling from posterior:::")
@@ -135,7 +125,7 @@ class normal_gp_test(unittest.TestCase):
         )  # [sampler's num_samples, batch_size of input, q, DAG's num_of_output]
         print(samples)
 
-    #@unittest.skip("print inner loop shape")
+    @unittest.skip("print inner loop shape")
     def test_normal_gp_inner_loop_shape(self):
         """
         NOTE: run this func can observe MC-gradient-descent in standard BO
@@ -153,7 +143,7 @@ class normal_gp_test(unittest.TestCase):
         num_restarts = 2  # create batch shape for optimise acquisition func
         raw_samples = 3  # this create initial batch shape for optimise acquisition func
 
-        sampler = SobolQMCNormalSampler(num_samples=128, seed=1234)
+        sampler = SobolQMCNormalSampler(num_samples=4, seed=0)
         acq = botorch.acquisition.monte_carlo.qExpectedImprovement(
             model=self.model,
             best_f=torch.tensor([1.]),
@@ -185,7 +175,7 @@ class ross_dag_dummy_perf_model_test(unittest.TestCase):
     def setUp(self):
         np.random.seed(0), torch.manual_seed(0)
 
-        # define dag
+        # define dag  direct_DagGPyTorchModel, DagGPyTorchModel
         class perf_model_DAG(SO_Dag, DagGPyTorchModel):
             def __init__(self, train_input_names: list[str],
                          train_target_names: list[str], train_inputs: Tensor,
@@ -212,7 +202,7 @@ class ross_dag_dummy_perf_model_test(unittest.TestCase):
             "y",
         ]
         num_init = 3
-        num_samples = 1000
+        num_samples = 2
 
         # hand-craft data
         train_inputs = np.array([
@@ -239,6 +229,32 @@ class ross_dag_dummy_perf_model_test(unittest.TestCase):
                                   train_inputs, train_targets, num_samples)
 
     #@unittest.skip("..")
+    def test_dag_posterior(self):
+        print()
+        print("dag sampling::::")
+        fit_dag(self.dag)
+
+        train_input_names = ["x1", "x2", "x3"]
+        q = 1
+        new_input = torch.rand(1, q, len(train_input_names))
+
+        print("input shape: ", new_input.shape)
+
+        pst = self.dag.posterior(new_input)
+
+        print()
+        print("posterior:")
+        print(pst.mvn)
+        sampler = SobolQMCNormalSampler(num_samples=4, seed=0)
+        samples = sampler(pst)
+        print()
+        print("sampling from posterior")
+        print(
+            samples.shape
+        )  # [sampler's num_samples, batch_size of input, q, DAG's num_of_output]
+        print(samples)
+
+    @unittest.skip("..")
     def test_dag_inner_loop(self):
         print()
         print("dag inner loop")
@@ -248,7 +264,7 @@ class ross_dag_dummy_perf_model_test(unittest.TestCase):
         num_restarts = 2  # create batch shape for optimise acquisition func
         raw_samples = 3  # this create initial batch shape for optimise acquisition func
 
-        sampler = SobolQMCNormalSampler(num_samples=128, seed=1234)
+        sampler = SobolQMCNormalSampler(num_samples=4, seed=0)
         acq = botorch.acquisition.monte_carlo.qExpectedImprovement(
             model=self.dag,
             best_f=torch.tensor([1.]),
@@ -271,7 +287,6 @@ class ross_dag_dummy_perf_model_test(unittest.TestCase):
         query = candidates.detach()
         logging.info("candidates: ")
         print(query, val.detach())
-
 
 class ross_dag_test(unittest.TestCase):
     """
@@ -459,9 +474,6 @@ class ross_dag_test(unittest.TestCase):
         query = candidates.detach()
         logging.info("candidates: ")
         print(query, val.detach())
-
-    def test_mem_stress(self):
-        pass
 
 
 class direct_dag_test(unittest.TestCase):
