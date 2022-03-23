@@ -39,7 +39,7 @@ def build_model(tuner: str, train_inputs_dict: dict, train_targets_dict: dict,
     if tuner == "dagbo-ssa":
         model = build_perf_model_from_spec_ssa(train_inputs_dict_,
                                                train_targets_dict_,
-                                               acq_func_config["num_samples"],
+                                               acq_func_config["sbo_samples"],
                                                param_space, metric_space,
                                                obj_space, edges,
                                                standardisation, device)
@@ -47,7 +47,7 @@ def build_model(tuner: str, train_inputs_dict: dict, train_targets_dict: dict,
     elif tuner == "dagbo-direct":
         model = build_perf_model_from_spec_direct(
             train_inputs_dict_, train_targets_dict_,
-            acq_func_config["num_samples"], param_space, metric_space,
+            acq_func_config["sbo_samples"], param_space, metric_space,
             obj_space, edges, standardisation, device)
         fit_dag(model)
     elif tuner == "bo":
@@ -258,7 +258,6 @@ def build_input_by_topological_order(
     train_inputs = np.stack(train_inputs).T
     train_targets = np.stack(train_targets).T
 
-    # standardisation
     # NOTE: across q-dim!!
     if standardisation:
         # StandardScaler, MinMaxScaler
@@ -330,7 +329,9 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
     covar = None
     if covar is None:
         print(f"building {node}")
-        covar = ScaleKernel(MaternKernel(nu=2.5, lengthscale_prior=GammaPrior(3.0, 6.0)), outputscale_prior=GammaPrior( 2.0, 0.15))
+        covar = ScaleKernel(MaternKernel(nu=2.5,
+            lengthscale_prior=GammaPrior(3.0, 6.0)),
+            outputscale_prior=GammaPrior(2.0, 0.15))
 
     #if node == "unified_mem":
     #    print(f"building {node} with custom kernel")

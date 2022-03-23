@@ -126,7 +126,7 @@ class normal_gp_test(unittest.TestCase):
         print(samples)
 
     @unittest.skip("print inner loop shape")
-    def test_normal_gp_inner_loop_shape(self):
+    def test_normal_gp_inner_loop(self):
         """
         NOTE: run this func can observe MC-gradient-descent in standard BO
 
@@ -137,7 +137,6 @@ class normal_gp_test(unittest.TestCase):
         """
         print()
         print("normal gp inner loop:::")
-        print()
         fit_gpr(self.model)
         q = 1
         num_restarts = 2  # create batch shape for optimise acquisition func
@@ -233,15 +232,12 @@ class ross_dag_dummy_perf_model_test(unittest.TestCase):
         print()
         print("dag sampling::::")
         fit_dag(self.dag)
-
         train_input_names = ["x1", "x2", "x3"]
         q = 1
         new_input = torch.rand(1, q, len(train_input_names))
-
         print("input shape: ", new_input.shape)
 
         pst = self.dag.posterior(new_input)
-
         print()
         print("posterior:")
         print(pst.mvn)
@@ -257,8 +253,7 @@ class ross_dag_dummy_perf_model_test(unittest.TestCase):
     @unittest.skip("..")
     def test_dag_inner_loop(self):
         print()
-        print("dag inner loop")
-        print()
+        print("dag inner loop:::")
         fit_dag(self.dag)
         q = 1
         num_restarts = 2  # create batch shape for optimise acquisition func

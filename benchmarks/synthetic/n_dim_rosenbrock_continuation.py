@@ -42,12 +42,13 @@ flags.DEFINE_integer("minimize", 1, "min or max objective")
 acq_func_config = {
     "q": 1,
     # usually use 128
-    "num_restarts": 2,
+    "num_restarts": 128,
     # for 3D-rosenbrock, can use 1024
-    "raw_samples": int(3),
+    "raw_samples": int(256),
     # NOTE: most mem-intensive
     # for 3D-rosenbrock, can use 512
-    "num_samples": int(4),
+    "num_samples": int(256),  # draw from reparametrised random variables
+    "sbo_samples": int(512),
     # only a placeholder for {EI, qEI}, will be overwritten per iter
     "y_max": torch.tensor([1.]),
     "beta": 1,  # for UCB

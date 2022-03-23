@@ -237,7 +237,12 @@ class SampleAveragePosterior_v2(GPyTorchPosterior):
         """
         #logging.info("sampler: ")
         #print(sample_shape)
+        #print(self.event_shape)
+        #print(sample_shape + self.event_shape)
+        #print(sample_shape + Size([self.num_samples]) + self.event_shape)
+        #print("base sample:")
         #print(base_samples.shape)
+        #print(base_samples)
         #print(self.mvn)
         #print(self.mvn.loc[:5])
 
@@ -249,6 +254,7 @@ class SampleAveragePosterior_v2(GPyTorchPosterior):
                     "sample_shape disagrees with shape of base_samples.")
             # get base_samples to the correct shape
             # THIS IS THE LINE I HAVE CHANGED
+            #base_samples = base_samples.expand(sample_shape + self.event_shape)
             base_samples = base_samples.expand(sample_shape +
                                                Size([self.num_samples]) +
                                                self.event_shape)
@@ -256,6 +262,8 @@ class SampleAveragePosterior_v2(GPyTorchPosterior):
             if not self._is_mt:
                 base_samples = base_samples.squeeze(-1)
 
+        #print(base_samples.shape)
+        #print(base_samples)
         # check gpytorch's implementation of rsample
         #with fast_computations(covar_root_decomposition=False):
         with ExitStack() as es:
@@ -269,7 +277,9 @@ class SampleAveragePosterior_v2(GPyTorchPosterior):
             samples = samples.unsqueeze(-1)
 
         # average over all mixture of posterior, aka SampleAveragePosterior
+        #print("sample:")
         #print(samples.shape)
+        #print(samples)
         samples = samples.mean(dim=1)
         return samples
 

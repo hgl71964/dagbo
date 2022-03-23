@@ -146,4 +146,4 @@ class SingleTaskGP_Node(SingleTaskGP):
 
         self.input_names = input_names
         self.output_name = output_name
-        super().__init__(train_inputs, train_targets, likelihood, covar)
+        super().__init__(train_inputs, train_targets, likelihood=likelihood, covar_module=covar)

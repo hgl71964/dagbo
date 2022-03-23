@@ -344,17 +344,19 @@ class SO_Dag(Dag):
 
             # make prediction via GP
             mvn = node(node_inputs)
-            # TODO add likelihood?
+            # XXX likelihood or not
+            #like_mvn = node.likelihood(mvn, node_inputs)
+            like_mvn = mvn
 
-            node_dict[node.output_name] = mvn
-            prediction = mvn.rsample()
+            node_dict[node.output_name] = like_mvn
+            prediction = like_mvn.rsample()
             #print()
             #print("rsample size::")
             #print(node.output_name)
             #print(node_inputs.shape)
             #print(prediction.shape)
             #print(node_inputs)
-            #print(mvn.loc)
+            #print(like_mvn.loc)
             tensor_inputs_dict[node.output_name] = prediction
             sink_node_name = node.output_name
 
@@ -408,8 +410,9 @@ class lazy_SO_Dag(Dag):
 
             # make prediction via GP
             mvn = node(node_inputs)
-            # likelihood
-            like_mvn = node.likelihood(mvn, node_inputs)
+            # XXX likelihood or not
+            #like_mvn = node.likelihood(mvn, node_inputs)
+            like_mvn = mvn
 
             #node_dict[node.output_name] = mvn
             #prediction = mvn.rsample()
