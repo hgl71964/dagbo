@@ -19,7 +19,7 @@ from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.models.utils import gpt_posterior_settings
 
 from dagbo.models.dag.dag import Dag, SO_Dag
-from dagbo.models.dag.node import Node
+from dagbo.models.dag.node import SingleTaskGP_Node
 from dagbo.models.dag.sample_average_posterior import SampleAveragePosterior
 from dagbo.models.dag.dag_gpytorch_model import DagGPyTorchModel, direct_DagGPyTorchModel
 from dagbo.models.dag.fit_dag import fit_dag, fit_node_with_scipy, test_fit_node_with_scipy, fit_node_with_adam
@@ -32,13 +32,13 @@ class normal_gp_test(unittest.TestCase):
         (as building block for dagbo)
     """
     def setUp(self):
-        class gp(Node):
+        class gp(SingleTaskGP_Node):
             def __init__(self, input_names, output_name, train_inputs,
                          train_targets):
                 super().__init__(input_names, output_name, train_inputs,
                                  train_targets)
-                self.num_outputs = 1
 
+            # expose posterior to print shape
             def posterior(self,
                           X: Tensor,
                           observation_noise=False,
@@ -72,8 +72,7 @@ class normal_gp_test(unittest.TestCase):
         train_inputs = torch.tensor([
             [0.1, 0.2, 0.3],
             [0.4, 0.1, 0.9],
-        ],
-                                    dtype=torch.float32)
+        ], dtype=torch.float64)
         func = lambda x: torch.sin(x[0] * (8 * math.pi)) + torch.cos(x[1] * (
             3 * math.pi)) + torch.log(x[2] + 0.1) + 3
         train_targets = torch.tensor([func(i) for i in train_inputs])
@@ -83,7 +82,7 @@ class normal_gp_test(unittest.TestCase):
 
         self.model = gp(["x1", "x2", "x3"], "t", train_inputs, train_targets)
 
-    #@unittest.skip("print sample shape")
+    @unittest.skip("print sample shape")
     def test_normal_gp_sampling_shape(self):
         fit_gpr(self.model)
 
@@ -120,7 +119,7 @@ class normal_gp_test(unittest.TestCase):
         )  # [sampler's num_samples, batch_size of input, q, DAG's num_of_output]
         print(samples)
 
-    @unittest.skip("print inner loop shape")
+    #@unittest.skip("print inner loop shape")
     def test_normal_gp_inner_loop_shape(self):
         """
         gp posterior only return one `deterministic` `posterior` object
