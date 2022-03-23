@@ -111,7 +111,7 @@ def main(_):
     for t in range(FLAGS.epochs):
         start = time.perf_counter()
 
-        model = build_model(FLAGS.tuner, exp, train_inputs_dict,
+        model = build_model(FLAGS.tuner, train_inputs_dict,
                             train_targets_dict, param_space,
                             metric_space, obj_space, edges, acq_func_config,
                             bool(FLAGS.norm), bool(FLAGS.minimize), device)

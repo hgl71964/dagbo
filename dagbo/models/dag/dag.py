@@ -67,6 +67,7 @@ class Dag(Module):
                                 train_inputs, train_targets)
 
         batch_shape = train_inputs.shape[:-2]
+        assert batch_shape == 1, "batch shape should be 1"
         self.input_names = train_input_names
         self.target_names = train_target_names
 
@@ -409,52 +410,6 @@ class lazy_SO_Dag(Dag):
             #prediction = mvn.rsample()
             node_dict[node.output_name] = like_mvn
             prediction = like_mvn.rsample()
-            tensor_inputs_dict[node.output_name] = prediction
-            sink_node_name = node.output_name
-
-        return node_dict[sink_node_name]
-
-
-class MO_Dag(Dag):
-    """
-    Multi objective Dag:
-        a Dag that support multiple sink nodes
-
-    TODO: add support for MO
-
-    Args:
-        Dag ([type]): see above
-    """
-    def __init__(self, train_input_names: list[str],
-                 train_target_names: list[str], train_inputs: Tensor,
-                 train_targets: Tensor):
-        super().__init__(train_input_names, train_target_names, train_inputs,
-                         train_targets)
-
-    def define_dag(self, batch_shape: Size) -> None:
-        raise NotImplementedError
-
-    def forward(self, tensor_inputs: Tensor) -> MultivariateNormal:
-        tensor_inputs_dict = unpack_to_dict(self.registered_input_names,
-                                            tensor_inputs)
-        node_dict = {}
-        sink_node_name = None
-
-        # ensure traverse in topological order
-        for node in self.nodes_dag_order():
-
-            # prepare input to each node
-            node_inputs_dict = {
-                k: v
-                for k, v in tensor_inputs_dict.items() if k in node.input_names
-            }
-            node_inputs = pack_to_tensor(node.input_names, node_inputs_dict)
-
-            # make prediction via GP
-            mvn = node(node_inputs)
-
-            node_dict[node.output_name] = mvn
-            prediction = mvn.rsample()
             tensor_inputs_dict[node.output_name] = prediction
             sink_node_name = node.output_name
 

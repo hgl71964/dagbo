@@ -7,8 +7,8 @@ from typing import Union
 from copy import deepcopy
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
-from dagbo.dag import lazy_SO_Dag, Dag
-from dagbo.dag_gpytorch_model import DagGPyTorchModel, direct_DagGPyTorchModel
+from dagbo.models.dag.dag import lazy_SO_Dag, Dag
+from dagbo.models.dag.dag_gpytorch_model import DagGPyTorchModel, direct_DagGPyTorchModel
 
 
 def get_dag_topological_order(obj_space: dict[str, str],

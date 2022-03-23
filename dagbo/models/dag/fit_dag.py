@@ -9,7 +9,7 @@ from botorch.optim.fit import fit_gpytorch_torch
 from botorch.sampling.samplers import SobolQMCNormalSampler
 from ax import Experiment
 
-from .models.node import Node
+from .node import Node
 from .dag import Dag
 
 

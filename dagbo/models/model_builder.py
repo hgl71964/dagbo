@@ -20,11 +20,10 @@ from dagbo.models.dag.parametric_mean import LinearMean
 from dagbo.utils.perf_model_utils import get_dag_topological_order, find_inverse_edges
 
 
-def build_model(tuner: str, exp: Experiment, train_inputs_dict: dict,
-                train_targets_dict: dict, param_space: dict,
-                metric_space: dict, obj_space: dict, edges: dict,
-                acq_func_config: dict, standardisation: bool, minimize: bool,
-                device) -> Union[Dag, SingleTaskGP]:
+def build_model(tuner: str, train_inputs_dict: dict, train_targets_dict: dict,
+                param_space: dict, metric_space: dict, obj_space: dict,
+                edges: dict, acq_func_config: dict, standardisation: bool,
+                minimize: bool, device) -> Union[Dag, SingleTaskGP]:
 
     # format data
     ## standardisation - deepcopy

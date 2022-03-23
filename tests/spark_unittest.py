@@ -13,10 +13,38 @@ from dagbo.utils.perf_model_utils import find_inverse_edges, get_dag_topological
 
 class exec_spark_test(unittest.TestCase):
     def setUp(self):
-        pass
+        self.app_id = "application_1641844906451_0006"
+        self.base_url = "http://localhost:18080"
 
     def tearDown(self):
         pass
+
+    @unittest.skip("ok")
+    def test_feat_extract(self):
+        metric = request_history_server(self.base_url, self.app_id)
+        print(metric)
+
+    @unittest.skip("ok")
+    def test_extract_throughput(self):
+        path = "/home/gh512/workspace/bo/spark-dir/hiBench/report/hibench.report"
+        l = extract_throughput(path)
+        print(l)
+
+    @unittest.skip("ok")
+    def test_app_id_extract(self):
+        log_path = "/home/gh512/workspace/bo/spark-dir/hiBench/report/wordcount/spark/bench.log"
+        app_id = extract_app_id(log_path)
+        print("app id")
+        print(app_id)
+
+    #@unittest.skip("ok")
+    def test_app_id_feat_extraction(self):
+        log_path = "/home/gh512/workspace/bo/spark-dir/hiBench/report/wordcount/spark/bench.log"
+        app_id = extract_app_id(log_path)
+        metric = request_history_server(self.base_url, app_id)
+
+        print("end-to-end feat extraction: ")
+        print(metric)
 
     @unittest.skip("ok")
     def test_subprocess(self):
@@ -105,98 +133,6 @@ class perf_utils_test(unittest.TestCase):
                         break
                     elif val == node:
                         raise RuntimeError("not topological order")
-
-
-class perf_model_test(unittest.TestCase):
-    def setUp(self):
-        # performance model
-        param_space, metric_space, obj_space, edges = parse_model(
-            "dagbo/interface/rosenbrock_3d_dagbo.txt")
-        #"dagbo/interface/rosenbrock_3d_correct_model.txt")
-        #"dagbo/interface/spark_performance_model.txt")
-
-        self.param_space = param_space
-        self.metric_space = metric_space
-        self.obj_space = obj_space
-        self.edges = edges
-        #print(param_space)
-        #print(edges)
-
-        acq_func_config = {
-            "q": 2,
-            "num_restarts": 48,
-            "raw_samples": 128,
-            "num_samples": 2048,
-            "y_max": torch.tensor([1.]),  # for EI
-            "beta": 1,  # for UCB
-        }
-        self.acq_func_config = acq_func_config
-
-        # make fake input tensor
-        self.train_inputs_dict = {
-            #i: torch.rand(acq_func_config["q"])
-            i: np.random.rand(acq_func_config["q"])
-            for i in list(param_space.keys())
-        }
-        self.train_targets_dict = {
-            #i: torch.rand(acq_func_config["q"])
-            i: np.random.rand(acq_func_config["q"])
-            for i in list(metric_space.keys()) + list(obj_space.keys())
-        }
-        norm = True
-
-        # build, build_perf_model_from_spec
-        self.dag = build_perf_model_from_spec_ssa(
-            self.train_inputs_dict, self.train_targets_dict,
-            acq_func_config["num_samples"], param_space, metric_space,
-            obj_space, edges, norm)
-        # feature extractor
-        self.app_id = "application_1641844906451_0006"
-        self.base_url = "http://localhost:18080"
-
-    @unittest.skip("ok")
-    def test_input_build(self):
-        node_order = get_dag_topological_order(self.obj_space, self.edges)
-        train_input_names, train_target_names, train_inputs, train_targets = build_input_by_topological_order(
-            self.train_inputs_dict, self.train_targets_dict, self.param_space,
-            self.metric_space, self.obj_space, node_order)
-        print("input build:")
-        print(train_input_names)
-        print(train_target_names)
-        print(train_inputs.shape)
-        print(train_targets.shape)
-        print(train_inputs)
-
-    @unittest.skip("ok")
-    def test_dag_build(self):
-        print(self.dag)
-
-    @unittest.skip("ok")
-    def test_feat_extract(self):
-        metric = request_history_server(self.base_url, self.app_id)
-        print(metric)
-
-    @unittest.skip("ok")
-    def test_extract_throughput(self):
-        path = "/home/gh512/workspace/bo/spark-dir/hiBench/report/hibench.report"
-        l = extract_throughput(path)
-        print(l)
-
-    @unittest.skip("ok")
-    def test_app_id_extract(self):
-        log_path = "/home/gh512/workspace/bo/spark-dir/hiBench/report/wordcount/spark/bench.log"
-        app_id = extract_app_id(log_path)
-        print("app id")
-        print(app_id)
-
-    #@unittest.skip("ok")
-    def test_app_id_feat_extraction(self):
-        log_path = "/home/gh512/workspace/bo/spark-dir/hiBench/report/wordcount/spark/bench.log"
-        app_id = extract_app_id(log_path)
-        metric = request_history_server(self.base_url, app_id)
-
-        print("end-to-end feat extraction: ")
-        print(metric)
 
 
 if __name__ == "__main__":
