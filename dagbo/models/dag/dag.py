@@ -8,8 +8,8 @@ from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.distributions.multitask_multivariate_normal import MultitaskMultivariateNormal
 from gpytorch.means.mean import Mean
 from gpytorch.module import Module
-from .models.node import Node
-from .utils.tensor_dict_conversions import pack_to_tensor, unpack_to_dict
+from dagbo.utils.tensor_dict_conversions import pack_to_tensor, unpack_to_dict
+from .node import Node
 
 
 class Dag(Module):

@@ -143,6 +143,9 @@ def _exec(exec_path: str) -> None:
     sleep(1)
     rc = subprocess.run([exec_path])
     if rc.returncode != 0:
+        print("stdout: ")
+        print(rc.stdout)
+        print()
         print("stderr: ")
         print(rc.stderr)
         raise RuntimeError("exec spark return non-zero code")

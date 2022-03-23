@@ -12,11 +12,11 @@ from gpytorch.kernels.scale_kernel import ScaleKernel
 from botorch.models import SingleTaskGP
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
-from dagbo.dag import Dag, lazy_SO_Dag
-from dagbo.dag_gpytorch_model import DagGPyTorchModel, direct_DagGPyTorchModel
-from dagbo.fit_dag import fit_dag
+from dagbo.models.dag.dag import Dag, lazy_SO_Dag
+from dagbo.models.dag.dag_gpytorch_model import DagGPyTorchModel, direct_DagGPyTorchModel
+from dagbo.models.dag.fit_dag import fit_dag
 from dagbo.models.gp_factory import make_gps, fit_gpr
-from dagbo.models.parametric_mean import LinearMean
+from dagbo.models.dag.parametric_mean import LinearMean
 from dagbo.utils.perf_model_utils import get_dag_topological_order, find_inverse_edges
 
 

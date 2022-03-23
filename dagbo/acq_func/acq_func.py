@@ -11,7 +11,7 @@ from botorch.sampling.samplers import MCSampler
 from botorch.sampling.samplers import SobolQMCNormalSampler
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
-from dagbo.dag import Dag
+from dagbo.models.dag.dag import Dag
 from dagbo.utils.perf_model_utils import get_dag_topological_order
 
 

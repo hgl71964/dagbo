@@ -10,7 +10,7 @@ from ax import Experiment, Metric
 from ax.storage.metric_registry import register_metric
 
 from dagbo.models.model_builder import build_model
-from dagbo.models.acq_func import inner_loop
+from dagbo.acq_func.acq_func import inner_loop
 from dagbo.utils.basic_utils import gpu_usage
 from dagbo.utils.ax_experiment_utils import (candidates_to_generator_run,
                                              load_exp, load_dict,
