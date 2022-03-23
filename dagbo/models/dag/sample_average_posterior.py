@@ -270,6 +270,8 @@ class SampleAveragePosterior_v2(GPyTorchPosterior):
             if gpt_settings._fast_covar_root_decomposition.is_default():
                 es.enter_context(
                     gpt_settings._fast_covar_root_decomposition(False))
+
+            # NOTE: mvn is gpytorch's posterior
             samples = self.mvn.rsample(sample_shape=sample_shape,
                                        base_samples=base_samples)
         # make sure there always is an output dimension

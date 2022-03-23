@@ -5,7 +5,6 @@ import torch
 import gpytorch
 import numpy as np
 from torch import Tensor
-from ax import Experiment
 from gpytorch.priors.torch_priors import GammaPrior
 from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
@@ -328,7 +327,7 @@ def build_covar(node: str, metric_space: dict, obj_space: dict,
 
     covar = None
     if covar is None:
-        print(f"building {node}")
+        #print(f"building {node}")
         covar = ScaleKernel(MaternKernel(nu=2.5,
             lengthscale_prior=GammaPrior(3.0, 6.0)),
             outputscale_prior=GammaPrior(2.0, 0.15))
