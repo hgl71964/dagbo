@@ -15,7 +15,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from dagbo.models.dag.dag import Dag, lazy_SO_Dag
 from dagbo.models.dag.dag_gpytorch_model import DagGPyTorchModel, direct_DagGPyTorchModel
 from dagbo.models.dag.fit_dag import fit_dag
-from dagbo.models.gp_factory import make_gps, fit_gpr
+from dagbo.models.gp_factory import make_gps, make_node, make_SingleTaskGP_node, fit_gpr
 from dagbo.models.dag.parametric_mean import LinearMean
 from dagbo.utils.perf_model_utils import get_dag_topological_order, find_inverse_edges
 
@@ -83,14 +83,15 @@ def build_gp_from_spec(
     x = train_inputs.squeeze(0)
     y = train_targets.squeeze(0)[..., -1]
     y = y.reshape(-1, 1)  # [q, 1] for 1 dim output
-
     #print()
     #print("shape")
-    #print(x.shape)
-    #print(y.shape)
+    #print(x.shape)  # [q, dim]
+    #print(y.shape)  # [q, 1]
     #print(y)
     #print()
-    gpr = make_gps(x=x, y=y, gp_name="MA")
+    #gpr = make_gps(x=x, y=y, gp_name="MA")
+    #gpr = make_node(x=x, y=y, gp_name="MA")
+    gpr = make_SingleTaskGP_node(x=x, y=y, gp_name="MA")
     return gpr
 
 

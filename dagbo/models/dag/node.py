@@ -1,3 +1,5 @@
+from typing import Optional, Union
+
 from torch import Tensor
 from gpytorch.constraints.constraints import GreaterThan, Positive
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
@@ -10,8 +12,10 @@ from gpytorch.means.zero_mean import ZeroMean
 from gpytorch.means.constant_mean import ConstantMean
 from gpytorch.models.exact_gp import ExactGP
 from gpytorch.priors.torch_priors import GammaPrior
+
+from botorch.models import SingleTaskGP
+
 from .parametric_mean import ParametricMean, LinearMean
-from typing import Optional, Union
 
 MIN_INFERRED_NOISE_LEVEL = 1e-4
 
@@ -63,6 +67,8 @@ class Node(ExactGP):
             likelihood = GaussianLikelihood(batch_shape=batch_shape,
                                             noise_prior=noise_prior,
                                             noise_constraint=noise_constraint)
+        else:
+            raise RuntimeError("not support custom likelihood yet")
         super().__init__(train_inputs, train_targets, likelihood)
 
         #print("dim init:", train_inputs.shape, train_targets.shape)
@@ -109,3 +115,36 @@ class Node(ExactGP):
             mean_x = self.mean(x)
         covar_x = self.covar(x)
         return MultivariateNormal(mean_x, covar_x)
+
+
+class SingleTaskGP_Node(SingleTaskGP):
+    def __init__(self,
+                 input_names: list[str],
+                 output_name: str,
+                 train_inputs: Tensor,
+                 train_targets: Tensor,
+                 mean: Optional[Union[Mean, ParametricMean]] = None,
+                 covar: Optional[Kernel] = None,
+                 likelihood: Optional[_GaussianLikelihoodBase] = None):
+        """
+        Args:
+            input_names: a d-length list of the names of each input
+                defining the order of the inputs in the innermost
+                dimension of train_inputs.
+            output_name: the names of the metric this node is modelling
+            train_inputs: A batch_shape*q*d-dim Tensor of the training inputs
+                The innermost dim, dim=-1, must follow the same order as
+                input_names as this is how the data is supplied to the
+                parametric mean the DAG.
+            train_targets: A batch_shape*q-dim Tensor of the training targets
+        """
+        assert train_inputs.shape[0] == 1
+        assert train_targets.shape[0] == 1
+        train_inputs = train_inputs.squeeze(0)  # [q, dim]
+        train_targets = train_targets.squeeze(0)
+        train_targets = train_targets.unsqueeze(-1)  # [d, 1]
+
+        self.input_names = input_names
+        self.output_name = output_name
+
+        super().__init__(train_inputs, train_targets, likelihood, covar)

@@ -18,12 +18,12 @@ from botorch.optim import optimize_acqf
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.models.utils import gpt_posterior_settings
 
-from dagbo.dag import Dag, SO_Dag
-from dagbo.models.node import Node
-from dagbo.models.sample_average_posterior import SampleAveragePosterior
-from dagbo.dag_gpytorch_model import DagGPyTorchModel, direct_DagGPyTorchModel
-from dagbo.fit_dag import fit_dag, fit_node_with_scipy, test_fit_node_with_scipy, fit_node_with_adam
-from dagbo.other_opt.model_factory import fit_gpr
+from dagbo.models.dag.dag import Dag, SO_Dag
+from dagbo.models.dag.node import Node
+from dagbo.models.dag.sample_average_posterior import SampleAveragePosterior
+from dagbo.models.dag.dag_gpytorch_model import DagGPyTorchModel, direct_DagGPyTorchModel
+from dagbo.models.dag.fit_dag import fit_dag, fit_node_with_scipy, test_fit_node_with_scipy, fit_node_with_adam
+from dagbo.models.gp_factory import fit_gpr
 
 
 class normal_gp_test(unittest.TestCase):
@@ -83,7 +83,7 @@ class normal_gp_test(unittest.TestCase):
 
         self.model = gp(["x1", "x2", "x3"], "t", train_inputs, train_targets)
 
-    @unittest.skip("print sample shape")
+    #@unittest.skip("print sample shape")
     def test_normal_gp_sampling_shape(self):
         fit_gpr(self.model)
 
@@ -181,7 +181,7 @@ class ross_dag_test(unittest.TestCase):
                          train_target_names: list[str], train_inputs: Tensor,
                          train_targets: Tensor, num_samples: int):
                 super().__init__(train_input_names, train_target_names,
-                                 train_inputs, train_targets)
+                                 train_inputs, train_targets, "cpu")
 
                 # required for all classes that extend SparkDag
                 self.num_samples = num_samples
@@ -370,7 +370,7 @@ class direct_dag_test(unittest.TestCase):
                          train_target_names: list[str], train_inputs: Tensor,
                          train_targets: Tensor, num_samples: int):
                 super().__init__(train_input_names, train_target_names,
-                                 train_inputs, train_targets)
+                                 train_inputs, train_targets, "cpu")
 
                 # required for all classes that extend SparkDag
                 self.num_samples = num_samples

@@ -1,4 +1,5 @@
 import logging
+from copy import deepcopy
 from torch import Size
 from torch import Tensor
 from typing import Iterator, Optional, Union
@@ -9,7 +10,7 @@ from gpytorch.distributions.multitask_multivariate_normal import MultitaskMultiv
 from gpytorch.means.mean import Mean
 from gpytorch.module import Module
 from dagbo.utils.tensor_dict_conversions import pack_to_tensor, unpack_to_dict
-from .node import Node
+from .node import Node, SingleTaskGP_Node
 
 
 class Dag(Module):
@@ -67,7 +68,7 @@ class Dag(Module):
                                 train_inputs, train_targets)
 
         batch_shape = train_inputs.shape[:-2]
-        assert batch_shape == 1, "batch shape should be 1"
+        assert batch_shape == Size([1]), f"get batch shape {batch_shape}"
         self.input_names = train_input_names
         self.target_names = train_target_names
 
@@ -125,7 +126,9 @@ class Dag(Module):
         #print("dim: ", X.shape, y.shape)
 
         # instantial node
-        node = Node(children, name, X, y, mean, covar, likelihood)
+        X, y = deepcopy(X), deepcopy(y)
+        #node = Node(children, name, X, y, mean, covar, likelihood)
+        node = SingleTaskGP_Node(children, name, X, y, mean, covar, likelihood)
         self.add_module(
             name,
             node)  # nn.Module's method, keep a mapping dict[name, Module]
@@ -308,9 +311,9 @@ class SO_Dag(Dag):
     """
     def __init__(self, train_input_names: list[str],
                  train_target_names: list[str], train_inputs: Tensor,
-                 train_targets: Tensor):
+                 train_targets: Tensor, device):
         super().__init__(train_input_names, train_target_names, train_inputs,
-                         train_targets)
+                         train_targets, device)
 
         # NOTE: this will be used by Botorch's API
         self._num_outputs = 1
@@ -323,8 +326,9 @@ class SO_Dag(Dag):
         Args:
             tensor_inputs: batch_shape*q*d-dim tensor
         """
-        tensor_inputs_dict = unpack_to_dict(self.registered_input_names,
-                                            tensor_inputs)
+        #tensor_inputs_dict = unpack_to_dict(self.registered_input_names,
+        #                                    tensor_inputs)
+        tensor_inputs_dict = unpack_to_dict(self.input_names, tensor_inputs)
         node_dict = {}
         sink_node_name = None
 
@@ -385,8 +389,9 @@ class lazy_SO_Dag(Dag):
             this order should be maintained by bounds
         """
         # will be update as traversal on-the-fly
-        tensor_inputs_dict = unpack_to_dict(self.registered_input_names,
-                                            tensor_inputs)
+        #tensor_inputs_dict = unpack_to_dict(self.registered_input_names,
+        #                                    tensor_inputs)
+        tensor_inputs_dict = unpack_to_dict(self.input_names, tensor_inputs)
         node_dict = {}
         sink_node_name = None
 
