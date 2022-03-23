@@ -5,14 +5,17 @@ import warnings
 import logging
 import unittest
 import torch
+import numpy as np
 import pandas as pd
 from torch import Size, Tensor
 from sklearn.metrics import mean_squared_error
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 import gpytorch
 from gpytorch.models.exact_gp import ExactGP
 from gpytorch.likelihoods.gaussian_likelihood import GaussianLikelihood
 import botorch
+from botorch.models import SingleTaskGP
 from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.optim import optimize_acqf
 from botorch.posteriors.gpytorch import GPyTorchPosterior
@@ -32,6 +35,8 @@ class normal_gp_test(unittest.TestCase):
         (as building block for dagbo)
     """
     def setUp(self):
+        np.random.seed(0), torch.manual_seed(0)
+
         class gp(SingleTaskGP_Node):
             def __init__(self, input_names, output_name, train_inputs,
                          train_targets):
@@ -46,11 +51,13 @@ class normal_gp_test(unittest.TestCase):
                 self.eval()  # make sure model is in eval mode
                 with gpt_posterior_settings():
                     mvn = self(X)
-                print("mvn:::")
-                print(X.shape)
-                print(mvn)
+                print()
+                print("X::: ", X.shape)
                 print(X)
+                print("mvn:::")
+                print(mvn)
                 print(mvn.loc)
+                print()
                 #print(mvn.loc)  # can verify identical mvn
                 posterior = GPyTorchPosterior(mvn=mvn)
                 return posterior
@@ -66,17 +73,26 @@ class normal_gp_test(unittest.TestCase):
             "z2",
             "y",
         ]
-        num_init = 2
+        num_init = 3
 
         # hand-craft data
-        train_inputs = torch.tensor([
+        train_inputs = np.array([
             [0.1, 0.2, 0.3],
+            [0.3, 0.2, 0.7],
             [0.4, 0.1, 0.9],
-        ], dtype=torch.float64)
-        func = lambda x: torch.sin(x[0] * (8 * math.pi)) + torch.cos(x[1] * (
-            3 * math.pi)) + torch.log(x[2] + 0.1) + 3
-        train_targets = torch.tensor([func(i) for i in train_inputs])
+        ])
 
+        # targets
+        func = lambda x: np.sin(x[0] * (8 * math.pi)) + np.cos(x[1] * (
+            3 * math.pi)) + np.log(x[2] + 0.1) + 3
+        train_targets = np.array([func(i) for i in train_inputs])
+        train_targets = train_targets.reshape(num_init, 1)
+
+        # format
+        train_inputs = MinMaxScaler().fit_transform(train_inputs)
+        train_targets = StandardScaler().fit_transform(train_targets)
+        train_inputs = torch.from_numpy(train_inputs)
+        train_targets = torch.from_numpy(train_targets)
         train_inputs = train_inputs.reshape(1, num_init, 3)
         train_targets = train_targets.reshape(1, num_init)
 
@@ -122,6 +138,8 @@ class normal_gp_test(unittest.TestCase):
     #@unittest.skip("print inner loop shape")
     def test_normal_gp_inner_loop_shape(self):
         """
+        NOTE: run this func can observe MC-gradient-descent in standard BO
+
         gp posterior only return one `deterministic` `posterior` object
             representing a gaussian posterior distribution
             this is ok for normal gp
@@ -129,6 +147,7 @@ class normal_gp_test(unittest.TestCase):
         """
         print()
         print("normal gp inner loop:::")
+        print()
         fit_gpr(self.model)
         q = 1
         num_restarts = 2  # create batch shape for optimise acquisition func
@@ -148,7 +167,102 @@ class normal_gp_test(unittest.TestCase):
             bounds=torch.tensor([
                 [0, 0, 0],
                 [1, 1, 1],
-            ], dtype=torch.float32),
+            ], dtype=torch.float64),
+            q=q,
+            num_restarts=num_restarts,
+            raw_samples=raw_samples,
+            sequential=False,  # joint optimisation of q
+        )
+        query = candidates.detach()
+        logging.info("candidates: ")
+        print(query, val.detach())
+
+
+class ross_dag_dummy_perf_model_test(unittest.TestCase):
+    """
+    test ross' impl of sample average dagbo
+    """
+    def setUp(self):
+        np.random.seed(0), torch.manual_seed(0)
+
+        # define dag
+        class perf_model_DAG(SO_Dag, DagGPyTorchModel):
+            def __init__(self, train_input_names: list[str],
+                         train_target_names: list[str], train_inputs: Tensor,
+                         train_targets: Tensor, num_samples: int):
+                super().__init__(train_input_names, train_target_names,
+                                 train_inputs, train_targets, "cpu")
+
+                # required for all classes that extend SparkDag
+                self.num_samples = num_samples
+
+            def define_dag(self, batch_shape: Size = Size([])) -> None:
+                x1 = self.register_input("x1")
+                x2 = self.register_input("x2")
+                x3 = self.register_input("x3")
+                y = self.register_metric("y", [x1, x2, x3])
+
+        # prepare input
+        train_input_names = [
+            "x1",
+            "x2",
+            "x3",
+        ]
+        train_target_names = [
+            "y",
+        ]
+        num_init = 3
+        num_samples = 1000
+
+        # hand-craft data
+        train_inputs = np.array([
+            [0.1, 0.2, 0.3],
+            [0.3, 0.2, 0.7],
+            [0.4, 0.1, 0.9],
+        ])
+
+        # targets
+        func = lambda x: np.sin(x[0] * (8 * math.pi)) + np.cos(x[1] * (
+            3 * math.pi)) + np.log(x[2] + 0.1) + 3
+        train_targets = np.array([func(i) for i in train_inputs])
+        train_targets = train_targets.reshape(num_init, 1)
+
+        # format
+        train_inputs = MinMaxScaler().fit_transform(train_inputs)
+        train_targets = StandardScaler().fit_transform(train_targets)
+        train_inputs = torch.from_numpy(train_inputs)
+        train_targets = torch.from_numpy(train_targets)
+        train_inputs = train_inputs.reshape(1, num_init, 3)
+        train_targets = train_targets.reshape(1, num_init, 1)
+
+        self.dag = perf_model_DAG(train_input_names, train_target_names,
+                                  train_inputs, train_targets, num_samples)
+
+    #@unittest.skip("..")
+    def test_dag_inner_loop(self):
+        print()
+        print("dag inner loop")
+        print()
+        fit_dag(self.dag)
+        q = 1
+        num_restarts = 2  # create batch shape for optimise acquisition func
+        raw_samples = 3  # this create initial batch shape for optimise acquisition func
+
+        sampler = SobolQMCNormalSampler(num_samples=128, seed=1234)
+        acq = botorch.acquisition.monte_carlo.qExpectedImprovement(
+            model=self.dag,
+            best_f=torch.tensor([1.]),
+            sampler=sampler,
+            objective=None,  # use when model has multiple output
+        )
+
+        # inner loop
+        candidates, val = botorch.optim.optimize_acqf(
+            acq_function=acq,
+            bounds=torch.tensor([
+                [0, 0, 0],
+                [1, 1, 1],
+            ], dtype=torch.float64),
             q=q,
             num_restarts=num_restarts,
             raw_samples=raw_samples,
@@ -164,6 +278,7 @@ class ross_dag_test(unittest.TestCase):
     test ross' impl of sample average dagbo
     """
     def setUp(self):
+        np.random.seed(0), torch.manual_seed(0)
 
         # define dag
         class TREE_DAG(SO_Dag, DagGPyTorchModel):
@@ -335,7 +450,7 @@ class ross_dag_test(unittest.TestCase):
             bounds=torch.tensor([
                 [0, 0, 0],
                 [1, 1, 1],
-            ], dtype=torch.float32),
+            ], dtype=torch.float64),
             q=q,
             num_restarts=num_restarts,
             raw_samples=raw_samples,
@@ -354,6 +469,8 @@ class direct_dag_test(unittest.TestCase):
     test my impl of sampling from dagbo's approx. posterior
     """
     def setUp(self):
+        np.random.seed(0), torch.manual_seed(0)
+
         # define dag
         class TREE_DAG(SO_Dag, direct_DagGPyTorchModel):
             """
@@ -499,7 +616,7 @@ class direct_dag_test(unittest.TestCase):
             bounds=torch.tensor([
                 [0, 0, 0],
                 [1, 1, 1],
-            ], dtype=torch.float32),
+            ], dtype=torch.float64),
             q=q,
             num_restarts=num_restarts,
             raw_samples=raw_samples,

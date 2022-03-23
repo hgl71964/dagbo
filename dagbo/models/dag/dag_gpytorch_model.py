@@ -64,6 +64,15 @@ class DagGPyTorchModel(GPyTorchModel):
         # GPyTorchPosterior support both MultitaskMultivariateNormal and MultivariateNormal
         # mvn: [num_samples, batch_shape, q, num_nodes]
         posterior = GPyTorchPosterior(mvn=mvn)
+
+        #print()
+        #print("X::: ", X.shape)
+        #print(X)
+        #print("mvn:::")
+        #print(mvn)
+        #print(mvn.loc)
+        #print()
+
         if verbose:
             logging.info("DAG's posterior: ")
             print("expanded_X: ", expanded_X.shape)

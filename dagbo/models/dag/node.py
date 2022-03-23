@@ -142,7 +142,7 @@ class SingleTaskGP_Node(SingleTaskGP):
         assert train_targets.shape[0] == 1
         train_inputs = train_inputs.squeeze(0)  # [q, dim]
         train_targets = train_targets.squeeze(0)
-        train_targets = train_targets.unsqueeze(-1)  # [d, 1]
+        train_targets = train_targets.unsqueeze(-1)  # [q, 1]
 
         self.input_names = input_names
         self.output_name = output_name
