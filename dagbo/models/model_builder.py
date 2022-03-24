@@ -92,9 +92,9 @@ def build_gp_from_spec(
     #print(y)
     #print()
     # NOTE: the following gives the same results with a fixed seed, therefore gp node is ok
-    #gpr = make_gps(x=x, y=y, gp_name="MA")
+    gpr = make_gps(x=x, y=y, gp_name="MA")
     #gpr = make_node(x=x, y=y, gp_name="MA")
-    gpr = make_SingleTaskGP_node(x=x, y=y, gp_name="MA")
+    #gpr = make_SingleTaskGP_node(x=x, y=y, gp_name="MA")
     return gpr
 
 

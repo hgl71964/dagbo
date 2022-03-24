@@ -42,7 +42,7 @@ flags.DEFINE_integer("minimize", 1, "min or max objective")
 acq_func_config = {
     "q": 1,
     # usually use 128
-    "num_restarts": 64,
+    "num_restarts": 48,
     # for 3D-rosenbrock, can use 1024
     "raw_samples": int(256),
     # NOTE: most mem-intensive
