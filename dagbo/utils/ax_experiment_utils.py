@@ -17,9 +17,6 @@ from ax import SearchSpace, Experiment, OptimizationConfig, Runner, Objective
 from ax.storage.json_store.load import load_experiment
 from ax.storage.json_store.save import save_experiment
 
-from dagbo.utils.perf_model_utils import get_dag_topological_order
-
-
 def candidates_to_generator_run(exp: Experiment, candidate: Tensor,
                                 param_space: dict) -> GeneratorRun:
     """
