@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # config
-epochs=20
+epochs=30
 repeat=2
 norm=1
 minimize=1

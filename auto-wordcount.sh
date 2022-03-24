@@ -3,7 +3,7 @@
 # config
 
 ## tuner
-epochs=20
+epochs=30
 repeat=2
 norm=1
 minimize=1
@@ -22,7 +22,7 @@ conf_path="/home/gh512/workspace/bo/spark-dir/hiBench/conf/spark.conf"
 base_url="http://localhost:18080"
 
 clear_benchlog () {
-  rm -rf /home/gh512/workspace/bo/spark-dir/hiBench/report/kmeans/spark
+  rm -rf /home/gh512/workspace/bo/spark-dir/hiBench/report/wordcount/spark
 }
 
 # create if not exist
