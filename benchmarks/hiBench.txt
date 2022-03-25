@@ -31,6 +31,8 @@ CONFIG DIR:
         - core-site.xml, yarn-site.xml, hdfs-site.xml, yarn-site.xml
 2. {hibench home}/conf
 
+3. make sure chmod -R 777 {hibench home}/report
+
 
 DISTRIBUTED ENV SET-UPS:
 
