@@ -13,14 +13,14 @@ hibench_home="/home/gh512/workspace/bo/spark-dir/hiBench"
 hdfs_path="/HiBench"
 
 ## paths
-exec_path="/home/gh512/workspace/bo/spark-dir/hiBench/bin/workloads/ml/kmeans/spark/run.sh"
-performance_model_path="dagbo/interface/spark_perf_model_8.txt"
-hibench_report_path="/home/gh512/workspace/bo/spark-dir/hiBench/report/hibench.report"
-conf_path="/home/gh512/workspace/bo/spark-dir/hiBench/conf/spark.conf"
+performance_model_path="dagbo/interface/spark_perf_model_13.txt"
+exec_path="{hibench_home}/bin/workloads/ml/kmeans/spark/run.sh"
+hibench_report_path="{hibench_home}/report/hibench.report"
+conf_path="{hibench_home}/conf/spark.conf"
 base_url="http://localhost:18080"
 
 clear_benchlog () {
-  rm -rf /home/gh512/workspace/bo/spark-dir/hiBench/report/kmeans/spark
+  rm -rf {hibench_home}/report/kmeans/spark
 }
 
 # create if not exist
