@@ -16,13 +16,13 @@ hdfs_path="/HiBench"
 
 ## paths
 performance_model_path="dagbo/interface/spark_perf_model_13.txt"
-exec_path="{hibench_home}/bin/workloads/micro/wordcount/spark/run.sh"
-hibench_report_path="{hibench_home}/report/hibench.report"
-conf_path="{hibench_home}/conf/spark.conf"
+exec_path="${hibench_home}/bin/workloads/micro/wordcount/spark/run.sh"
+hibench_report_path="${hibench_home}/report/hibench.report"
+conf_path="${hibench_home}/conf/spark.conf"
 base_url="http://localhost:18080"
 
 clear_benchlog () {
-  rm -rf {hibench_home}/report/wordcount/spark
+  rm -rf ${hibench_home}/report/wordcount/spark
 }
 
 # create if not exist
