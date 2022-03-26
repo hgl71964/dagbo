@@ -1,0 +1,52 @@
+digraph hartmann {
+	graph [rankdir=LR]
+	subgraph cluster_0 {
+		color=lightgrey style=filled
+		label=param
+		x0 [label=x0]
+		x1 [label=x1]
+		x2 [label=x2]
+		x3 [label=x3]
+		x4 [label=x4]
+		x5 [label=x5]
+	}
+	subgraph cluster_1 {
+		color=blue
+		label="intermediate metrics"
+		exp0 [label=exp0]
+		exp1 [label=exp1]
+		exp2 [label=exp2]
+		exp3 [label=exp3]
+	}
+	subgraph cluster_2 {
+		final [label=final]
+	}
+	x0 -> exp0
+	x1 -> exp0
+	x2 -> exp0
+	x3 -> exp0
+	x4 -> exp0
+	x5 -> exp0
+	x0 -> exp1
+	x1 -> exp1
+	x2 -> exp1
+	x3 -> exp1
+	x4 -> exp1
+	x5 -> exp1
+	x0 -> exp2
+	x1 -> exp2
+	x2 -> exp2
+	x3 -> exp2
+	x4 -> exp2
+	x5 -> exp2
+	x0 -> exp3
+	x1 -> exp3
+	x2 -> exp3
+	x3 -> exp3
+	x4 -> exp3
+	x5 -> exp3
+	exp0 -> final
+	exp1 -> final
+	exp2 -> final
+	exp3 -> final
+}

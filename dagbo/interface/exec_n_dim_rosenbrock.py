@@ -11,6 +11,12 @@ SCALE_MAPPING = {
 def call_rosenbrock(
         params: dict[str, float], train_inputs_dict: dict[str, np.ndarray],
         train_targets_dict: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
+    """
+    n-dim rosenbrock benchmark func, n is automatically inferred from params
+        1. minimization
+		2. global minimum: 0
+        3. x* = [(1, ...)]
+    """
 
     # NOTE: scale back because params are always defined within [0, 1]
     scale = SCALE_MAPPING["p"]
@@ -27,10 +33,12 @@ def call_rosenbrock(
         i_s.append(tmp)
         f_s.append(tmp_2)
 
+    # populate intermediate metric
     obj = {}
     for c, (i, j) in enumerate(zip(i_s, f_s)):
         obj[f"i{c}"] = np.array([i]).reshape(-1)
         obj[f"f{c}"] = np.array([j]).reshape(-1)
+    # final obj
     obj["final"] = np.array([sum(f_s)]).reshape(-1)
 
     # populdate input dict
