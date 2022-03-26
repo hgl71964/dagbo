@@ -4,8 +4,8 @@ import numpy as np
 
 # NOTE: possibly the most important mapping, scale param range [0, 1] back to their original values
 SCALE_MAPPING = {
-    "p": 1,
-}
+        "p": 1,
+        }
 
 
 def call_hartmann(
@@ -23,18 +23,18 @@ def call_hartmann(
     n = len(params.keys())
     assert n == 6, "hartmann should be 6-dim"
     alphas = [1.0, 1.2, 3.0, 3.2]
-	A = [
-                [10, 3, 17, 3.5, 1.7, 8],
-                [0.05, 10, 17, 0.1, 8, 14],
-                [3, 3.5, 1.7, 10, 17, 8],
-                [17, 8, 0.05, 10, 0.1, 14],
-		]
-	P = [
-				[1312, 1696, 5569, 124, 8283, 5886],
-				[2329, 4135, 8307, 3736, 1004, 9991],
-				[2348, 1451, 3522, 2883, 3047, 6650],
-				[4047, 8828, 8732, 5743, 1091, 381],
-		]
+    A = [
+            [10, 3, 17, 3.5, 1.7, 8],
+            [0.05, 10, 17, 0.1, 8, 14],
+            [3, 3.5, 1.7, 10, 17, 8],
+            [17, 8, 0.05, 10, 0.1, 14],
+            ]
+    P = [
+            [1312, 1696, 5569, 124, 8283, 5886],
+            [2329, 4135, 8307, 3736, 1004, 9991],
+            [2348, 1451, 3522, 2883, 3047, 6650],
+            [4047, 8828, 8732, 5743, 1091, 381],
+            ]
     exp = [0 for i in range(4)]
     for i in range(4):
         tmp = []
@@ -65,3 +65,10 @@ def call_hartmann(
             train_targets_dict[k] = np.array([v])
 
     return obj
+
+if __name__ == "__main__":
+    params = {}
+    x_star = (0.20169, 0.150011, 0.476874, 0.275332, 0.311652, 0.6573)
+    for i in range(6):
+        params[f"x{i}"] = x_star[i]
+    print(call_hartmann(params, {}, {}))
