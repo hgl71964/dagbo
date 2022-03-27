@@ -1,0 +1,26 @@
+digraph hartmann {
+	graph [rankdir=LR]
+	subgraph cluster_0 {
+		color=lightgrey style=filled
+		label=param
+		x0 [label=x0]
+		x1 [label=x1]
+		x2 [label=x2]
+		x3 [label=x3]
+		x4 [label=x4]
+		x5 [label=x5]
+	}
+	subgraph cluster_1 {
+		color=blue
+		label="intermediate metrics"
+	}
+	subgraph cluster_2 {
+		final [label=final]
+	}
+	x0 -> final
+	x1 -> final
+	x2 -> final
+	x3 -> final
+	x4 -> final
+	x5 -> final
+}

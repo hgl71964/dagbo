@@ -1,0 +1,60 @@
+digraph hartmann {
+	graph [rankdir=LR]
+	subgraph cluster_0 {
+		color=lightgrey style=filled
+		label=param
+		x0 [label=x0]
+		x1 [label=x1]
+		x2 [label=x2]
+		x3 [label=x3]
+		x4 [label=x4]
+		x5 [label=x5]
+	}
+	subgraph cluster_1 {
+		color=blue
+		label="intermediate metrics"
+		inner_sum0 [label=inner_sum0]
+		inner_sum1 [label=inner_sum1]
+		inner_sum2 [label=inner_sum2]
+		inner_sum3 [label=inner_sum3]
+		exp0 [label=exp0]
+		exp1 [label=exp1]
+		exp2 [label=exp2]
+		exp3 [label=exp3]
+	}
+	subgraph cluster_2 {
+		final [label=final]
+	}
+	x0 -> inner_sum0
+	x1 -> inner_sum0
+	x2 -> inner_sum0
+	x3 -> inner_sum0
+	x4 -> inner_sum0
+	x5 -> inner_sum0
+	x0 -> inner_sum1
+	x1 -> inner_sum1
+	x2 -> inner_sum1
+	x3 -> inner_sum1
+	x4 -> inner_sum1
+	x5 -> inner_sum1
+	x0 -> inner_sum2
+	x1 -> inner_sum2
+	x2 -> inner_sum2
+	x3 -> inner_sum2
+	x4 -> inner_sum2
+	x5 -> inner_sum2
+	x0 -> inner_sum3
+	x1 -> inner_sum3
+	x2 -> inner_sum3
+	x3 -> inner_sum3
+	x4 -> inner_sum3
+	x5 -> inner_sum3
+	inner_sum0 -> exp0
+	inner_sum1 -> exp1
+	inner_sum2 -> exp2
+	inner_sum3 -> exp3
+	exp0 -> final
+	exp1 -> final
+	exp2 -> final
+	exp3 -> final
+}
