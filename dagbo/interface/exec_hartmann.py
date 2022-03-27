@@ -35,6 +35,7 @@ def call_hartmann(
             [2348, 1451, 3522, 2883, 3047, 6650],
             [4047, 8828, 8732, 5743, 1091, 381],
             ]
+    inner_sum = [0 for i in range(4)]
     exp = [0 for i in range(4)]
     for i in range(4):
         tmp = []
@@ -42,12 +43,15 @@ def call_hartmann(
             xj = params[f"x{j}"]
             inner = A[i][j] * (xj - 0.0001 * P[i][j]) ** 2
             tmp.append(inner)
-        exp[i] = alphas[i] * np.exp(-sum(tmp))
+        inner_sum[i] = -sum(tmp)
+        #exp[i] = alphas[i] * np.exp(-sum(tmp))
+        exp[i] = np.exp(-sum(tmp))
 
     obj = {}
-    for c, item in enumerate(exp):
-        obj[f"exp{c}"] = np.array([item]).reshape(-1)
-    obj["final"] = -np.array([sum(exp)]).reshape(-1)
+    for c, (i1, i2) in enumerate(zip(inner_sum, exp)):
+        obj[f"inner_sum{c}"] = np.array([i1]).reshape(-1)
+        obj[f"exp{c}"] = np.array([i2]).reshape(-1)
+    obj["final"] = -np.sum(np.array(exp) * np.array(alphas))
 
     # populdate input dict
     for k, v in params.items():

@@ -1,14 +1,14 @@
 #! /bin/bash
 
 # config
-epochs=30
+epochs=50
 workload="hartmann-6D" # workload name need to match EXACTLY, it is lower case
 repeat=9
 norm=1
 minimize=1
 device=gpu
 
-performance_model_path="dagbo/interface/hartmann_6d_dagbo.txt"
+performance_model_path="dagbo/interface/hartmann_perf_model_2.txt"
 # create if not exist
 mkdir -p benchmarks/data
 
