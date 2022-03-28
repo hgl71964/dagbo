@@ -1,0 +1,23 @@
+digraph branin {
+	graph [rankdir=LR]
+	subgraph cluster_0 {
+		color=lightgrey style=filled
+		label=param
+		x0 [label=x0]
+		x1 [label=x1]
+	}
+	subgraph cluster_1 {
+		color=blue
+		label="intermediate metrics"
+		t1 [label=t1]
+		t2 [label=t2]
+	}
+	subgraph cluster_2 {
+		final [label=final]
+	}
+	x0 -> t1
+	x0 -> t2
+	x1 -> t1
+	t1 -> final
+	t2 -> final
+}
