@@ -272,7 +272,6 @@ def mem_safeguard(param: dict) -> dict:
 
         # keep at least 400M user-memory if executor.memory=1g.
         # for mem: https://luminousmen.com/post/dive-into-spark-memory
-        # FIXME: mem not safe
         if param["executor.memory"] == 1 and param["memory.fraction"] > 0.6:
             param["memory.fraction"] = 0.6
         elif param["executor.memory"] == 2 and param["memory.fraction"] > 0.8:

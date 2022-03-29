@@ -4,7 +4,6 @@ import numpy as np
 
 import requests
 from absl import app
-from absl import flags
 from tqdm import tqdm
 from typing import Union
 """
@@ -29,8 +28,6 @@ NOTE: the description for each metric: https://spark.apache.org/docs/2.4.5/monit
 Example url:
      curl http://localhost:18080/api/v1/applications/application_1641844906451_0006/stages/
 """
-
-FLAGS = flags.FLAGS
 
 
 def main(_):
