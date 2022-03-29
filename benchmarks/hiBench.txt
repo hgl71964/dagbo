@@ -202,3 +202,8 @@ solution:
 
 7. fail to launch history server
        make sure /tmp/spark-events exists! & permission 777
+
+8. fail "Diagnostics: Container killed on request. Exit code is 143"
+        due to memory issues:
+        see: https://community.cloudera.com/t5/Support-Questions/Diagnostics-Container-killed-on-request-Exit-code-is-143/td-p/240929
+

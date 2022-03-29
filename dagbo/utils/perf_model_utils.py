@@ -7,6 +7,7 @@ from typing import Union
 from copy import deepcopy
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
+
 def get_dag_topological_order(obj_space: dict[str, str],
                               edges: dict[str, list[str]]) -> list[str]:
     """

@@ -30,6 +30,11 @@ CONST_WRITE = {
     "spark.local.dir":
     "/local/scratch/spark_tmp_dir",  # to store intermediate data
 
+    # mem
+    #"spark.yarn.executor.memoryOverhead": 512,
+    #"spark.yarn.driver.memoryOverhead": 512,
+    #"spark.yarn.am.memoryOverhead": 512,
+
     # for continuous perf model
     "spark.speculation": "true",
     "spark.shuffle.compress": "false",
@@ -267,6 +272,7 @@ def mem_safeguard(param: dict) -> dict:
 
         # keep at least 300M user-memory if executor.memory=1g.
         # for mem: https://luminousmen.com/post/dive-into-spark-memory
+        # FIXME: mem not safe
         if param["executor.memory"] == 1 and param["memory.fraction"] > 0.7:
             param["memory.fraction"] = 0.7
         elif param["executor.memory"] == 2 and param["memory.fraction"] > 0.8:

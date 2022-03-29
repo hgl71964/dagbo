@@ -115,8 +115,7 @@ class normal_gp_test(unittest.TestCase):
         print()
         print("posterior:::")
         print(pst.mvn)
-        sampler = SobolQMCNormalSampler(
-            num_samples=4, seed=0)
+        sampler = SobolQMCNormalSampler(num_samples=4, seed=0)
         samples = sampler(pst)
         print()
         print("sampling from posterior:::")
@@ -282,6 +281,7 @@ class ross_dag_dummy_perf_model_test(unittest.TestCase):
         query = candidates.detach()
         logging.info("candidates: ")
         print(query, val.detach())
+
 
 class ross_dag_test(unittest.TestCase):
     """

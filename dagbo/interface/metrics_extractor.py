@@ -54,15 +54,12 @@ def extract_and_aggregate(params: dict[str, float],
 
     metric_list = request_history_server(base_url, app_id)
 
-    # agg
+    # agg & add metric
     agg_m = _aggregation(metric_list)
-    # add unified memory
-    assert "memory.fraction" in params and "executor.memory" in params, "input space error"
-    agg_m[
-        "unified_mem"] = params["memory.fraction"] * params["executor.memory"]
-    ## add final obj
-    agg_m["duration"] = duration
-    agg_m["throughput"] = throughput
+    agg_m = _add_metric(agg_m, {
+        "duration": duration,
+        "throughput": throughput
+    })
     ## unit conversion
     agg_m = _post_processing(agg_m)
 
@@ -113,6 +110,22 @@ def _aggregation(exec_metric_list: list[dict[str, list[float]]]) -> dict:
             else:
                 d[metric_name] += val
     return d
+
+
+def _add_metric(agg_m: dict, params: dict, add_dict: dict) -> dict:
+    # add from dict
+    for k, v in add_dict.items():
+        agg_m[k] = v
+
+    # add unified memory
+    assert "memory.fraction" in params and "executor.memory" in params, "input space error"
+    agg_m[
+        "unified_mem"] = params["memory.fraction"] * params["executor.memory"]
+
+    # add taskTime per core
+    assert "executor.cores" in params, "input space error"
+    agg_m["taskTimePerCore"] = agg_m["taskTime"] / params["executor.cores"]
+    return agg_m
 
 
 def _post_processing(metric_map: dict[str, float]) -> dict[str, float]:
@@ -204,6 +217,7 @@ def request_history_server(base_url, app_id) -> list[dict]:
         exec_metric_list. list of per-stage exec_map, where k: executor id - v: list of metric values
     """
     stage_ids = _get_stages(base_url, app_id)
+    stage_ids = list(reversed(stage_ids))
     exec_metric_list = _get_executors_metric(base_url, app_id, stage_ids)
     return exec_metric_list
 
@@ -314,7 +328,7 @@ def _append_metric(exec_map, task):
     return exec_map
 
 
-def _get_stages(base_url, app_id):
+def _get_stages(base_url, app_id) -> list[int]:
     """
     get all stages id. if a stage is not completed, it is skipped
     """

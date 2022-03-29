@@ -127,6 +127,7 @@ def make_SingleTaskGP_node(x: Tensor, y: Tensor, gp_name: str):
             #print(mvn.loc)  # can verify identical mvn
             posterior = GPyTorchPosterior(mvn=mvn)
             return posterior
+
     #model = SingleTaskGP_Node([f"x{i}" for i in range(20)], "final", x, y)
     model = gp([f"x{i}" for i in range(20)], "final", x, y)
     model.covar_module = make_kernels(gp_name)

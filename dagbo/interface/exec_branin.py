@@ -5,8 +5,8 @@ import math
 
 # NOTE: possibly the most important mapping, scale param range [0, 1] back to their original values
 SCALE_MAPPING = {
-        "p": 15,
-        }
+    "p": 15,
+}
 
 
 def call_branin(
@@ -30,7 +30,7 @@ def call_branin(
     #x0 = params["x0"]
     #x1 = params["x1"]
 
-    t1 = x1 - 5.1 / (4 * math.pi ** 2) * (x0)**2 + 5 / math.pi * x0 - 6
+    t1 = x1 - 5.1 / (4 * math.pi**2) * (x0)**2 + 5 / math.pi * x0 - 6
     square = t1**2
     t2 = 10 * (1 - 1 / (8 * math.pi)) * np.cos(x0)
 
@@ -56,6 +56,7 @@ def call_branin(
             train_targets_dict[k] = np.array([v])
 
     return obj
+
 
 if __name__ == "__main__":
     # NOTE: this only works if we disable the scale

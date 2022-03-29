@@ -66,6 +66,7 @@ class exec_spark_test(unittest.TestCase):
         }
         call_spark(spec, conf_path, exec_path)
 
+
 class perf_utils_test(unittest.TestCase):
     def setUp(self):
         param_space, metric_space, obj_space, edges = parse_model(

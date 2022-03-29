@@ -4,8 +4,8 @@ import numpy as np
 
 # NOTE: possibly the most important mapping, scale param range [0, 1] back to their original values
 SCALE_MAPPING = {
-        "p": 1,
-        }
+    "p": 1,
+}
 
 
 def call_hartmann(
@@ -24,24 +24,24 @@ def call_hartmann(
     assert n == 6, "hartmann should be 6-dim"
     alphas = [1.0, 1.2, 3.0, 3.2]
     A = [
-            [10, 3, 17, 3.5, 1.7, 8],
-            [0.05, 10, 17, 0.1, 8, 14],
-            [3, 3.5, 1.7, 10, 17, 8],
-            [17, 8, 0.05, 10, 0.1, 14],
-            ]
+        [10, 3, 17, 3.5, 1.7, 8],
+        [0.05, 10, 17, 0.1, 8, 14],
+        [3, 3.5, 1.7, 10, 17, 8],
+        [17, 8, 0.05, 10, 0.1, 14],
+    ]
     P = [
-            [1312, 1696, 5569, 124, 8283, 5886],
-            [2329, 4135, 8307, 3736, 1004, 9991],
-            [2348, 1451, 3522, 2883, 3047, 6650],
-            [4047, 8828, 8732, 5743, 1091, 381],
-            ]
+        [1312, 1696, 5569, 124, 8283, 5886],
+        [2329, 4135, 8307, 3736, 1004, 9991],
+        [2348, 1451, 3522, 2883, 3047, 6650],
+        [4047, 8828, 8732, 5743, 1091, 381],
+    ]
     inner_sum = [0 for i in range(4)]
     exp = [0 for i in range(4)]
     for i in range(4):
         tmp = []
         for j in range(6):
             xj = params[f"x{j}"]
-            inner = A[i][j] * (xj - 0.0001 * P[i][j]) ** 2
+            inner = A[i][j] * (xj - 0.0001 * P[i][j])**2
             tmp.append(inner)
         inner_sum[i] = -sum(tmp)
         #exp[i] = alphas[i] * np.exp(-sum(tmp))
@@ -69,6 +69,7 @@ def call_hartmann(
             train_targets_dict[k] = np.array([v])
 
     return obj
+
 
 if __name__ == "__main__":
     params = {}
