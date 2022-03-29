@@ -42,7 +42,8 @@ def main(_):
 def extract_and_aggregate(params: dict[str, float],
                           train_inputs_dict: dict[str, np.ndarray],
                           train_targets_dict: dict[str, np.ndarray],
-                          hibench_report_path: str, base_url: str) -> float:
+                          hibench_report_path: str, base_url: str,
+                          file_path: str) -> float:
     """
     extract & aggregation metric & populate data
     """
@@ -56,7 +57,7 @@ def extract_and_aggregate(params: dict[str, float],
 
     # agg & add metric
     agg_m = _aggregation(metric_list)
-    agg_m = _add_metric(agg_m, {
+    agg_m = _add_metric(agg_m, file_path, {
         "duration": duration,
         "throughput": throughput
     })
@@ -112,20 +113,32 @@ def _aggregation(exec_metric_list: list[dict[str, list[float]]]) -> dict:
     return d
 
 
-def _add_metric(agg_m: dict, params: dict, add_dict: dict) -> dict:
+def _add_metric(agg_m: dict, file_path: str, add_dict: dict) -> dict:
     # add from dict
     for k, v in add_dict.items():
         agg_m[k] = v
 
+    # read actual conf from conf file
+    conf = _read_from_conf_file(file_path)
+
     # add unified memory
-    assert "memory.fraction" in params and "executor.memory" in params, "input space error"
-    agg_m[
-        "unified_mem"] = params["memory.fraction"] * params["executor.memory"]
+    agg_m["unified_mem"] = float(conf["spark.memory.fraction"]) * float(
+        conf["spark.executor.memory"])
 
     # add taskTime per core
-    assert "executor.cores" in params, "input space error"
-    agg_m["taskTimePerCore"] = agg_m["taskTime"] / params["executor.cores"]
+    agg_m["taskTimePerCore"] = agg_m["taskTime"] / float(
+        conf["hibench.yarn.executor.cores"])
     return agg_m
+
+
+def _read_from_conf_file(file_path: str) -> dict[str, str]:
+    m = {}
+    with open(file_path, "r") as f:
+        lines = f.readlines()
+        for l in lines:
+            ll = l.strip().split()
+            m[ll[0]] = ll[1]
+    return m
 
 
 def _post_processing(metric_map: dict[str, float]) -> dict[str, float]:

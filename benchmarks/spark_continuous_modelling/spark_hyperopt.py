@@ -10,7 +10,7 @@ from ax.storage.metric_registry import register_metric
 from dagbo.interface.exec_spark import call_spark
 from dagbo.utils.ax_experiment_utils import load_exp, save_dict, load_dict
 from dagbo.utils.hyperopt_utils import search_space_from_ax_experiment, build_trials_from_sobol, get_model
-from dagbo.interface.metrics_extractor import extract_and_aggregate, extract_duration_app_id, extract_throughput
+from dagbo.interface.metrics_extractor import extract_duration_app_id, extract_throughput
 
 FLAGS = flags.FLAGS
 flags.DEFINE_enum("tuner", "rand", ["rand", "tpe"], "tuner to use")

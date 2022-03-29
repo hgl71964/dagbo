@@ -29,7 +29,7 @@ class exec_spark_test(unittest.TestCase):
         l = extract_throughput(path)
         print(l)
 
-    #@unittest.skip("ok")
+    @unittest.skip("ok")
     def test_app_id_feat_extraction(self):
         log_path = "/home/gh512/workspace/bo/spark-dir/hiBench/report/wordcount/spark/bench.log"
         app_id, _ = extract_duration_app_id(self.base_url)
