@@ -105,6 +105,7 @@ def _aggregation(exec_metric_list: list[dict[str, list[float]]]) -> dict:
     d = {}
     for per_stage_dict in straggler_metric_list:
         for metric_name, val in per_stage_dict.items():
+            # if val is list, then each element is per task metric
             if isinstance(val, list):
                 val = sum(val)
             if metric_name not in d:
