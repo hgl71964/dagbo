@@ -3,7 +3,6 @@ import subprocess
 from time import sleep
 from copy import deepcopy
 from typing import Union
-from .metrics_extractor import extract_app_id, extract_throughput
 
 # example:
 #rc = subprocess.call("benchmarks/sleep.sh", shell=True)
