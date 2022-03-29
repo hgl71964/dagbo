@@ -51,7 +51,7 @@ class SparkMetric(Metric):
             val = extract_and_aggregate(params, train_inputs_dict,
                                         train_targets_dict,
                                         FLAGS.hibench_report_path,
-                                        FLAGS.base_url, FLAG.conf_path)
+                                        FLAGS.base_url, FLAGS.conf_path)
             # to records
             records.append({
                 "arm_name": arm_name,

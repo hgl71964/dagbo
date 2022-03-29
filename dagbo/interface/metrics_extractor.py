@@ -120,8 +120,8 @@ def _add_metric(agg_m: dict, file_path: str, add_dict: dict) -> dict:
 
     # add unified memory
     assert "spark.memory.fraction" in conf and "spark.executor.memory" in conf, "conf file name inconsistent"
-    agg_m["unified_mem"] = float(conf["spark.memory.fraction"]) * float(
-        conf["spark.executor.memory"])
+    tmp = float(conf["spark.executor.memory"][:-1])
+    agg_m["unified_mem"] = float(conf["spark.memory.fraction"]) * tmp
 
     # add taskTime per core
     assert "hibench.yarn.executor.cores" in conf, "conf file name inconsistent"
