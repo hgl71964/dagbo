@@ -270,11 +270,11 @@ def mem_safeguard(param: dict) -> dict:
     # NOTE: memory guard for kmeans workload
     if "executor.memory" in param and "memory.fraction" in param:
 
-        # keep at least 300M user-memory if executor.memory=1g.
+        # keep at least 400M user-memory if executor.memory=1g.
         # for mem: https://luminousmen.com/post/dive-into-spark-memory
         # FIXME: mem not safe
-        if param["executor.memory"] == 1 and param["memory.fraction"] > 0.7:
-            param["memory.fraction"] = 0.7
+        if param["executor.memory"] == 1 and param["memory.fraction"] > 0.6:
+            param["memory.fraction"] = 0.6
         elif param["executor.memory"] == 2 and param["memory.fraction"] > 0.8:
             param["memory.fraction"] = 0.8
 
