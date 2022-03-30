@@ -54,7 +54,7 @@ def extract_and_aggregate(params: dict[str, float],
 
     # agg & add metric
     agg_m = _aggregation(metric_list)
-    agg_m = _add_metric(agg_m, file_path, {
+    agg_m = _add_metric(agg_m, file_path, params, {
         "duration": duration,
         "throughput": throughput
     })
@@ -110,7 +110,8 @@ def _aggregation(exec_metric_list: list[dict[str, list[float]]]) -> dict:
     return d
 
 
-def _add_metric(agg_m: dict, file_path: str, add_dict: dict) -> dict:
+def _add_metric(agg_m: dict, file_path: str, params: str,
+                add_dict: dict) -> dict:
     # add from dict
     for k, v in add_dict.items():
         agg_m[k] = v
@@ -121,7 +122,9 @@ def _add_metric(agg_m: dict, file_path: str, add_dict: dict) -> dict:
     # add unified memory
     assert "spark.memory.fraction" in conf and "spark.executor.memory" in conf, "conf file name inconsistent"
     tmp = float(conf["spark.executor.memory"][:-1])
-    agg_m["unified_mem"] = float(conf["spark.memory.fraction"]) * tmp
+    #agg_m["unified_mem"] = float(conf["spark.memory.fraction"]) * tmp
+    agg_m["unified_mem"] = float(params["executor.memory"]) * float(
+        params["memory.fraction"])
 
     # add taskTime per core
     assert "hibench.yarn.executor.cores" in conf, "conf file name inconsistent"
@@ -130,7 +133,8 @@ def _add_metric(agg_m: dict, file_path: str, add_dict: dict) -> dict:
 
     # add threads
     assert "hibench.yarn.executor.cores" in conf and "hibench.yarn.executor.num" in conf, "conf file name inconsistent"
-    agg_m["threads"] = float(conf["hibench.yarn.executor.cores"]) * float(conf["hibench.yarn.executor.num"])
+    agg_m["threads"] = float(conf["hibench.yarn.executor.cores"]) * float(
+        conf["hibench.yarn.executor.num"])
     return agg_m
 
 
