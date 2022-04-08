@@ -70,13 +70,6 @@ def main(_):
     torch.manual_seed(FLAGS.seed)
 
     # build experiment
-    param_names = [
-        "executor.num[*]",
-        "executor.cores",
-        "memory.fraction",
-        "executor.memory",
-        "default.parallelism",
-    ]
     search_space = SearchSpace([
         ax.RangeParameter("executor.num[*]",
                           ax.ParameterType.FLOAT,

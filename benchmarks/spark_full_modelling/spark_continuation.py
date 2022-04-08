@@ -10,7 +10,7 @@ from ax import Experiment, Metric
 from ax.storage.metric_registry import register_metric
 
 from dagbo.models.model_builder import build_model
-from dagbo.models.acq_func import inner_loop
+from dagbo.acq_func.acq_func import inner_loop
 from dagbo.utils.basic_utils import gpu_usage
 from dagbo.utils.ax_experiment_utils import (candidates_to_generator_run,
                                              load_exp, load_dict,
@@ -52,9 +52,10 @@ flags.DEFINE_integer("minimize", 1, "min or max objective")
 # flags cannot define dict, acq_func_config will be affected by side-effect
 acq_func_config = {
     "q": 1,
-    "num_restarts": 128,
-    "raw_samples": int(1024),
-    "num_samples": int(1024),
+    "num_restarts": 128,  # 128
+    "raw_samples": int(512),
+    "num_samples": int(512),  # 1024
+    "sbo_samples": int(512),  # 1024
     "y_max": torch.tensor([
         1.
     ]),  # only a placeholder for {EI, qEI}, will be overwritten per iter
@@ -75,7 +76,7 @@ class SparkMetric(Metric):
             val = extract_and_aggregate(params, train_inputs_dict,
                                         train_targets_dict,
                                         FLAGS.hibench_report_path,
-                                        FLAGS.base_url)
+                                        FLAGS.base_url, FLAGS.conf_path)
             # to records
             records.append({
                 "arm_name": arm_name,
@@ -122,7 +123,7 @@ def main(_):
     for t in range(FLAGS.epochs):
         start = time.perf_counter()
 
-        model = build_model(FLAGS.tuner, exp, train_inputs_dict,
+        model = build_model(FLAGS.tuner, train_inputs_dict,
                             train_targets_dict, param_space,
                             metric_space, obj_space, edges, acq_func_config,
                             bool(FLAGS.norm), bool(FLAGS.minimize), device)

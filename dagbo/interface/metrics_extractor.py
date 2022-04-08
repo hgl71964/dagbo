@@ -135,6 +135,8 @@ def _add_metric(agg_m: dict, file_path: str, params: str,
     assert "hibench.yarn.executor.cores" in conf and "hibench.yarn.executor.num" in conf, "conf file name inconsistent"
     agg_m["threads"] = float(conf["hibench.yarn.executor.cores"]) * float(
         conf["hibench.yarn.executor.num"])
+    # add overhead
+    agg_m["overhead"] = float(agg_m["duration"]) - float(agg_m["taskTimePerCore"]) * 1e-3
     return agg_m
 
 

@@ -62,6 +62,12 @@ SCALE_MAPPING = {
     "executor.cores": 4,
     "executor.memory": 4,
     "default.parallelism": 16,
+
+    # new add
+    "spark.shuffle.file.buffer": 128,
+    "spark.speculation.multiplier": 5,
+    "spark.broadcast.blockSize": 128,
+    "spark.kryoserializer.buffer": 128,
 }
 
 # max(possible lowest value, actual val)
@@ -71,6 +77,12 @@ MIN_MAPPING = {
     "executor.memory": 1,  # for pagerank at least 2
     "default.parallelism": 2,
     "memory.fraction": 0.1,
+
+    # new add
+    "spark.shuffle.file.buffer": 2,
+    "spark.speculation.multiplier": 1,
+    "spark.broadcast.blockSize": 2,
+    "spark.kryoserializer.buffer": 2,
 }
 
 MAX_MAPPING = {
@@ -89,11 +101,19 @@ ROUND_MAPPING = {
     "default.parallelism": "int",
     "shuffle.spill.compress": "bool",
     "spark.speculation": "bool",
+    "spark.shuffle.file.buffer": "float",
+    "spark.speculation.multiplier": "float",
+    "spark.broadcast.blockSize": "float",
+    "spark.kryoserializer.buffer": "float",
+    "spark.speculation.quantile": "float",
 }
 
 # spec that needs unit mapping, e.g. '4' -> '4g'
 UNIT_MAPPING = {
-    "spark.executor.memory": 0,
+    "spark.executor.memory": "g",
+    "spark.kryoserializer.buffer": "k",
+    "spark.shuffle.file.buffer": "k",
+    "spark.broadcast.blockSize": "m",
 }
 
 # 0 -> false, 1 -> true
@@ -226,7 +246,8 @@ def _pre_process(param: dict[str, float]) -> dict[str, str]:
     # name mapping
     param_ = {}
     for key, val in param.items():
-        param_[NAME_MAPPING[key]] = str(val)
+        if key in NAME_MAPPING:
+            param_[NAME_MAPPING[key]] = str(val)
 
     # duplicate mapping
     add = {}
@@ -249,7 +270,7 @@ def _pre_process(param: dict[str, float]) -> dict[str, str]:
     # perform unit mapping, e.g. '4' -> '4g'
     for key in list(param_.keys()):
         if key in UNIT_MAPPING:
-            param_[key] = str(param_[key]) + "g"
+            param_[key] = str(param_[key]) + UNIT_MAPPING[key]
 
     # perform bool mapping, e.g. '0' -> false
     for key in list(param_.keys()):

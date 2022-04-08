@@ -1,0 +1,44 @@
+digraph "perf-model-28" {
+	graph [rankdir=LR]
+	subgraph cluster_0 {
+		color=lightgrey style=filled
+		label=param
+		"executor.num[*]" [label="executor.num[*]"]
+		"executor.cores" [label="executor.cores"]
+		"default.parallelism" [label="default.parallelism"]
+		"executor.memory" [label="executor.memory"]
+		"memory.fraction" [label="memory.fraction"]
+		"spark.shuffle.file.buffer" [label="spark.shuffle.file.buffer"]
+		"spark.speculation.multiplier" [label="spark.speculation.multiplier"]
+		"spark.speculation.quantile" [label="spark.speculation.quantile"]
+		"spark.broadcast.blockSize" [label="spark.broadcast.blockSize"]
+		"spark.kryoserializer.buffer" [label="spark.kryoserializer.buffer"]
+	}
+	subgraph cluster_1 {
+		color=blue
+		unified_mem [label=unified_mem]
+		taskTimePerCore [label=taskTimePerCore]
+		overhead [label=overhead]
+		label="intermediate metrics"
+	}
+	subgraph cluster_2 {
+		duration [label=duration]
+	}
+	"executor.num[*]" -> taskTimePerCore
+	"executor.num[*]" -> overhead
+	"executor.cores" -> taskTimePerCore
+	"executor.cores" -> overhead
+	"default.parallelism" -> taskTimePerCore
+	"executor.memory" -> unified_mem
+	"executor.memory" -> overhead
+	"memory.fraction" -> unified_mem
+	unified_mem -> taskTimePerCore
+	"spark.shuffle.file.buffer" -> taskTimePerCore
+	"spark.speculation.multiplier" -> taskTimePerCore
+	"spark.speculation.quantile" -> taskTimePerCore
+	"spark.broadcast.blockSize" -> taskTimePerCore
+	"spark.kryoserializer.buffer" -> taskTimePerCore
+	taskTimePerCore -> duration
+	overhead -> duration
+}
+
