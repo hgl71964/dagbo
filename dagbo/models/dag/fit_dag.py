@@ -4,6 +4,8 @@ import torch
 from torch.optim import Adam
 from pyro.infer import NUTS, MCMC
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
+
+from botorch.models import SingleTaskGP
 from botorch.fit import fit_gpytorch_model
 from botorch.optim.fit import fit_gpytorch_torch
 from botorch.sampling.samplers import SobolQMCNormalSampler
@@ -147,6 +149,8 @@ def fit_dag(dag_model: Dag,
     """
     #for node in dag_model.nodes_output_order(): deprecated this order
     for node in dag_model.nodes_dag_order():
+        if not isinstance(node, SingleTaskGP):  # skip non-gp node
+            continue
         if verbose:
             print("fitting node: ", node.output_name)
 

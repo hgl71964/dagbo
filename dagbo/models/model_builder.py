@@ -208,11 +208,30 @@ def build_perf_model_from_spec_direct(train_inputs_dict: dict[str, np.ndarray],
             children = [i for i in reversed_edge[node]]
             mean = build_mean(node, metric_space, obj_space, children)
             covar = build_covar(node, metric_space, obj_space, children)
-            dag.register_metric(node, children, mean=mean, covar=covar)
+            #dag.register_metric(node, children, mean=mean, covar=covar)
+            register_metric(dag, metric_space, obj_space, node, children, mean=mean, covar=covar)
         else:
             raise RuntimeError("unknown node")
     dag.to(device)
     return dag
+
+def register_metric(dag, metric_space, obj_space, node, children, mean, covar):
+    """
+    To build normal node and gp node
+    """
+    if node in metric_space:
+        ppt = metric_space[node]
+    elif node in obj_space:
+        ppt = obj_space[node]
+
+    if ppt == 0:
+        dag.register_metric(node, children, mean=mean, covar=covar)
+    elif ppt == "sum":
+        print("build Sum Node")
+        #dag.register_metric(node, children, mean=mean, covar=covar)
+        dag.register_normal_metric(node, children, None, None)
+    else:
+        raise
 
 
 def build_input_by_topological_order(

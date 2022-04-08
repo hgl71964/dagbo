@@ -41,24 +41,26 @@ def _population_spaces(path: str):
                 if '=' not in l[0]:  # ok
                     name = l[0].strip("\"")
                     try:
-                        shape = l[2]
+                        attr = l[2].strip("]").split("=")
                     except:
-                        shape = None
-                    ppt = 0
-                    if shape and "square" in shape:
-                        ppt = "add"
+                        attr = None
+                    if attr is None:
+                        ppt = 0
+                    else:
+                        ppt = attr[-1]
                     metric_space[name] = ppt
 
             elif c == 2:  # obj
                 if '=' not in l[0]:  # ok
                     name = l[0].strip("\"")
                     try:
-                        shape = l[2]
+                        attr = l[2].strip("]").split("=")
                     except:
-                        shape = None
-                    ppt = 0
-                    if shape and "square" in shape:
-                        ppt = "add"
+                        attr = None
+                    if attr is None:
+                        ppt = 0
+                    else:
+                        ppt = attr[-1]
                     obj_space[name] = ppt
 
     #print(param_space)
@@ -90,7 +92,7 @@ def parse_model(path):
 
 
 if __name__ == '__main__':
-    path = 'dagbo/interface/spark_perf_model_21.txt'
+    path = 'dagbo/interface/hartmann_perf_model_1.txt'
     a, b, c, d = parse_model(path)
     print(a)
     print(b)

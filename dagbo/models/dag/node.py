@@ -21,7 +21,8 @@ from .parametric_mean import ParametricMean, LinearMean
 MIN_INFERRED_NOISE_LEVEL = 1e-4
 
 
-#class Node(ExactGP):
+class Node(ExactGP):
+    pass
 #    """
 #    An ExactGP with a configurable mean.
 #    Mean can subclass gpytorch.means.Mean or ParametricMean.
@@ -173,6 +174,7 @@ class Sum_Node(nn.Module):
                 parametric mean the DAG.
             train_targets: A batch_shape*q-dim Tensor of the training targets
         """
+        super().__init__()
         assert train_inputs.shape[0] == 1
         assert train_targets.shape[0] == 1
         train_inputs = train_inputs.squeeze(0)  # [q, dim]
@@ -181,8 +183,11 @@ class Sum_Node(nn.Module):
 
         self.input_names = input_names
         self.output_name = output_name
-        super().__init__()
 
 
     def forward(self, x):
-        return
+        """
+        Args:
+                x: [..., num_output, num_input]
+        """
+        return x.sum(dim=-1)

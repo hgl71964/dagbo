@@ -10,7 +10,7 @@ from gpytorch.distributions.multitask_multivariate_normal import MultitaskMultiv
 from gpytorch.means.mean import Mean
 from gpytorch.module import Module
 from dagbo.utils.tensor_dict_conversions import pack_to_tensor, unpack_to_dict
-from .node import Node, SingleTaskGP_Node
+from .node import Node, SingleTaskGP_Node, Sum_Node
 
 
 class Dag(Module):
@@ -129,6 +129,32 @@ class Dag(Module):
         X, y = deepcopy(X), deepcopy(y)
         #node = Node(children, name, X, y, mean, covar, likelihood)
         node = SingleTaskGP_Node(children, name, X, y, mean, covar, likelihood)
+        self.add_module(
+            name,
+            node)  # nn.Module's method, keep a mapping dict[name, Module]
+        self.registered_target_names.append(node.output_name)
+        return name
+
+    def register_normal_metric(
+            self,
+            name: str,
+            children: list[str],
+            mean: Optional[Mean] = None,
+            covar: Optional[Kernel] = None,
+            likelihood: Optional[_GaussianLikelihoodBase] = None) -> str:
+        """
+        children is un-ordered
+        """
+        self._error_missing_names([name] + children)
+        self._error_unregistered_inputs(children, name)
+
+        X, y = self.prepare_node_data(name, children)
+        self._check_init_metric_data(name, X, y)
+
+        # instantial node
+        X, y = deepcopy(X), deepcopy(y)
+        #node = Node(children, name, X, y, mean, covar, likelihood)
+        node = Sum_Node(children, name, X, y, mean, covar, likelihood)
         self.add_module(
             name,
             node)  # nn.Module's method, keep a mapping dict[name, Module]
@@ -408,16 +434,17 @@ class lazy_SO_Dag(Dag):
             # node.input_names = register_metric's children, so order is preserved
             node_inputs = pack_to_tensor(node.input_names, node_inputs_dict)
 
-            # make prediction via GP
+            # make prediction via GP, XXX likelihood or not
             mvn = node(node_inputs)
-            # XXX likelihood or not
             #like_mvn = node.likelihood(mvn, node_inputs)
             like_mvn = mvn
-
-            #node_dict[node.output_name] = mvn
-            #prediction = mvn.rsample()
             node_dict[node.output_name] = like_mvn
-            prediction = like_mvn.rsample()
+
+            # append prediction to tensor_inputs_dict
+            if isinstance(mvn, MultivariateNormal):
+                prediction = like_mvn.rsample()
+            else:
+                prediction = mvn
             tensor_inputs_dict[node.output_name] = prediction
             sink_node_name = node.output_name
 

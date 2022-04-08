@@ -23,7 +23,7 @@ digraph hartmann {
 		exp3 [label=exp3]
 	}
 	subgraph cluster_2 {
-		final [label=final]
+		final [label=final attr=sum]
 	}
 	x0 -> inner_sum0
 	x1 -> inner_sum0

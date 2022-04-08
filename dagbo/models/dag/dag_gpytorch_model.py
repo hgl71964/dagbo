@@ -1,4 +1,5 @@
 import logging
+import torch
 from torch import Tensor
 from typing import Any, Union
 from botorch.models.gpytorch import GPyTorchModel
@@ -140,11 +141,20 @@ class direct_DagGPyTorchModel(GPyTorchModel):
                     "Observation noise is not yet supported for DagGPyTorch models."
                 )
         # GPyTorchPosterior support both MultitaskMultivariateNormal and MultivariateNormal
-        # mvn loc: [num_samples, batch_shape, q, num_nodes]
-        gpytorch_mvn = MultivariateNormal(
-            mvn.loc.mean(0),
-            mvn.covariance_matrix.mean(0))  # take ave. along samples dim
-        posterior = GPyTorchPosterior(mvn=gpytorch_mvn)
+        if isinstance(mvn, MultivariateNormal):
+            # mvn loc: [num_samples, batch_shape, q, num_nodes]
+            gpytorch_mvn = MultivariateNormal(
+                mvn.loc.mean(0),
+                mvn.covariance_matrix.mean(0))  # take ave. along samples dim
+            posterior = GPyTorchPosterior(mvn=gpytorch_mvn)
+        else:
+            # build fake gp output in the case of the obj node being a sum node
+            cov_matrix = torch.eye(1) * 1e-6  # it is single obj so 1X1
+            cov_matrix = cov_matrix.to(mvn)  # put to device & dtype
+            gpytorch_mvn = MultivariateNormal(
+                mvn.mean(0),
+                cov_matrix)
+            posterior = GPyTorchPosterior(mvn=gpytorch_mvn)
 
         #print()
         #print("X::: ", X.shape)
